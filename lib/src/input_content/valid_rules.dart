@@ -14,7 +14,7 @@ class ValidRules {
   /// [message] 自定义错误提示
   static String? phone(String? value, {String? message}) {
     if (value == null || value.trim().isEmpty) {
-      return message ?? '请输入手机号';
+      return message ?? '手机号是必填项不能为空';
     }
     final regex = RegExp(r'^1[3-9]\d{9}$');
     if (!regex.hasMatch(value.trim())) {

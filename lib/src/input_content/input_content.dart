@@ -50,6 +50,8 @@ class InputContent extends StatefulWidget {
   final double inputRadius;
   // 边框颜色
   final Color borderColor;
+  // 聚焦边框颜色（不传则使用主题色）
+  final Color? focusBorderColor;
   // 校验失败的提示颜色
   final Color errorColor;
   // 前置图标
@@ -72,8 +74,9 @@ class InputContent extends StatefulWidget {
     this.fontSize = 18,
     this.fontWeight,
     this.hintText,
-    this.inputRadius = 50,
+    this.inputRadius = 5,
     this.borderColor = const Color(0xFFE2E8F0),
+    this.focusBorderColor,
     this.errorColor = const Color(0xFFEF4444),
     this.contentPadding,
     this.fillColor,
@@ -172,10 +175,6 @@ class _TextInputState extends State<InputContent> {
                 hintText: widget.hintText ?? '请输入${widget.formLabel ?? ''}',
                 hintStyle: widget.hintStyle ?? TextStyle(color: state.hasError ? widget.errorColor : widget.hintTextColor ?? Colors.grey, fontSize: widget.hintFontSize),
                 prefixIcon: buildPrefixIcon(),
-
-                //  (widget.prefixIcon != null || widget.formLabel != null)
-                //     ? TextInputPrefixIcon(prefixIcon: widget.prefixIcon, formLabel: widget.formLabel, required: widget.required, formLayout: widget.formLayout)
-                //     : null,
                 prefixIconConstraints: BoxConstraints(minWidth: 40, minHeight: 40),
                 suffixIcon: TextInputSuffixIcon(
                   suffixIcon: widget.suffixIcon,
@@ -189,7 +188,7 @@ class _TextInputState extends State<InputContent> {
                 focusedBorder: buildBorder(BorderType.focusedBorder, hasError: state.hasError),
                 filled: true,
                 fillColor: widget.fillColor ?? Colors.white,
-                contentPadding: widget.contentPadding ?? EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                contentPadding: widget.contentPadding ?? EdgeInsets.symmetric(horizontal: 10, vertical: 15),
               ),
             ),
           ],
@@ -259,7 +258,7 @@ class _TextInputState extends State<InputContent> {
         color: hasError
             ? widget.errorColor
             : type == BorderType.focusedBorder
-            ? const Color(0xFF50B25E)
+            ? widget.focusBorderColor ?? Theme.of(context).colorScheme.primary
             : widget.borderColor,
         width: 1.5,
       ),
