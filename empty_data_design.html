@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EmptyData 组件设计稿</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: #F1F5F9;
+    color: #1E293B;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  .page-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #94A3B8;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  }
+
+  .card-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #F1F5F9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-default { background: #EFF6FF; color: #3B82F6; }
+  .badge-custom { background: #F0FDF4; color: #22C55E; }
+  .badge-action { background: #FFF7ED; color: #F97316; }
+  .badge-network { background: #FEF2F2; color: #EF4444; }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  /* ===== 模拟手机屏幕 ===== */
+  .phone-frame {
+    margin: 24px auto;
+    width: 280px;
+    height: 380px;
+    background: #FAFBFC;
+    border-radius: 24px;
+    border: 2px solid #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: #E2E8F0;
+    border-radius: 4px;
+  }
+
+  /* ===== 空状态组件样式 ===== */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 图标区域 */
+  .empty-icon {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .empty-icon svg {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .empty-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    opacity: 0.15;
+  }
+
+  /* 不同主题的图标样式 */
+  .icon-default { background: #F0F4FF; }
+  .icon-default::after { background: #3B82F6; }
+  .icon-default svg { color: #6366F1; stroke: #6366F1; }
+
+  .icon-custom { background: #F0FDF4; }
+  .icon-custom::after { background: #22C55E; }
+  .icon-custom svg { color: #16A34A; stroke: #16A34A; }
+
+  .icon-action { background: #FFF7ED; }
+  .icon-action::after { background: #F97316; }
+  .icon-action svg { color: #EA580C; stroke: #EA580C; }
+
+  .icon-network { background: #FEF2F2; }
+  .icon-network::after { background: #EF4444; }
+  .icon-network svg { color: #DC2626; stroke: #DC2626; }
+
+  /* 标题 */
+  .empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1E293B;
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+  }
+
+  /* 描述 */
+  .empty-desc {
+    font-size: 13px;
+    color: #94A3B8;
+    line-height: 1.6;
+    max-width: 200px;
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+
+  /* 操作按钮 */
+  .empty-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.2px;
+  }
+
+  .empty-action:hover {
+    transform: scale(1.03);
+  }
+
+  .action-primary {
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+  }
+
+  .action-outline {
+    background: transparent;
+    color: #6366F1;
+    border: 1.5px solid #C7D2FE;
+  }
+
+  .action-warm {
+    background: linear-gradient(135deg, #F97316, #FB923C);
+    color: white;
+    box-shadow: 0 2px 8px rgba(249,115,22,0.3);
+  }
+
+  .action-danger {
+    background: linear-gradient(135deg, #EF4444, #F87171);
+    color: white;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+  }
+
+  .action-svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ===== API 参数表格 ===== */
+  .api-section {
+    max-width: 1200px;
+    margin: 48px auto 0;
+  }
+
+  .api-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .api-title::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(180deg, #6366F1, #8B5CF6);
+    border-radius: 2px;
+  }
+
+  .api-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    border-collapse: collapse;
+  }
+
+  .api-table thead {
+    background: #F8FAFC;
+  }
+
+  .api-table th {
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748B;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #E2E8F0;
+  }
+
+  .api-table td {
+    padding: 12px 20px;
+    font-size: 13px;
+    color: #475569;
+    border-bottom: 1px solid #F1F5F9;
+  }
+
+  .api-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .param-name {
+    font-family: 'Courier New', monospace;
+    color: #6366F1;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .param-type {
+    font-family: 'Courier New', monospace;
+    color: #0EA5E9;
+    font-size: 12px;
+    background: #F0F9FF;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .param-default {
+    font-family: 'Courier New', monospace;
+    color: #94A3B8;
+    font-size: 12px;
+  }
+
+  /* ===== 用法示例 ===== */
+  .usage-section {
+    max-width: 1200px;
+    margin: 40px auto 0;
+  }
+
+  .code-block {
+    background: #1E293B;
+    border-radius: 12px;
+    padding: 24px;
+    overflow-x: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .code-block pre {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #E2E8F0;
+    margin: 0;
+  }
+
+  .code-keyword { color: #C084FC; }
+  .code-string { color: #34D399; }
+  .code-comment { color: #64748B; }
+  .code-widget { color: #60A5FA; }
+  .code-param { color: #FBBF24; }
+
+  /* ===== 结构标注 ===== */
+  .structure-section {
+    max-width: 1200px;
+    margin: 40px auto 0;
+  }
+
+  .structure-box {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .structure-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+
+  .struct-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+  }
+
+  .struct-box {
+    width: 200px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 2px dashed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    position: relative;
+  }
+
+  .struct-arrow {
+    width: 2px;
+    height: 16px;
+    background: #CBD5E1;
+    position: relative;
+  }
+
+  .struct-arrow::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: -3px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #CBD5E1;
+    border-bottom: 2px solid #CBD5E1;
+    transform: rotate(45deg);
+  }
+
+  .struct-label {
+    font-size: 11px;
+    color: #94A3B8;
+    position: absolute;
+    right: -120px;
+    white-space: nowrap;
+  }
+
+  .s-icon { border-color: #C7D2FE; background: #F5F3FF; color: #6366F1; }
+  .s-title { border-color: #BBF7D0; background: #F0FDF4; color: #16A34A; }
+  .s-desc { border-color: #FDE68A; background: #FFFBEB; color: #D97706; }
+  .s-btn { border-color: #FECACA; background: #FEF2F2; color: #DC2626; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">EmptyData 组件设计稿</h1>
+<p class="page-subtitle">lite_ui 空状态展示组件 — 四种预设场景 + 完全自定义</p>
+
+<!-- ===== 组件结构图 ===== -->
+<div class="structure-section">
+  <div class="api-title">组件结构</div>
+  <div class="structure-box">
+    <div class="structure-diagram">
+      <div class="struct-item">
+        <div class="struct-box s-icon" style="width:240px; height:80px; border-radius:50%;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span class="struct-label">icon (Widget) — 图标/插图</span>
+        </div>
+      </div>
+      <div class="struct-arrow"></div>
+      <div class="struct-item">
+        <div class="struct-box s-title">
+          <strong>暂无数据</strong>
+          <span class="struct-label">title (String) — 主标题</span>
+        </div>
+      </div>
+      <div class="struct-arrow"></div>
+      <div class="struct-item">
+        <div class="struct-box s-desc">
+          当前没有可显示的内容
+          <span class="struct-label">description (String) — 描述</span>
+        </div>
+      </div>
+      <div class="struct-arrow"></div>
+      <div class="struct-item">
+        <div class="struct-box s-btn">
+          <button class="empty-action action-primary" style="padding:6px 16px; font-size:12px;">重新加载</button>
+          <span class="struct-label">action (Widget?) — 可选操作</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 四种场景卡片 ===== -->
+<div class="grid" style="margin-top: 40px;">
+
+  <!-- 1. 默认空状态 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-badge badge-default">Default</span>
+      <span class="card-title">默认空状态 — 列表/数据为空</span>
+    </div>
+    <div class="phone-frame">
+      <div class="empty-state">
+        <div class="empty-icon icon-default">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="empty-title">暂无数据</div>
+        <div class="empty-desc">当前列表没有内容，<br>请先添加数据</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 搜索无结果 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-badge badge-custom">Search</span>
+      <span class="card-title">搜索无结果 — 过滤/搜索场景</span>
+    </div>
+    <div class="phone-frame">
+      <div class="empty-state">
+        <div class="empty-icon icon-custom">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <line x1="8" y1="11" x2="14" y2="11"/>
+          </svg>
+        </div>
+        <div class="empty-title">未找到相关结果</div>
+        <div class="empty-desc">换个关键词试试？</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 带操作按钮 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-badge badge-action">Action</span>
+      <span class="card-title">带操作按钮 — 可重试/添加</span>
+    </div>
+    <div class="phone-frame">
+      <div class="empty-state">
+        <div class="empty-icon icon-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+        </div>
+        <div class="empty-title">还没有内容</div>
+        <div class="empty-desc">点击下方按钮添加<br>第一条数据</div>
+        <button class="empty-action action-warm">
+          <svg class="action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          添加数据
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 网络错误 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-badge badge-network">Network</span>
+      <span class="card-title">网络异常 — 加载失败重试</span>
+    </div>
+    <div class="phone-frame">
+      <div class="empty-state">
+        <div class="empty-icon icon-network">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="1" y1="1" x2="23" y2="23"/>
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+            <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <line x1="12" y1="20" x2="12.01" y2="20"/>
+          </svg>
+        </div>
+        <div class="empty-title">网络连接失败</div>
+        <div class="empty-desc">请检查网络设置后<br>重新加载</div>
+        <button class="empty-action action-danger">
+          <svg class="action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          重新加载
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== API 参数表 ===== -->
+<div class="api-section">
+  <div class="api-title">API 参数设计</div>
+  <table class="api-table">
+    <thead>
+      <tr>
+        <th>参数</th>
+        <th>类型</th>
+        <th>默认值</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="param-name">type</span></td>
+        <td><span class="param-type">EmptyDataType</span></td>
+        <td><span class="param-default">EmptyDataType.empty</span></td>
+        <td>预设场景类型：empty / search / noNetwork / error</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">title</span></td>
+        <td><span class="param-type">String?</span></td>
+        <td><span class="param-default">自动（按 type）</span></td>
+        <td>主标题文字，不传则根据 type 使用默认文案</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">description</span></td>
+        <td><span class="param-type">String?</span></td>
+        <td><span class="param-default">自动（按 type）</span></td>
+        <td>描述文字，不传则根据 type 使用默认文案</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">icon</span></td>
+        <td><span class="param-type">Widget?</span></td>
+        <td><span class="param-default">自动（按 type）</span></td>
+        <td>自定义图标 Widget，不传则使用 type 对应的内置图标</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">iconBackgroundColor</span></td>
+        <td><span class="param-type">Color?</span></td>
+        <td><span class="param-default">自动（按 type）</span></td>
+        <td>图标背景圆形颜色</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">actionLabel</span></td>
+        <td><span class="param-type">String?</span></td>
+        <td><span class="param-default">null</span></td>
+        <td>操作按钮文字，传 null 不显示按钮</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">onAction</span></td>
+        <td><span class="param-type">VoidCallback?</span></td>
+        <td><span class="param-default">null</span></td>
+        <td>操作按钮点击回调</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">actionWidget</span></td>
+        <td><span class="param-type">Widget?</span></td>
+        <td><span class="param-default">null</span></td>
+        <td>自定义操作区域 Widget（优先级高于 actionLabel）</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">titleStyle</span></td>
+        <td><span class="param-type">TextStyle?</span></td>
+        <td><span class="param-default">null</span></td>
+        <td>自定义标题样式</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">descriptionStyle</span></td>
+        <td><span class="param-type">TextStyle?</span></td>
+        <td><span class="param-default">null</span></td>
+        <td>自定义描述样式</td>
+      </tr>
+      <tr>
+        <td><span class="param-name">padding</span></td>
+        <td><span class="param-type">EdgeInsetsGeometry?</span></td>
+        <td><span class="param-default">EdgeInsets.all(32)</span></td>
+        <td>组件外边距</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== 用法示例 ===== -->
+<div class="usage-section">
+  <div class="api-title">用法示例</div>
+  <div class="code-block">
+    <pre><span class="code-comment">// 1. 最简用法 — 默认空状态</span>
+<span class="code-widget">EmptyData</span>()
+
+<span class="code-comment">// 2. 指定场景类型</span>
+<span class="code-widget">EmptyData</span>(
+  <span class="code-param">type</span>: <span class="code-string">EmptyDataType.search</span>,
+)
+
+<span class="code-comment">// 3. 带操作按钮</span>
+<span class="code-widget">EmptyData</span>(
+  <span class="code-param">type</span>: <span class="code-string">EmptyDataType.empty</span>,
+  <span class="code-param">actionLabel</span>: <span class="code-string">'添加数据'</span>,
+  <span class="code-param">onAction</span>: () { <span class="code-comment">// 跳转添加页</span> },
+)
+
+<span class="code-comment">// 4. 完全自定义</span>
+<span class="code-widget">EmptyData</span>(
+  <span class="code-param">icon</span>: <span class="code-widget">Image.asset</span>(<span class="code-string">'assets/empty.png'</span>),
+  <span class="code-param">title</span>: <span class="code-string">'自定义标题'</span>,
+  <span class="code-param">description</span>: <span class="code-string">'自定义描述内容'</span>,
+  <span class="code-param">actionWidget</span>: <span class="code-widget">ElevatedButton</span>(...),
+)</pre>
+  </div>
+</div>
+
+</body>
+</html>
