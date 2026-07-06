@@ -1,18 +1,18 @@
 /// 备选数据项
 ///
 /// 泛型参数说明：
-/// - [T] value 的类型，用于后端提交等场景。作为选中状态追踪的标识，
-///   若 T 是自定义对象，必须 override `==` 和 `hashCode`。
-/// - [V] data 的类型，用于携带后端返回的完整原始数据对象，可选。
-class SelectItem<T, V> {
+/// - [V] value 的类型，用于后端提交等场景。作为选中状态追踪的标识，
+///   若 V 是自定义对象，必须 override `==` 和 `hashCode`。
+/// - [D] data 的类型，用于携带后端返回的完整原始数据对象，可选。
+class SelectItem<V, D> {
   /// 显示文本
   final String label;
 
   /// 实际值，用于后端提交
-  final T value;
+  final V value;
 
   /// 可选的原始数据，选中时一并返回
-  final V? data;
+  final D? data;
 
   /// 副标题/描述
   final String? subtitle;
@@ -30,16 +30,16 @@ class SelectItem<T, V> {
 }
 
 /// 单选回调：返回选中的 value 和 data
-typedef OnSelectChange<T, V> = void Function(T value, V? data);
+typedef OnSelectChange<V, D> = void Function(V value, D? data);
 
 /// 多选确认回调：返回所有选中项的 values 和 datas
-typedef OnMultiSelectConfirm<T, V> = void Function(List<T> values, List<V?> datas);
+typedef OnMultiSelectConfirm<V, D> = void Function(List<V> values, List<D?> datas);
 
 /// 远程搜索回调：根据关键字异步返回数据列表
-typedef RemoteSearchCallback<T, V> = Future<List<SelectItem<T, V>>> Function(String keyword);
+typedef RemoteSearchCallback<V, D> = Future<List<SelectItem<V, D>>> Function(String keyword);
 
 /// 动态数据生成回调：根据当前过滤关键字返回额外数据（与静态 items 合并显示）
-typedef DynamicItemsCallback<T, V> = Future<List<SelectItem<T, V>>> Function(String keyword);
+typedef DynamicItemsCallback<V, D> = Future<List<SelectItem<V, D>>> Function(String keyword);
 
 /// ActionSheet 内容类型
 enum ActionSheetType {

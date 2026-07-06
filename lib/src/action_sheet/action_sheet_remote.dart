@@ -12,9 +12,9 @@ import 'model.dart';
 /// - 多选模式：点击项切换选中状态，底部显示已选数量 + 确定按钮
 ///
 /// 泛型参数：
-/// - [T] 选项 value 的类型
-/// - [V] 选项 data 的类型（可选原始数据）
-class ActionSheetRemote<T, V> extends StatefulWidget {
+/// - [V] 选项 value 的类型
+/// - [D] 选项 data 的类型（可选原始数据）
+class ActionSheetRemote<V, D> extends StatefulWidget {
   /// 主标题
   final String? title;
 
@@ -22,22 +22,22 @@ class ActionSheetRemote<T, V> extends StatefulWidget {
   final String? description;
 
   /// 远程搜索回调：根据关键字返回数据列表
-  final RemoteSearchCallback<T, V> onSearch;
+  final RemoteSearchCallback<V, D> onSearch;
 
   /// 初始数据（首次打开时显示，或空搜索时显示）
-  final List<SelectItem<T, V>>? initialItems;
+  final List<SelectItem<V, D>>? initialItems;
 
   /// 是否为多选模式，默认 false（单选）
   final bool multiple;
 
   /// 初始选中项的 value 集合
-  final Set<T>? selectedValues;
+  final Set<V>? selectedValues;
 
   /// 单选回调（单选模式下点击项时触发，返回 value 和 data）
-  final OnSelectChange<T, V>? onSelect;
+  final OnSelectChange<V, D>? onSelect;
 
   /// 多选确认回调（多选模式下点击「确定」时触发，返回 values 和 datas）
-  final OnMultiSelectConfirm<T, V>? onConfirm;
+  final OnMultiSelectConfirm<V, D>? onConfirm;
 
   /// 搜索框提示文字
   final String searchHint;
@@ -68,17 +68,17 @@ class ActionSheetRemote<T, V> extends StatefulWidget {
   });
 
   @override
-  State<ActionSheetRemote<T, V>> createState() => _ActionSheetRemoteState<T, V>();
+  State<ActionSheetRemote<V, D>> createState() => _ActionSheetRemoteState<V, D>();
 }
 
-class _ActionSheetRemoteState<T, V> extends State<ActionSheetRemote<T, V>> {
+class _ActionSheetRemoteState<V, D> extends State<ActionSheetRemote<V, D>> {
   final TextEditingController _searchController = TextEditingController();
 
   /// 当前搜索结果
-  List<SelectItem<T, V>> _results = [];
+  List<SelectItem<V, D>> _results = [];
 
   /// 当前选中项的 value 集合
-  Set<T> _selectedValues = {};
+  Set<V> _selectedValues = {};
 
   /// 是否正在加载
   bool _isLoading = false;
@@ -148,7 +148,7 @@ class _ActionSheetRemoteState<T, V> extends State<ActionSheetRemote<T, V>> {
   }
 
   /// 处理列表项点击
-  void _handleItemTap(SelectItem<T, V> item) {
+  void _handleItemTap(SelectItem<V, D> item) {
     if (item.disabled) return;
 
     if (widget.multiple) {

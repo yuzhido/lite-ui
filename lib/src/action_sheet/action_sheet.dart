@@ -17,8 +17,8 @@ import 'model.dart';
 /// 不同模式内容渲染委托给对应的子组件。
 ///
 /// 泛型参数：
-/// - [T] 选项 value 的类型
-/// - [V] 选项 data 的类型（可选原始数据）
+/// - [V] 选项 value 的类型
+/// - [D] 选项 data 的类型（可选原始数据）
 class ActionSheet {
   /// 显示一个从底部向上弹出的 ActionSheet
   ///
@@ -44,32 +44,32 @@ class ActionSheet {
   /// [onSearch] 远程搜索回调（必填）
   /// [initialItems] 初始数据
   /// [emptyText] 空状态提示文字
-  static Future<T?> show<T, V>({
+  static Future<V?> show<V, D>({
     required BuildContext context,
     ActionSheetType type = ActionSheetType.local,
     String? title,
     String? description,
-    List<SelectItem<T, V>>? items,
+    List<SelectItem<V, D>>? items,
     Widget? customChild,
     String cancelLabel = '取消',
 
     // filterable / remote 通用参数
     bool multiple = false,
-    Set<T>? selectedValues,
-    OnSelectChange<T, V>? onSelect,
-    OnMultiSelectConfirm<T, V>? onConfirm,
+    Set<V>? selectedValues,
+    OnSelectChange<V, D>? onSelect,
+    OnMultiSelectConfirm<V, D>? onConfirm,
     String searchHint = '搜索',
     String confirmLabel = '确定',
 
     // filterable 专属
-    DynamicItemsCallback<T, V>? dynamicItems,
+    DynamicItemsCallback<V, D>? dynamicItems,
 
     // remote 专属
-    RemoteSearchCallback<T, V>? onSearch,
-    List<SelectItem<T, V>>? initialItems,
+    RemoteSearchCallback<V, D>? onSearch,
+    List<SelectItem<V, D>>? initialItems,
     String emptyText = '暂无数据',
   }) {
-    return showModalBottomSheet<T>(
+    return showModalBottomSheet<V>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -91,7 +91,7 @@ class ActionSheet {
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
             child: ConstrainedBox(
               constraints: constraints,
-              child: _buildContent<T, V>(
+              child: _buildContent<V, D>(
                 type: type,
                 title: title,
                 description: description,
@@ -118,22 +118,22 @@ class ActionSheet {
   }
 
   /// 根据 type 渲染不同的内容组件
-  static Widget _buildContent<T, V>({
+  static Widget _buildContent<V, D>({
     required ActionSheetType type,
     required String? title,
     required String? description,
-    required List<SelectItem<T, V>>? items,
+    required List<SelectItem<V, D>>? items,
     required Widget? customChild,
     required String cancelLabel,
     required bool multiple,
-    required Set<T>? selectedValues,
-    required OnSelectChange<T, V>? onSelect,
-    required OnMultiSelectConfirm<T, V>? onConfirm,
+    required Set<V>? selectedValues,
+    required OnSelectChange<V, D>? onSelect,
+    required OnMultiSelectConfirm<V, D>? onConfirm,
     required String searchHint,
     required String confirmLabel,
-    required DynamicItemsCallback<T, V>? dynamicItems,
-    required RemoteSearchCallback<T, V>? onSearch,
-    required List<SelectItem<T, V>>? initialItems,
+    required DynamicItemsCallback<V, D>? dynamicItems,
+    required RemoteSearchCallback<V, D>? onSearch,
+    required List<SelectItem<V, D>>? initialItems,
     required String emptyText,
     required BuildContext ctx,
   }) {
@@ -144,9 +144,9 @@ class ActionSheet {
         final mockTitle = title ?? '操作提示';
         final mockDesc = description ?? '这是一条模拟描述内容，用于开发阶段预览弹窗效果。';
         final mockItems =
-            (items != null && items.isNotEmpty) ? items : _defaultMockItems as List<SelectItem<T, V>>;
+            (items != null && items.isNotEmpty) ? items : _defaultMockItems as List<SelectItem<V, D>>;
 
-        return ActionSheetLocal<T, V>(
+        return ActionSheetLocal<V, D>(
           title: useMock ? mockTitle : title,
           description: useMock ? mockDesc : description,
           items: useMock ? mockItems : items,
@@ -164,9 +164,9 @@ class ActionSheet {
         final filterableDesc = description ?? '输入关键字过滤列表数据，用于开发阶段预览弹窗效果。';
         final filterableItems = (items != null && items.isNotEmpty)
             ? items
-            : _filterableMockItems as List<SelectItem<T, V>>;
+            : _filterableMockItems as List<SelectItem<V, D>>;
 
-        return ActionSheetFilterable<T, V>(
+        return ActionSheetFilterable<V, D>(
           title: filterableUseMock ? filterableTitle : title,
           description: filterableUseMock ? filterableDesc : description,
           items: filterableItems,
@@ -185,9 +185,9 @@ class ActionSheet {
         final remoteTitle = title ?? '远程搜索';
         final remoteDesc = description ?? '输入关键字远程搜索数据，用于开发阶段预览弹窗效果。';
         final remoteSearch =
-            onSearch ?? ((keyword) => _mockRemoteSearch<T, V>(keyword));
+            onSearch ?? ((keyword) => _mockRemoteSearch<V, D>(keyword));
 
-        return ActionSheetRemote<T, V>(
+        return ActionSheetRemote<V, D>(
           title: title ?? remoteTitle,
           description: description ?? remoteDesc,
           onSearch: remoteSearch,
@@ -251,15 +251,15 @@ class ActionSheet {
   ];
 
   /// remote 模式模拟搜索（从城市列表中按关键字过滤）
-  static Future<List<SelectItem<T, V>>> _mockRemoteSearch<T, V>(String keyword) async {
+  static Future<List<SelectItem<V, D>>> _mockRemoteSearch<V, D>(String keyword) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final mockItems = _filterableMockItems;
-    if (keyword.isEmpty) return mockItems as List<SelectItem<T, V>>;
+    if (keyword.isEmpty) return mockItems as List<SelectItem<V, D>>;
     final kw = keyword.toLowerCase();
     return mockItems.where((item) {
       return item.label.toLowerCase().contains(kw) ||
           (item.subtitle?.toLowerCase().contains(kw) ?? false) ||
           item.value.toString().toLowerCase().contains(kw);
-    }).toList() as List<SelectItem<T, V>>;
+    }).toList() as List<SelectItem<V, D>>;
   }
 }

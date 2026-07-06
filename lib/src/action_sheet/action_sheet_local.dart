@@ -8,9 +8,9 @@ import 'model.dart';
 /// 用于 [ActionSheetType.local] 模式，可直接独立使用或嵌入弹窗。
 ///
 /// 泛型参数：
-/// - [T] 选项 value 的类型
-/// - [V] 选项 data 的类型（可选原始数据）
-class ActionSheetLocal<T, V> extends StatelessWidget {
+/// - [V] 选项 value 的类型
+/// - [D] 选项 data 的类型（可选原始数据）
+class ActionSheetLocal<V, D> extends StatelessWidget {
   /// 主标题
   final String? title;
 
@@ -18,10 +18,10 @@ class ActionSheetLocal<T, V> extends StatelessWidget {
   final String? description;
 
   /// 操作项列表
-  final List<SelectItem<T, V>>? items;
+  final List<SelectItem<V, D>>? items;
 
   /// 操作项点击回调，返回选中的 value 和 data
-  final OnSelectChange<T, V>? onSelect;
+  final OnSelectChange<V, D>? onSelect;
 
   /// 取消按钮文字，默认为「取消」
   final String cancelLabel;
@@ -41,23 +41,26 @@ class ActionSheetLocal<T, V> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // 内容卡片
-        Flexible(
-          child: Container(
-            decoration: BoxDecoration(color: theme.canvasColor, borderRadius: BorderRadius.circular(12)),
-            clipBehavior: Clip.antiAlias,
-            child: _buildContent(theme),
+    return Padding(
+      padding: EdgeInsetsGeometry.symmetric(horizontal: 10),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 内容卡片
+          Flexible(
+            child: Container(
+              decoration: BoxDecoration(color: theme.canvasColor, borderRadius: BorderRadius.circular(12)),
+              clipBehavior: Clip.antiAlias,
+              child: _buildContent(theme),
+            ),
           ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // 取消按钮（固定）
-        _buildCancelButton(context, theme),
-      ],
+      
+          const SizedBox(height: 8),
+      
+          // 取消按钮（固定）
+          _buildCancelButton(context, theme),
+        ],
+      ),
     );
   }
 

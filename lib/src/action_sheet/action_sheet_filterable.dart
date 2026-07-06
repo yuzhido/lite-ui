@@ -10,9 +10,9 @@ import 'model.dart';
 /// - 多选模式：点击项切换选中状态，底部显示已选数量 + 确定按钮
 ///
 /// 泛型参数：
-/// - [T] 选项 value 的类型
-/// - [V] 选项 data 的类型（可选原始数据）
-class ActionSheetFilterable<T, V> extends StatefulWidget {
+/// - [V] 选项 value 的类型
+/// - [D] 选项 data 的类型（可选原始数据）
+class ActionSheetFilterable<V, D> extends StatefulWidget {
   /// 主标题
   final String? title;
 
@@ -20,22 +20,22 @@ class ActionSheetFilterable<T, V> extends StatefulWidget {
   final String? description;
 
   /// 静态数据源
-  final List<SelectItem<T, V>> items;
+  final List<SelectItem<V, D>> items;
 
   /// 异步动态数据回调（根据过滤关键字返回额外数据，与静态 items 合并显示）
-  final DynamicItemsCallback<T, V>? dynamicItems;
+  final DynamicItemsCallback<V, D>? dynamicItems;
 
   /// 是否为多选模式，默认 false（单选）
   final bool multiple;
 
   /// 初始选中项的 value 集合
-  final Set<T>? selectedValues;
+  final Set<V>? selectedValues;
 
   /// 单选回调（单选模式下点击项时触发，返回 value 和 data）
-  final OnSelectChange<T, V>? onSelect;
+  final OnSelectChange<V, D>? onSelect;
 
   /// 多选确认回调（多选模式下点击「确定」时触发，返回 values 和 datas）
-  final OnMultiSelectConfirm<T, V>? onConfirm;
+  final OnMultiSelectConfirm<V, D>? onConfirm;
 
   /// 搜索框提示文字
   final String searchHint;
@@ -62,20 +62,20 @@ class ActionSheetFilterable<T, V> extends StatefulWidget {
   });
 
   @override
-  State<ActionSheetFilterable<T, V>> createState() => _ActionSheetFilterableState<T, V>();
+  State<ActionSheetFilterable<V, D>> createState() => _ActionSheetFilterableState<V, D>();
 }
 
-class _ActionSheetFilterableState<T, V> extends State<ActionSheetFilterable<T, V>> {
+class _ActionSheetFilterableState<V, D> extends State<ActionSheetFilterable<V, D>> {
   final TextEditingController _searchController = TextEditingController();
 
   /// 当前搜索关键字
   String _keyword = '';
 
   /// 当前选中项的 value 集合
-  Set<T> _selectedValues = {};
+  Set<V> _selectedValues = {};
 
   /// 动态数据回调返回的结果
-  List<SelectItem<T, V>> _dynamicResults = [];
+  List<SelectItem<V, D>> _dynamicResults = [];
 
   /// 动态数据是否正在加载
   bool _isLoadingDynamic = false;
@@ -99,7 +99,7 @@ class _ActionSheetFilterableState<T, V> extends State<ActionSheetFilterable<T, V
   }
 
   /// 获取过滤后的显示列表
-  List<SelectItem<T, V>> get _filteredItems {
+  List<SelectItem<V, D>> get _filteredItems {
     // 1. 静态数据本地过滤
     final filteredStatic = _keyword.isEmpty
         ? widget.items
@@ -149,7 +149,7 @@ class _ActionSheetFilterableState<T, V> extends State<ActionSheetFilterable<T, V
   }
 
   /// 处理列表项点击
-  void _handleItemTap(SelectItem<T, V> item) {
+  void _handleItemTap(SelectItem<V, D> item) {
     if (item.disabled) return;
 
     if (widget.multiple) {
