@@ -6,7 +6,11 @@ import 'model.dart';
 ///
 /// 包含：标题 + 描述 + 可滚动操作项列表 + 取消按钮
 /// 用于 [ActionSheetType.local] 模式，可直接独立使用或嵌入弹窗。
-class ActionSheetLocal extends StatelessWidget {
+///
+/// 泛型参数：
+/// - [T] 选项 value 的类型
+/// - [V] 选项 data 的类型（可选原始数据）
+class ActionSheetLocal<T, V> extends StatelessWidget {
   /// 主标题
   final String? title;
 
@@ -14,15 +18,22 @@ class ActionSheetLocal extends StatelessWidget {
   final String? description;
 
   /// 操作项列表
-  final List<ActionSheetItem>? items;
+  final List<SelectItem<T, V>>? items;
 
-  /// 操作项点击回调，返回点击的索引
-  final ValueChanged<int>? onSelect;
+  /// 操作项点击回调，返回选中的 value 和 data
+  final OnSelectChange<T, V>? onSelect;
 
   /// 取消按钮文字，默认为「取消」
   final String cancelLabel;
 
-  const ActionSheetLocal({super.key, this.title, this.description, this.items, this.onSelect, this.cancelLabel = '取消'});
+  const ActionSheetLocal({
+    super.key,
+    this.title,
+    this.description,
+    this.items,
+    this.onSelect,
+    this.cancelLabel = '取消',
+  });
 
   bool get _hasHeader => title != null || description != null;
 
@@ -72,7 +83,8 @@ class ActionSheetLocal extends StatelessWidget {
                 if (description != null)
                   Text(
                     description!,
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color?.withOpacity(0.55), height: 1.4),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55), height: 1.4),
                     textAlign: TextAlign.center,
                   ),
               ],
@@ -86,38 +98,50 @@ class ActionSheetLocal extends StatelessWidget {
               children: (items ?? []).asMap().entries.map((entry) {
                 final index = entry.key;
                 final item = entry.value;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (index > 0 || _hasHeader) Divider(height: 0.5, thickness: 0.5),
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed: () => onSelect?.call(index),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(item.label, style: theme.textTheme.titleMedium?.copyWith(color: item.textColor ?? theme.colorScheme.primary)),
-                            if (item.subtitle != null) ...[
-                              const SizedBox(height: 4),
+                final isDisabled = item.disabled;
+                return Opacity(
+                  opacity: isDisabled ? 0.5 : 1.0,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (index > 0 || _hasHeader) Divider(height: 0.5, thickness: 0.5),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: isDisabled
+                              ? null
+                              : () => onSelect?.call(item.value, item.data),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                               Text(
-                                item.subtitle!,
-                                style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color?.withOpacity(0.5), height: 1.3),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                                item.label,
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(color: theme.colorScheme.primary),
                               ),
+                              if (item.subtitle != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.subtitle!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                                      height: 1.3),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               }).toList(),
             ),
@@ -135,7 +159,10 @@ class ActionSheetLocal extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: TextButton(
         onPressed: () => Navigator.of(context).pop(),
-        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+        style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap),
         child: Text(cancelLabel, style: theme.textTheme.titleMedium),
       ),
     );

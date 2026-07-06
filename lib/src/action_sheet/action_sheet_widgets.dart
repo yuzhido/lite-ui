@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'model.dart';
-
 /// 顶部拖拽手柄指示器
 ///
 /// 底部弹窗顶部的短横条，提示用户可拖拽关闭。
@@ -150,14 +148,29 @@ class _ActionSheetSearchFieldState extends State<ActionSheetSearchField> {
 
 /// 带选中勾选标记的列表项
 class ActionSheetCheckListItem extends StatelessWidget {
-  final ActionSheetItem item;
-  final bool isSelected;
+  /// 显示文本
+  final String label;
+
+  /// 副标题
+  final String? subtitle;
+
+  /// 是否已选中
+  final bool isChecked;
+
+  /// 是否禁用
+  final bool isDisabled;
+
+  /// 是否为多选模式
   final bool multiple;
+
+  /// 点击回调
   final VoidCallback? onTap;
 
   const ActionSheetCheckListItem({
-    required this.item,
-    required this.isSelected,
+    required this.label,
+    required this.isChecked,
+    this.subtitle,
+    this.isDisabled = false,
     this.multiple = false,
     this.onTap,
     super.key,
@@ -167,76 +180,80 @@ class ActionSheetCheckListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final avatarChar = item.label.isNotEmpty ? item.label.characters.first : '';
+    final avatarChar = label.isNotEmpty ? label.characters.first : '';
+    final effectiveOnTap = isDisabled ? null : onTap;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-      decoration: BoxDecoration(
-        color: isSelected ? primary.withValues(alpha: 0.08) : theme.canvasColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return Opacity(
+      opacity: isDisabled ? 0.5 : 1.0,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isChecked ? primary.withValues(alpha: 0.08) : theme.canvasColor,
           borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                // 左侧圆形头像（首字母）
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: isSelected ? primary.withValues(alpha: 0.2) : Colors.grey.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      avatarChar,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : Colors.grey.shade700,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: effectiveOnTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  // 左侧圆形头像（首字母）
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isChecked ? primary.withValues(alpha: 0.2) : Colors.grey.shade100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        avatarChar,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isChecked ? Colors.white : Colors.grey.shade700,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                // 文本内容
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: isSelected ? primary : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                      ),
-                      if (item.subtitle != null) ...[
-                        const SizedBox(height: 4),
+                  const SizedBox(width: 12),
+                  // 文本内容
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          item.subtitle!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
-                            height: 1.3,
+                          label,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: isChecked ? primary : Colors.black87,
+                            fontWeight: isChecked ? FontWeight.w600 : FontWeight.normal,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                // 右侧勾选标记（单选时显示）
-                if (!multiple && isSelected)
-                  Icon(Icons.check_circle, color: primary, size: 24),
-              ],
+                  // 右侧勾选标记（单选时显示）
+                  if (!multiple && isChecked)
+                    Icon(Icons.check_circle, color: primary, size: 24),
+                ],
+              ),
             ),
           ),
         ),

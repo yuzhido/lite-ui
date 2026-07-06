@@ -10,7 +10,11 @@ import 'model.dart';
 /// 支持远程异步搜索，支持单选/多选模式。
 /// - 单选模式：点击项即选中并关闭弹窗
 /// - 多选模式：点击项切换选中状态，底部显示已选数量 + 确定按钮
-class ActionSheetRemote extends StatefulWidget {
+///
+/// 泛型参数：
+/// - [T] 选项 value 的类型
+/// - [V] 选项 data 的类型（可选原始数据）
+class ActionSheetRemote<T, V> extends StatefulWidget {
   /// 主标题
   final String? title;
 
@@ -18,22 +22,22 @@ class ActionSheetRemote extends StatefulWidget {
   final String? description;
 
   /// 远程搜索回调：根据关键字返回数据列表
-  final RemoteSearchCallback onSearch;
+  final RemoteSearchCallback<T, V> onSearch;
 
   /// 初始数据（首次打开时显示，或空搜索时显示）
-  final List<ActionSheetItem>? initialItems;
+  final List<SelectItem<T, V>>? initialItems;
 
   /// 是否为多选模式，默认 false（单选）
   final bool multiple;
 
   /// 初始选中项的 value 集合
-  final Set<String>? selectedValues;
+  final Set<T>? selectedValues;
 
-  /// 单选回调（单选模式下点击项时触发）
-  final ValueChanged<ActionSheetItem>? onSelect;
+  /// 单选回调（单选模式下点击项时触发，返回 value 和 data）
+  final OnSelectChange<T, V>? onSelect;
 
-  /// 多选确认回调（多选模式下点击「确定」时触发）
-  final ValueChanged<List<ActionSheetItem>>? onConfirm;
+  /// 多选确认回调（多选模式下点击「确定」时触发，返回 values 和 datas）
+  final OnMultiSelectConfirm<T, V>? onConfirm;
 
   /// 搜索框提示文字
   final String searchHint;
@@ -64,17 +68,17 @@ class ActionSheetRemote extends StatefulWidget {
   });
 
   @override
-  State<ActionSheetRemote> createState() => _ActionSheetRemoteState();
+  State<ActionSheetRemote<T, V>> createState() => _ActionSheetRemoteState<T, V>();
 }
 
-class _ActionSheetRemoteState extends State<ActionSheetRemote> {
+class _ActionSheetRemoteState<T, V> extends State<ActionSheetRemote<T, V>> {
   final TextEditingController _searchController = TextEditingController();
 
   /// 当前搜索结果
-  List<ActionSheetItem> _results = [];
+  List<SelectItem<T, V>> _results = [];
 
   /// 当前选中项的 value 集合
-  Set<String> _selectedValues = {};
+  Set<T> _selectedValues = {};
 
   /// 是否正在加载
   bool _isLoading = false;
@@ -144,29 +148,32 @@ class _ActionSheetRemoteState extends State<ActionSheetRemote> {
   }
 
   /// 处理列表项点击
-  void _handleItemTap(ActionSheetItem item) {
-    final val = itemValue(item);
+  void _handleItemTap(SelectItem<T, V> item) {
+    if (item.disabled) return;
+
     if (widget.multiple) {
       setState(() {
-        if (_selectedValues.contains(val)) {
-          _selectedValues.remove(val);
+        if (_selectedValues.contains(item.value)) {
+          _selectedValues.remove(item.value);
         } else {
-          _selectedValues.add(val);
+          _selectedValues.add(item.value);
         }
       });
     } else {
       // 单选：直接回调并关闭
-      widget.onSelect?.call(item);
-      item.onTap?.call();
-      Navigator.of(context).pop(item);
+      widget.onSelect?.call(item.value, item.data);
+      Navigator.of(context).pop(item.value);
     }
   }
 
   /// 处理多选确认
   void _handleConfirm() {
-    final selectedItems = _results.where((item) => _selectedValues.contains(itemValue(item))).toList();
-    widget.onConfirm?.call(selectedItems);
-    Navigator.of(context).pop(selectedItems);
+    final selectedItems =
+        _results.where((item) => _selectedValues.contains(item.value)).toList();
+    final values = selectedItems.map((e) => e.value).toList();
+    final datas = selectedItems.map((e) => e.data).toList();
+    widget.onConfirm?.call(values, datas);
+    Navigator.of(context).pop();
   }
 
   @override
@@ -192,7 +199,11 @@ class _ActionSheetRemoteState extends State<ActionSheetRemote> {
           const ActionSheetDragHandle(),
 
           // 头部：标题 + 描述 + 关闭按钮
-          ActionSheetHeader(title: widget.title, description: widget.description, itemCount: _results.length, onClose: () => Navigator.of(context).pop()),
+          ActionSheetHeader(
+              title: widget.title,
+              description: widget.description,
+              itemCount: _results.length,
+              onClose: () => Navigator.of(context).pop()),
 
           // 搜索输入框
           Padding(
@@ -227,7 +238,8 @@ class _ActionSheetRemoteState extends State<ActionSheetRemote> {
   Widget _buildContent(ThemeData theme) {
     // Loading 状态
     if (_isLoading) {
-      return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
+      return const SizedBox(
+          height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
 
     // 空状态
@@ -244,10 +256,12 @@ class _ActionSheetRemoteState extends State<ActionSheetRemote> {
       itemCount: _results.length,
       itemBuilder: (context, index) {
         final item = _results[index];
-        final isSelected = _selectedValues.contains(itemValue(item));
+        final isSelected = _selectedValues.contains(item.value);
         return ActionSheetCheckListItem(
-          item: item,
-          isSelected: isSelected,
+          label: item.label,
+          subtitle: item.subtitle,
+          isChecked: isSelected,
+          isDisabled: item.disabled,
           multiple: widget.multiple,
           onTap: () => _handleItemTap(item),
         );

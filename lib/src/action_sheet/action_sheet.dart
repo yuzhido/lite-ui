@@ -15,6 +15,10 @@ import 'model.dart';
 ///
 /// 该组件只负责弹窗壳子（showModalBottomSheet），
 /// 不同模式内容渲染委托给对应的子组件。
+///
+/// 泛型参数：
+/// - [T] 选项 value 的类型
+/// - [V] 选项 data 的类型（可选原始数据）
 class ActionSheet {
   /// 显示一个从底部向上弹出的 ActionSheet
   ///
@@ -28,8 +32,8 @@ class ActionSheet {
   /// --- filterable / remote 通用参数 ---
   /// [multiple] 是否多选模式，默认 false（单选）
   /// [selectedValues] 初始选中项的 value 集合
-  /// [onSelect] 单选回调
-  /// [onConfirm] 多选确认回调
+  /// [onSelect] 单选回调（返回 value 和 data）
+  /// [onConfirm] 多选确认回调（返回 values 和 datas）
   /// [searchHint] 搜索框提示文字
   /// [confirmLabel] 确定按钮文字
   ///
@@ -40,29 +44,29 @@ class ActionSheet {
   /// [onSearch] 远程搜索回调（必填）
   /// [initialItems] 初始数据
   /// [emptyText] 空状态提示文字
-  static Future<T?> show<T>({
+  static Future<T?> show<T, V>({
     required BuildContext context,
     ActionSheetType type = ActionSheetType.local,
     String? title,
     String? description,
-    List<ActionSheetItem>? items,
+    List<SelectItem<T, V>>? items,
     Widget? customChild,
     String cancelLabel = '取消',
 
     // filterable / remote 通用参数
     bool multiple = false,
-    Set<String>? selectedValues,
-    ValueChanged<ActionSheetItem>? onSelect,
-    ValueChanged<List<ActionSheetItem>>? onConfirm,
+    Set<T>? selectedValues,
+    OnSelectChange<T, V>? onSelect,
+    OnMultiSelectConfirm<T, V>? onConfirm,
     String searchHint = '搜索',
     String confirmLabel = '确定',
 
     // filterable 专属
-    DynamicItemsCallback? dynamicItems,
+    DynamicItemsCallback<T, V>? dynamicItems,
 
     // remote 专属
-    RemoteSearchCallback? onSearch,
-    List<ActionSheetItem>? initialItems,
+    RemoteSearchCallback<T, V>? onSearch,
+    List<SelectItem<T, V>>? initialItems,
     String emptyText = '暂无数据',
   }) {
     return showModalBottomSheet<T>(
@@ -75,7 +79,8 @@ class ActionSheet {
         // filterable/remote 类型：高度限制在 50%~70%
         BoxConstraints constraints;
         if (type == ActionSheetType.filterable || type == ActionSheetType.remote) {
-          constraints = BoxConstraints(minHeight: screenHeight * 0.60, maxHeight: screenHeight * 0.75);
+          constraints =
+              BoxConstraints(minHeight: screenHeight * 0.60, maxHeight: screenHeight * 0.75);
         } else {
           // local/custom 类型：最大高度 70%，无最小高度限制
           constraints = BoxConstraints(maxHeight: screenHeight * 0.75);
@@ -86,7 +91,7 @@ class ActionSheet {
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
             child: ConstrainedBox(
               constraints: constraints,
-              child: _buildContent<T>(
+              child: _buildContent<T, V>(
                 type: type,
                 title: title,
                 description: description,
@@ -113,22 +118,22 @@ class ActionSheet {
   }
 
   /// 根据 type 渲染不同的内容组件
-  static Widget _buildContent<T>({
+  static Widget _buildContent<T, V>({
     required ActionSheetType type,
     required String? title,
     required String? description,
-    required List<ActionSheetItem>? items,
+    required List<SelectItem<T, V>>? items,
     required Widget? customChild,
     required String cancelLabel,
     required bool multiple,
-    required Set<String>? selectedValues,
-    required ValueChanged<ActionSheetItem>? onSelect,
-    required ValueChanged<List<ActionSheetItem>>? onConfirm,
+    required Set<T>? selectedValues,
+    required OnSelectChange<T, V>? onSelect,
+    required OnMultiSelectConfirm<T, V>? onConfirm,
     required String searchHint,
     required String confirmLabel,
-    required DynamicItemsCallback? dynamicItems,
-    required RemoteSearchCallback? onSearch,
-    required List<ActionSheetItem>? initialItems,
+    required DynamicItemsCallback<T, V>? dynamicItems,
+    required RemoteSearchCallback<T, V>? onSearch,
+    required List<SelectItem<T, V>>? initialItems,
     required String emptyText,
     required BuildContext ctx,
   }) {
@@ -137,14 +142,18 @@ class ActionSheet {
         // local 模式：未传数据时自动填充模拟内容
         final bool useMock = items == null || items.isEmpty;
         final mockTitle = title ?? '操作提示';
-        final mockDesc = description ?? '这是一条模拟的描述内容，用于开发阶段预览弹窗效果。';
-        final mockItems = (items != null && items.isNotEmpty) ? items : _defaultMockItems;
+        final mockDesc = description ?? '这是一条模拟描述内容，用于开发阶段预览弹窗效果。';
+        final mockItems =
+            (items != null && items.isNotEmpty) ? items : _defaultMockItems as List<SelectItem<T, V>>;
 
-        return ActionSheetLocal(
+        return ActionSheetLocal<T, V>(
           title: useMock ? mockTitle : title,
           description: useMock ? mockDesc : description,
           items: useMock ? mockItems : items,
-          onSelect: (index) => Navigator.of(ctx).pop(index),
+          onSelect: (value, data) {
+            onSelect?.call(value, data);
+            Navigator.of(ctx).pop(value);
+          },
           cancelLabel: cancelLabel,
         );
 
@@ -153,9 +162,11 @@ class ActionSheet {
         final bool filterableUseMock = items == null || items.isEmpty;
         final filterableTitle = title ?? '可过滤选择';
         final filterableDesc = description ?? '输入关键字过滤列表数据，用于开发阶段预览弹窗效果。';
-        final filterableItems = (items != null && items.isNotEmpty) ? items : _filterableMockItems;
+        final filterableItems = (items != null && items.isNotEmpty)
+            ? items
+            : _filterableMockItems as List<SelectItem<T, V>>;
 
-        return ActionSheetFilterable(
+        return ActionSheetFilterable<T, V>(
           title: filterableUseMock ? filterableTitle : title,
           description: filterableUseMock ? filterableDesc : description,
           items: filterableItems,
@@ -173,9 +184,10 @@ class ActionSheet {
         // remote 模式：未传 onSearch 时使用模拟搜索
         final remoteTitle = title ?? '远程搜索';
         final remoteDesc = description ?? '输入关键字远程搜索数据，用于开发阶段预览弹窗效果。';
-        final remoteSearch = onSearch ?? _mockRemoteSearch;
+        final remoteSearch =
+            onSearch ?? ((keyword) => _mockRemoteSearch<T, V>(keyword));
 
-        return ActionSheetRemote(
+        return ActionSheetRemote<T, V>(
           title: title ?? remoteTitle,
           description: description ?? remoteDesc,
           onSearch: remoteSearch,
@@ -196,55 +208,58 @@ class ActionSheet {
   }
 
   /// 开发阶段默认模拟操作项（20条，用于测试滚动效果）
-  static const List<ActionSheetItem> _defaultMockItems = [
-    ActionSheetItem(label: '拍照', subtitle: '使用相机拍摄照片'),
-    ActionSheetItem(label: '从相册选择', subtitle: '从手机相册中选取图片'),
-    ActionSheetItem(label: '拍摄视频', subtitle: '录制一段短视频'),
-    ActionSheetItem(label: '文件'),
-    ActionSheetItem(label: '收藏'),
-    ActionSheetItem(label: '分享'),
-    ActionSheetItem(label: '复制链接'),
-    ActionSheetItem(label: '刷新', subtitle: '重新加载当前内容'),
-    ActionSheetItem(label: '编辑', subtitle: '修改当前内容'),
-    ActionSheetItem(label: '置顶', subtitle: '将内容置顶显示'),
-    ActionSheetItem(label: '标记已读'),
-    ActionSheetItem(label: '静音', subtitle: '关闭该会话的通知'),
-    ActionSheetItem(label: '导出数据', subtitle: '导出为 CSV 或 Excel 格式'),
-    ActionSheetItem(label: '打印', subtitle: '发送到打印机打印'),
-    ActionSheetItem(label: '归档'),
-    ActionSheetItem(label: '举报', subtitle: '提交违规内容举报'),
-    ActionSheetItem(label: '拉黑用户', subtitle: '屏蔽该用户的所有消息'),
-    ActionSheetItem(label: '清空记录', subtitle: '清除全部聊天记录'),
-    ActionSheetItem(label: '切换账号', subtitle: '切换到其他账号登录'),
-    ActionSheetItem(label: '删除', subtitle: '删除后不可恢复，请谨慎操作', textColor: Color(0xFFE53935)),
+  static const List<SelectItem<String, void>> _defaultMockItems = [
+    SelectItem(label: '拍照', subtitle: '使用相机拍摄照片', value: 'camera'),
+    SelectItem(label: '从相册选择', subtitle: '从手机相册中选取图片', value: 'album'),
+    SelectItem(label: '拍摄视频', subtitle: '录制一段短视频', value: 'video'),
+    SelectItem(label: '文件', value: 'file'),
+    SelectItem(label: '收藏', value: 'favorite'),
+    SelectItem(label: '分享', value: 'share'),
+    SelectItem(label: '复制链接', value: 'copy_link'),
+    SelectItem(label: '刷新', subtitle: '重新加载当前内容', value: 'refresh'),
+    SelectItem(label: '编辑', subtitle: '修改当前内容', value: 'edit'),
+    SelectItem(label: '置顶', subtitle: '将内容置顶显示', value: 'pin'),
+    SelectItem(label: '标记已读', value: 'mark_read'),
+    SelectItem(label: '静音', subtitle: '关闭该会话的通知', value: 'mute'),
+    SelectItem(label: '导出数据', subtitle: '导出为 CSV 或 Excel 格式', value: 'export'),
+    SelectItem(label: '打印', subtitle: '发送到打印机打印', value: 'print'),
+    SelectItem(label: '归档', value: 'archive'),
+    SelectItem(label: '举报', subtitle: '提交违规内容举报', value: 'report'),
+    SelectItem(label: '拉黑用户', subtitle: '屏蔽该用户的所有消息', value: 'block'),
+    SelectItem(label: '清空记录', subtitle: '清除全部聊天记录', value: 'clear'),
+    SelectItem(label: '切换账号', subtitle: '切换到其他账号登录', value: 'switch_account'),
+    SelectItem(label: '删除', subtitle: '删除后不可恢复，请谨慎操作', value: 'delete'),
   ];
 
   /// filterable 模式模拟数据（城市列表，用于测试过滤效果）
-  static const List<ActionSheetItem> _filterableMockItems = [
-    ActionSheetItem(label: '北京', subtitle: 'Beijing', value: 'beijing'),
-    ActionSheetItem(label: '上海', subtitle: 'Shanghai', value: 'shanghai'),
-    ActionSheetItem(label: '广州', subtitle: 'Guangzhou', value: 'guangzhou'),
-    ActionSheetItem(label: '深圳', subtitle: 'Shenzhen', value: 'shenzhen'),
-    ActionSheetItem(label: '杭州', subtitle: 'Hangzhou', value: 'hangzhou'),
-    ActionSheetItem(label: '成都', subtitle: 'Chengdu', value: 'chengdu'),
-    ActionSheetItem(label: '武汉', subtitle: 'Wuhan', value: 'wuhan'),
-    ActionSheetItem(label: '南京', subtitle: 'Nanjing', value: 'nanjing'),
-    ActionSheetItem(label: '重庆', subtitle: 'Chongqing', value: 'chongqing'),
-    ActionSheetItem(label: '西安', subtitle: "Xi'an", value: 'xian'),
-    ActionSheetItem(label: '苏州', subtitle: 'Suzhou', value: 'suzhou'),
-    ActionSheetItem(label: '天津', subtitle: 'Tianjin', value: 'tianjin'),
-    ActionSheetItem(label: '长沙', subtitle: 'Changsha', value: 'changsha'),
-    ActionSheetItem(label: '青岛', subtitle: 'Qingdao', value: 'qingdao'),
-    ActionSheetItem(label: '大连', subtitle: 'Dalian', value: 'dalian'),
+  static const List<SelectItem<String, void>> _filterableMockItems = [
+    SelectItem(label: '北京', subtitle: 'Beijing', value: 'beijing'),
+    SelectItem(label: '上海', subtitle: 'Shanghai', value: 'shanghai'),
+    SelectItem(label: '广州', subtitle: 'Guangzhou', value: 'guangzhou'),
+    SelectItem(label: '深圳', subtitle: 'Shenzhen', value: 'shenzhen'),
+    SelectItem(label: '杭州', subtitle: 'Hangzhou', value: 'hangzhou'),
+    SelectItem(label: '成都', subtitle: 'Chengdu', value: 'chengdu'),
+    SelectItem(label: '武汉', subtitle: 'Wuhan', value: 'wuhan'),
+    SelectItem(label: '南京', subtitle: 'Nanjing', value: 'nanjing'),
+    SelectItem(label: '重庆', subtitle: 'Chongqing', value: 'chongqing'),
+    SelectItem(label: '西安', subtitle: "Xi'an", value: 'xian'),
+    SelectItem(label: '苏州', subtitle: 'Suzhou', value: 'suzhou'),
+    SelectItem(label: '天津', subtitle: 'Tianjin', value: 'tianjin'),
+    SelectItem(label: '长沙', subtitle: 'Changsha', value: 'changsha'),
+    SelectItem(label: '青岛', subtitle: 'Qingdao', value: 'qingdao'),
+    SelectItem(label: '大连', subtitle: 'Dalian', value: 'dalian'),
   ];
 
   /// remote 模式模拟搜索（从城市列表中按关键字过滤）
-  static Future<List<ActionSheetItem>> _mockRemoteSearch(String keyword) async {
+  static Future<List<SelectItem<T, V>>> _mockRemoteSearch<T, V>(String keyword) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    if (keyword.isEmpty) return _filterableMockItems;
+    final mockItems = _filterableMockItems;
+    if (keyword.isEmpty) return mockItems as List<SelectItem<T, V>>;
     final kw = keyword.toLowerCase();
-    return _filterableMockItems.where((item) {
-      return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false) || (item.value?.toLowerCase().contains(kw) ?? false);
-    }).toList();
+    return mockItems.where((item) {
+      return item.label.toLowerCase().contains(kw) ||
+          (item.subtitle?.toLowerCase().contains(kw) ?? false) ||
+          item.value.toString().toLowerCase().contains(kw);
+    }).toList() as List<SelectItem<T, V>>;
   }
 }

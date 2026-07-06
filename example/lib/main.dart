@@ -32,43 +32,43 @@ class ActionSheetDemoPage extends StatefulWidget {
 class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
   String _selectedResult = '暂无选择';
 
-  /// 示例数据 - 城市列表
-  final List<ActionSheetItem> _cityItems = const [
-    ActionSheetItem(label: '北京', subtitle: 'Beijing · 首都', value: 'beijing'),
-    ActionSheetItem(label: '上海', subtitle: 'Shanghai · 经济中心', value: 'shanghai'),
-    ActionSheetItem(label: '广州', subtitle: 'Guangzhou · 华南重镇', value: 'guangzhou'),
-    ActionSheetItem(label: '深圳', subtitle: 'Shenzhen · 科技之城', value: 'shenzhen'),
-    ActionSheetItem(label: '杭州', subtitle: 'Hangzhou · 互联网之都', value: 'hangzhou'),
-    ActionSheetItem(label: '成都', subtitle: 'Chengdu · 天府之国', value: 'chengdu'),
-    ActionSheetItem(label: '武汉', subtitle: 'Wuhan · 九省通衢', value: 'wuhan'),
-    ActionSheetItem(label: '南京', subtitle: 'Nanjing · 六朝古都', value: 'nanjing'),
-    ActionSheetItem(label: '重庆', subtitle: 'Chongqing · 山城', value: 'chongqing'),
-    ActionSheetItem(label: '西安', subtitle: "Xi'an · 十三朝古都", value: 'xian'),
-    ActionSheetItem(label: '苏州', subtitle: 'Suzhou · 人间天堂', value: 'suzhou'),
-    ActionSheetItem(label: '天津', subtitle: 'Tianjin · 直辖市', value: 'tianjin'),
-    ActionSheetItem(label: '长沙', subtitle: 'Changsha · 星城', value: 'changsha'),
-    ActionSheetItem(label: '青岛', subtitle: 'Qingdao · 海滨城市', value: 'qingdao'),
-    ActionSheetItem(label: '大连', subtitle: 'Dalian · 北方明珠', value: 'dalian'),
+  /// 示例数据 - 城市列表，使用 `SelectItem<String, void>`
+  final List<SelectItem<String, void>> _cityItems = const [
+    SelectItem(label: '北京', subtitle: 'Beijing · 首都', value: 'beijing'),
+    SelectItem(label: '上海', subtitle: 'Shanghai · 经济中心', value: 'shanghai'),
+    SelectItem(label: '广州', subtitle: 'Guangzhou · 华南重镇', value: 'guangzhou'),
+    SelectItem(label: '深圳', subtitle: 'Shenzhen · 科技之城', value: 'shenzhen'),
+    SelectItem(label: '杭州', subtitle: 'Hangzhou · 互联网之都', value: 'hangzhou'),
+    SelectItem(label: '成都', subtitle: 'Chengdu · 天府之国', value: 'chengdu'),
+    SelectItem(label: '武汉', subtitle: 'Wuhan · 九省通衢', value: 'wuhan'),
+    SelectItem(label: '南京', subtitle: 'Nanjing · 六朝古都', value: 'nanjing'),
+    SelectItem(label: '重庆', subtitle: 'Chongqing · 山城', value: 'chongqing'),
+    SelectItem(label: '西安', subtitle: "Xi'an · 十三朝古都", value: 'xian'),
+    SelectItem(label: '苏州', subtitle: 'Suzhou · 人间天堂', value: 'suzhou'),
+    SelectItem(label: '天津', subtitle: 'Tianjin · 直辖市', value: 'tianjin'),
+    SelectItem(label: '长沙', subtitle: 'Changsha · 星城', value: 'changsha'),
+    SelectItem(label: '青岛', subtitle: 'Qingdao · 海滨城市', value: 'qingdao'),
+    SelectItem(label: '大连', subtitle: 'Dalian · 北方明珠', value: 'dalian'),
   ];
 
   /// 单选 Filterable 示例
   void _showFilterableSingle() async {
-    final result = await ActionSheet.show(
+    await ActionSheet.show<String, void>(
       context: context,
       type: ActionSheetType.filterable,
       title: '选择城市',
       description: '本地过滤选择，点击即选中',
       items: _cityItems,
       searchHint: '输入城市名搜索',
+      onSelect: (value, data) {
+        setState(() => _selectedResult = '单选结果：$value');
+      },
     );
-    if (result != null && result is ActionSheetItem) {
-      setState(() => _selectedResult = '单选结果：${result.label}');
-    }
   }
 
   /// 多选 Filterable 示例
   void _showFilterableMulti() async {
-    final result = await ActionSheet.show(
+    await ActionSheet.show<String, void>(
       context: context,
       type: ActionSheetType.filterable,
       title: '选择多个城市',
@@ -76,16 +76,16 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
       items: _cityItems,
       multiple: true,
       searchHint: '输入城市名搜索',
+      onConfirm: (values, datas) {
+        final names = values.join('、');
+        setState(() => _selectedResult = '多选结果：$names');
+      },
     );
-    if (result != null && result is List<ActionSheetItem>) {
-      final names = result.map((e) => e.label).join('、');
-      setState(() => _selectedResult = '多选结果：$names');
-    }
   }
 
   /// 远程搜索示例
   void _showRemoteSearch() async {
-    final result = await ActionSheet.show(
+    await ActionSheet.show<String, void>(
       context: context,
       type: ActionSheetType.remote,
       title: '远程搜索城市',
@@ -101,28 +101,28 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
               (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
+      onSelect: (value, data) {
+        setState(() => _selectedResult = '远程搜索结果：$value');
+      },
     );
-    if (result != null && result is ActionSheetItem) {
-      setState(() => _selectedResult = '远程搜索结果：${result.label}');
-    }
   }
 
   /// 本地操作列表示例
   void _showLocalActionSheet() async {
-    final result = await ActionSheet.show(
+    await ActionSheet.show<String, void>(
       context: context,
       type: ActionSheetType.local,
       title: '操作菜单',
       description: '选择一个操作',
+      onSelect: (value, data) {
+        setState(() => _selectedResult = '本地操作：选择了 $value');
+      },
     );
-    if (result != null && result is int) {
-      setState(() => _selectedResult = '本地操作：选择了第 $result 项');
-    }
   }
 
   /// 带动态数据的 Filterable 示例
   void _showFilterableWithDynamic() async {
-    final result = await ActionSheet.show(
+    await ActionSheet.show<String, void>(
       context: context,
       type: ActionSheetType.filterable,
       title: '选择城市（含动态数据）',
@@ -134,17 +134,17 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
         await Future.delayed(const Duration(milliseconds: 300));
         if (keyword.isEmpty) return [];
         return [
-          ActionSheetItem(
+          SelectItem<String, void>(
             label: '动态: $keyword',
             subtitle: '这是动态生成的选项',
             value: 'dynamic_$keyword',
           ),
         ];
       },
+      onSelect: (value, data) {
+        setState(() => _selectedResult = '动态数据结果：$value');
+      },
     );
-    if (result != null && result is ActionSheetItem) {
-      setState(() => _selectedResult = '动态数据结果：${result.label}');
-    }
   }
 
   @override
