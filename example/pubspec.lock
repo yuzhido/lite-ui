@@ -107,6 +107,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  lite_ui:
+    dependency: "direct main"
+    description:
+      path: ".."
+      relative: true
+    source: path
+    version: "0.0.1"
   matcher:
     dependency: transitive
     description:

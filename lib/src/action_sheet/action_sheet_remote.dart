@@ -192,19 +192,32 @@ class _ActionSheetRemoteState extends State<ActionSheetRemote> {
           const ActionSheetDragHandle(),
 
           // 头部：标题 + 描述 + 关闭按钮
-          ActionSheetHeader(title: widget.title, description: widget.description, onClose: () => Navigator.of(context).pop()),
+          ActionSheetHeader(title: widget.title, description: widget.description, itemCount: _results.length, onClose: () => Navigator.of(context).pop()),
 
           // 搜索输入框
-          ActionSheetSearchField(hint: widget.searchHint, keyword: _searchController.text, onChanged: _onSearchChanged, onClear: _onClearSearch),
-
-          Divider(height: 0.5, thickness: 0.5),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ActionSheetSearchField(
+              hint: widget.searchHint,
+              keyword: _searchController.text,
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              onClear: _onClearSearch,
+            ),
+          ),
 
           // 可滚动列表区域
           Expanded(child: _buildContent(theme)),
 
           // 多选模式底部栏
           if (widget.multiple)
-            ActionSheetBottomBar(selectedCount: _selectedValues.length, confirmLabel: widget.confirmLabel, onConfirm: _handleConfirm),
+            ActionSheetBottomBar(
+              selectedCount: _selectedValues.length,
+              cancelLabel: widget.cancelLabel,
+              confirmLabel: widget.confirmLabel,
+              onCancel: () => Navigator.of(context).pop(),
+              onConfirm: _handleConfirm,
+            ),
         ],
       ),
     );
@@ -226,13 +239,18 @@ class _ActionSheetRemoteState extends State<ActionSheetRemote> {
     }
 
     // 数据列表
-    return ListView.separated(
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _results.length,
-      separatorBuilder: (_, _) => Divider(height: 0.5, thickness: 0.5, indent: 20, endIndent: 20),
       itemBuilder: (context, index) {
         final item = _results[index];
         final isSelected = _selectedValues.contains(itemValue(item));
-        return ActionSheetCheckListItem(item: item, isSelected: isSelected, onTap: () => _handleItemTap(item));
+        return ActionSheetCheckListItem(
+          item: item,
+          isSelected: isSelected,
+          multiple: widget.multiple,
+          onTap: () => _handleItemTap(item),
+        );
       },
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/lite_ui.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,115 +8,219 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'ActionSheet Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7C3AED)),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const ActionSheetDemoPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class ActionSheetDemoPage extends StatefulWidget {
+  const ActionSheetDemoPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ActionSheetDemoPage> createState() => _ActionSheetDemoPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
+  String _selectedResult = '暂无选择';
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  /// 示例数据 - 城市列表
+  final List<ActionSheetItem> _cityItems = const [
+    ActionSheetItem(label: '北京', subtitle: 'Beijing · 首都', value: 'beijing'),
+    ActionSheetItem(label: '上海', subtitle: 'Shanghai · 经济中心', value: 'shanghai'),
+    ActionSheetItem(label: '广州', subtitle: 'Guangzhou · 华南重镇', value: 'guangzhou'),
+    ActionSheetItem(label: '深圳', subtitle: 'Shenzhen · 科技之城', value: 'shenzhen'),
+    ActionSheetItem(label: '杭州', subtitle: 'Hangzhou · 互联网之都', value: 'hangzhou'),
+    ActionSheetItem(label: '成都', subtitle: 'Chengdu · 天府之国', value: 'chengdu'),
+    ActionSheetItem(label: '武汉', subtitle: 'Wuhan · 九省通衢', value: 'wuhan'),
+    ActionSheetItem(label: '南京', subtitle: 'Nanjing · 六朝古都', value: 'nanjing'),
+    ActionSheetItem(label: '重庆', subtitle: 'Chongqing · 山城', value: 'chongqing'),
+    ActionSheetItem(label: '西安', subtitle: "Xi'an · 十三朝古都", value: 'xian'),
+    ActionSheetItem(label: '苏州', subtitle: 'Suzhou · 人间天堂', value: 'suzhou'),
+    ActionSheetItem(label: '天津', subtitle: 'Tianjin · 直辖市', value: 'tianjin'),
+    ActionSheetItem(label: '长沙', subtitle: 'Changsha · 星城', value: 'changsha'),
+    ActionSheetItem(label: '青岛', subtitle: 'Qingdao · 海滨城市', value: 'qingdao'),
+    ActionSheetItem(label: '大连', subtitle: 'Dalian · 北方明珠', value: 'dalian'),
+  ];
+
+  /// 单选 Filterable 示例
+  void _showFilterableSingle() async {
+    final result = await ActionSheet.show(
+      context: context,
+      type: ActionSheetType.filterable,
+      title: '选择城市',
+      description: '本地过滤选择，点击即选中',
+      items: _cityItems,
+      searchHint: '输入城市名搜索',
+    );
+    if (result != null && result is ActionSheetItem) {
+      setState(() => _selectedResult = '单选结果：${result.label}');
+    }
+  }
+
+  /// 多选 Filterable 示例
+  void _showFilterableMulti() async {
+    final result = await ActionSheet.show(
+      context: context,
+      type: ActionSheetType.filterable,
+      title: '选择多个城市',
+      description: '支持多选，点击确认后返回',
+      items: _cityItems,
+      multiple: true,
+      searchHint: '输入城市名搜索',
+    );
+    if (result != null && result is List<ActionSheetItem>) {
+      final names = result.map((e) => e.label).join('、');
+      setState(() => _selectedResult = '多选结果：$names');
+    }
+  }
+
+  /// 远程搜索示例
+  void _showRemoteSearch() async {
+    final result = await ActionSheet.show(
+      context: context,
+      type: ActionSheetType.remote,
+      title: '远程搜索城市',
+      description: '模拟异步搜索，支持防抖',
+      searchHint: '输入关键字远程搜索',
+      onSearch: (keyword) async {
+        // 模拟网络延迟
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (keyword.isEmpty) return _cityItems;
+        final kw = keyword.toLowerCase();
+        return _cityItems.where((item) {
+          return item.label.toLowerCase().contains(kw) ||
+              (item.subtitle?.toLowerCase().contains(kw) ?? false);
+        }).toList();
+      },
+    );
+    if (result != null && result is ActionSheetItem) {
+      setState(() => _selectedResult = '远程搜索结果：${result.label}');
+    }
+  }
+
+  /// 本地操作列表示例
+  void _showLocalActionSheet() async {
+    final result = await ActionSheet.show(
+      context: context,
+      type: ActionSheetType.local,
+      title: '操作菜单',
+      description: '选择一个操作',
+    );
+    if (result != null && result is int) {
+      setState(() => _selectedResult = '本地操作：选择了第 $result 项');
+    }
+  }
+
+  /// 带动态数据的 Filterable 示例
+  void _showFilterableWithDynamic() async {
+    final result = await ActionSheet.show(
+      context: context,
+      type: ActionSheetType.filterable,
+      title: '选择城市（含动态数据）',
+      description: '输入关键字时会动态合并额外数据',
+      items: _cityItems.sublist(0, 8), // 只显示前8个静态数据
+      searchHint: '输入关键字搜索',
+      dynamicItems: (keyword) async {
+        // 模拟动态数据（如从接口获取）
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (keyword.isEmpty) return [];
+        return [
+          ActionSheetItem(
+            label: '动态: $keyword',
+            subtitle: '这是动态生成的选项',
+            value: 'dynamic_$keyword',
+          ),
+        ];
+      },
+    );
+    if (result != null && result is ActionSheetItem) {
+      setState(() => _selectedResult = '动态数据结果：${result.label}');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
+        title: const Text('ActionSheet 组件示例'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            // 结果显示卡片
+            Card(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '选择结果',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _selectedResult,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 24),
+
+            // Filterable 单选
+            Text('Filterable 模式', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            _buildButton('单选 - 本地过滤选择', Icons.filter_list, _showFilterableSingle),
+            const SizedBox(height: 8),
+            _buildButton('多选 - 本地过滤选择', Icons.filter_list_outlined, _showFilterableMulti),
+            const SizedBox(height: 8),
+            _buildButton('带动态数据 - 输入时合并新选项', Icons.add_circle_outline, _showFilterableWithDynamic),
+            const SizedBox(height: 24),
+
+            // Remote 搜索
+            Text('Remote 模式', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            _buildButton('远程搜索 - 模拟异步请求', Icons.cloud, _showRemoteSearch),
+            const SizedBox(height: 24),
+
+            // Local 操作列表
+            Text('Local 模式', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            _buildButton('本地操作菜单', Icons.menu, _showLocalActionSheet),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+
+  Widget _buildButton(String label, IconData icon, VoidCallback onPressed) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        alignment: Alignment.centerLeft,
       ),
     );
   }

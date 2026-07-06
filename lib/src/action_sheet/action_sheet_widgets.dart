@@ -11,54 +11,71 @@ class ActionSheetDragHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final handleColor = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.2) ?? Colors.grey.shade300;
+    final handleColor = theme.colorScheme.outlineVariant;
 
     return Center(
       child: Container(
-        width: 36,
+        width: 40,
         height: 4,
-        margin: const EdgeInsets.only(top: 8, bottom: 4),
+        margin: const EdgeInsets.only(top: 10, bottom: 0),
         decoration: BoxDecoration(color: handleColor, borderRadius: BorderRadius.circular(2)),
       ),
     );
   }
 }
 
-/// ActionSheet 头部区域：左对齐标题 + 右侧关闭按钮
+/// ActionSheet 头部区域：左对齐标题 + 右侧计数 + 关闭按钮
 class ActionSheetHeader extends StatelessWidget {
   final String? title;
   final String? description;
+  final int? itemCount;
   final VoidCallback? onClose;
 
-  const ActionSheetHeader({this.title, this.description, this.onClose, super.key});
+  const ActionSheetHeader({this.title, this.description, this.itemCount, this.onClose, super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 4, 8),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 左侧：标题 + 描述
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title!, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, height: 1.3)),
-                if (description != null) ...[
-                  const SizedBox(height: 2),
-                  Text(description!, style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55), height: 1.4)),
-                ],
-              ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 左侧标题
+              Expanded(
+                child: Text(
+                  title ?? '',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              // 计数
+              if (itemCount != null)
+                Text('共 $itemCount 项', style: TextStyle(fontSize: 16, color: theme.hintColor)),
+              const SizedBox(width: 8),
+              // 关闭按钮
+              GestureDetector(
+                onTap: onClose,
+                child: const Icon(Icons.close, size: 20),
+              ),
+            ],
+          ),
+          // 描述（保留组件特有能力）
+          if (description != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              description!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55),
+                height: 1.4,
+              ),
             ),
-          ),
-          // 右侧：关闭按钮（保证 44x44 最小触控区域）
-          GestureDetector(
-            onTap: onClose,
-            child: Container(width: 44, height: 44, alignment: Alignment.topCenter, child: Icon(Icons.close, size: 20)),
-          ),
+          ],
         ],
       ),
     );
@@ -66,48 +83,66 @@ class ActionSheetHeader extends StatelessWidget {
 }
 
 /// ActionSheet 搜索输入框
-class ActionSheetSearchField extends StatelessWidget {
+class ActionSheetSearchField extends StatefulWidget {
   final String hint;
   final String keyword;
+  final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
 
-  const ActionSheetSearchField({required this.hint, required this.keyword, required this.onChanged, required this.onClear, super.key});
+  const ActionSheetSearchField({
+    required this.hint,
+    required this.keyword,
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+    super.key,
+  });
 
+  @override
+  State<ActionSheetSearchField> createState() => _ActionSheetSearchFieldState();
+}
+
+class _ActionSheetSearchFieldState extends State<ActionSheetSearchField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      child: TextField(
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: const Icon(Icons.search, size: 20),
-          suffixIcon: keyword.isNotEmpty
-              ? SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: IconButton(padding: EdgeInsets.zero, icon: const Icon(Icons.clear, size: 18), onPressed: onClear),
-                )
-              : null,
-          isDense: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.3)),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: widget.controller,
+            onChanged: widget.onChanged,
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+              suffixIcon: widget.keyword.isNotEmpty
+                  ? SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: widget.onClear,
+                      ),
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(5),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            ),
+            style: theme.textTheme.bodyMedium,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.3)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.6), width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        ),
-        style: theme.textTheme.bodyMedium,
+          const SizedBox(height: 10),
+          Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.1)),
+        ],
       ),
     );
   }
@@ -117,48 +152,92 @@ class ActionSheetSearchField extends StatelessWidget {
 class ActionSheetCheckListItem extends StatelessWidget {
   final ActionSheetItem item;
   final bool isSelected;
+  final bool multiple;
   final VoidCallback? onTap;
 
-  const ActionSheetCheckListItem({required this.item, required this.isSelected, this.onTap, super.key});
+  const ActionSheetCheckListItem({
+    required this.item,
+    required this.isSelected,
+    this.multiple = false,
+    this.onTap,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final avatarChar = item.label.isNotEmpty ? item.label.characters.first : '';
 
-    return SizedBox(
-      width: double.infinity,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.label, style: theme.textTheme.titleMedium?.copyWith(color: item.textColor ?? theme.colorScheme.primary, height: 1.3)),
-                    if (item.subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        item.subtitle!,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5), height: 1.3),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (isSelected)
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+      decoration: BoxDecoration(
+        color: isSelected ? primary.withValues(alpha: 0.08) : theme.canvasColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                // 左侧圆形头像（首字母）
                 Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(11)),
-                  child: Icon(Icons.check, size: 14, color: theme.colorScheme.primary),
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isSelected ? primary.withValues(alpha: 0.2) : Colors.grey.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      avatarChar,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
                 ),
-            ],
+                const SizedBox(width: 12),
+                // 文本内容
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isSelected ? primary : Colors.black87,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                      if (item.subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          item.subtitle!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // 右侧勾选标记（单选时显示）
+                if (!multiple && isSelected)
+                  Icon(Icons.check_circle, color: primary, size: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -166,43 +245,47 @@ class ActionSheetCheckListItem extends StatelessWidget {
   }
 }
 
-/// 多选模式底部栏：已选数量 + 确定按钮
+/// 多选模式底部栏：取消 + 确认按钮（右对齐）
 class ActionSheetBottomBar extends StatelessWidget {
   final int selectedCount;
+  final String cancelLabel;
   final String confirmLabel;
+  final VoidCallback? onCancel;
   final VoidCallback? onConfirm;
 
-  const ActionSheetBottomBar({required this.selectedCount, required this.confirmLabel, this.onConfirm, super.key});
+  const ActionSheetBottomBar({
+    required this.selectedCount,
+    required this.cancelLabel,
+    required this.confirmLabel,
+    this.onCancel,
+    this.onConfirm,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: theme.canvasColor,
-        border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1))),
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(13), blurRadius: 10, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
         top: false,
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Expanded(
-              child: Text(
-                selectedCount > 0 ? '已选择 $selectedCount 项' : '未选择',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: selectedCount > 0 ? theme.colorScheme.primary : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
-                  fontWeight: selectedCount > 0 ? FontWeight.w500 : null,
-                ),
-              ),
+            TextButton(
+              onPressed: onCancel,
+              child: Text(cancelLabel, style: TextStyle(color: theme.hintColor)),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             ElevatedButton(
               onPressed: selectedCount > 0 ? onConfirm : null,
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(88, 44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                disabledBackgroundColor: theme.colorScheme.outlineVariant,
               ),
               child: Text(confirmLabel),
             ),
