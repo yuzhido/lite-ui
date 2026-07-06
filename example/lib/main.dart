@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/action_sheet_demo.dart';
 import 'pages/empty_data_demo.dart';
+import 'pages/tree_select_demo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -43,6 +44,13 @@ class HomePage extends StatelessWidget {
             title: 'ActionSheet',
             subtitle: '底部弹窗操作面板',
             page: const ActionSheetDemoPage(),
+          ),
+          _buildNavItem(
+            context,
+            icon: Icons.account_tree,
+            title: 'TreeSelect',
+            subtitle: '树形选择器（竖向/级联/懒加载）',
+            page: const TreeSelectDemoPage(),
           ),
           _buildNavItem(
             context,

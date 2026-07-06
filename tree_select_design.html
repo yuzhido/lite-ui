@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TreeSelect 树形选择器 - 交互设计图</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #1565C0;
+  --primary-light: #E3F2FD;
+  --primary-mid: #90CAF9;
+  --primary-dark: #0D47A1;
+  --surface: #FAFBFC;
+  --card: #FFFFFF;
+  --text: #1A1A2E;
+  --text-secondary: #5F6368;
+  --text-muted: #9AA0A6;
+  --border: #E8EAED;
+  --bg-dark: #0F1923;
+  --accent-green: #0F9D58;
+  --accent-orange: #F4B400;
+  --accent-red: #DB4437;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.1);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.15);
+  --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Hero Header ── */
+.hero {
+  position: relative;
+  padding: 80px 60px 60px;
+  background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 40%, #0F2744 100%);
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px; right: -100px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(21,101,192,.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -150px; left: 10%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(15,157,88,.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: rgba(21,101,192,.2);
+  border: 1px solid rgba(21,101,192,.3);
+  border-radius: 20px;
+  color: var(--primary-mid);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: 48px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 16px;
+  position: relative;
+}
+.hero h1 span { color: var(--primary-mid); }
+.hero p {
+  font-size: 18px;
+  color: rgba(255,255,255,.5);
+  max-width: 600px;
+  line-height: 1.7;
+  position: relative;
+}
+.hero-features {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+  position: relative;
+}
+.hero-feature {
+  padding: 8px 18px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,.7);
+  font-size: 14px;
+  font-weight: 400;
+  backdrop-filter: blur(4px);
+}
+.hero-feature .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ── Section ── */
+.section {
+  padding: 60px;
+}
+.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.section-subtitle {
+  font-size: 15px;
+  color: rgba(255,255,255,.4);
+  margin-bottom: 40px;
+}
+
+/* ── Phone Grid ── */
+.phone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.phone-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: transform .3s, box-shadow .3s;
+}
+.phone-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+.phone-label {
+  padding: 20px 24px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.phone-label-num {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.phone-label-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+.phone-label-tag {
+  margin-left: auto;
+  padding: 3px 10px;
+  background: rgba(15,157,88,.15);
+  border: 1px solid rgba(15,157,88,.25);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #34D399;
+  font-weight: 500;
+}
+
+/* ── Phone Frame (BottomSheet mock) ── */
+.phone-frame {
+  margin: 0 16px 16px;
+  background: #F5F5F5;
+  border-radius: 16px 16px 4px 4px;
+  overflow: hidden;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── BottomSheet ── */
+.sheet {
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.sheet-drag {
+  width: 36px; height: 4px;
+  background: #D1D5DB;
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+.sheet-header {
+  padding: 14px 16px 0;
+  display: flex;
+  align-items: center;
+}
+.sheet-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+.sheet-close {
+  width: 28px; height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+.sheet-search {
+  margin: 12px 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 40px;
+  background: #F3F4F6;
+  border-radius: 8px;
+}
+.sheet-search svg { flex-shrink: 0; color: #9CA3AF; }
+.sheet-search span {
+  font-size: 14px;
+  color: #9CA3AF;
+}
+.sheet-search input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text);
+  width: 100%;
+  font-family: inherit;
+}
+.search-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 12px 16px 0;
+}
+
+/* ── Tree Items (Vertical) ── */
+.tree-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.tree-item {
+  display: flex;
+  align-items: center;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: background .15s;
+  position: relative;
+}
+.tree-item:hover { background: #F9FAFB; }
+.tree-item.selected {
+  background: var(--primary-light);
+}
+.tree-item .arrow {
+  width: 24px; height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.tree-item .arrow.expanded { transform: rotate(90deg); }
+.tree-item .arrow.leaf { visibility: hidden; }
+.tree-item .indent-1 { margin-left: 0; }
+.tree-item .indent-2 { margin-left: 24px; }
+.tree-item .indent-3 { margin-left: 48px; }
+
+.tree-label {
+  font-size: 14px;
+  color: var(--text);
+  flex: 1;
+  margin-left: 4px;
+}
+.tree-item.selected .tree-label {
+  color: var(--primary);
+  font-weight: 600;
+}
+.tree-badge {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+.tree-check {
+  width: 16px; height: 16px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.tree-icon {
+  width: 20px; height: 20px;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+/* Checkbox */
+.cb {
+  width: 18px; height: 18px;
+  border: 2px solid #D1D5DB;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 8px;
+  transition: all .15s;
+}
+.cb.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.cb.partial {
+  border-color: var(--primary);
+}
+.cb svg { display: none; }
+.cb.checked svg { display: block; }
+.cb.partial::after {
+  content: '';
+  width: 8px; height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+}
+
+/* ── Bottom Bar ── */
+.sheet-bottom-bar {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #fff;
+}
+.bar-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-right: auto;
+}
+.bar-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+.bar-btn.cancel {
+  background: none;
+  color: var(--text-muted);
+}
+.bar-btn.confirm {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ── Cascade (Horizontal) ── */
+.cascade-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: #FAFBFC;
+}
+.cascade-tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  position: relative;
+  cursor: pointer;
+}
+.cascade-tab.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+.cascade-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 30%; right: 30%;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+}
+.cascade-tab .tab-val {
+  display: block;
+  font-size: 12px;
+  color: var(--primary);
+  margin-top: 2px;
+  font-weight: 400;
+}
+.cascade-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.cascade-col {
+  flex: 1;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+.cascade-col:last-child { border-right: none; }
+.cascade-item {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background .15s;
+}
+.cascade-item:hover { background: #F9FAFB; }
+.cascade-item.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+.cascade-item .sub { font-size: 12px; color: var(--text-muted); }
+
+/* ── Search Results (Mode 4) ── */
+.search-result {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.search-result:hover { background: #F9FAFB; }
+.search-result-title {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+.search-result-title mark {
+  background: #FFF3CD;
+  color: var(--text);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+.search-result-path {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.search-result-path .sep { color: #D1D5DB; }
+
+/* ── Loading & Empty States ── */
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 12px;
+}
+.state-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.state-icon.empty { background: #FEF3C7; color: var(--accent-orange); }
+.state-icon.loading { background: var(--primary-light); color: var(--primary); }
+.state-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.spinner {
+  width: 24px; height: 24px;
+  border: 3px solid var(--primary-light);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Node loading inline */
+.node-loading {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px 10px 64px;
+  gap: 8px;
+}
+.node-loading .spinner { width: 16px; height: 16px; border-width: 2px; }
+.node-loading span { font-size: 13px; color: var(--text-muted); }
+
+/* ── API Panel ── */
+.api-section {
+  padding: 60px;
+  background: linear-gradient(180deg, var(--bg-dark) 0%, #111827 100%);
+}
+.api-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.api-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.api-card-header {
+  padding: 16px 20px;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.api-card-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.api-card-icon.model { background: rgba(21,101,192,.2); color: var(--primary-mid); }
+.api-card-icon.param { background: rgba(15,157,88,.2); color: #34D399; }
+.api-card-icon.callback { background: rgba(244,180,0,.2); color: #FBBF24; }
+.api-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+.api-card-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,.35);
+  margin-left: auto;
+}
+.api-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.api-table th {
+  text-align: left;
+  padding: 10px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,.35);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.api-table td {
+  padding: 10px 20px;
+  font-size: 13px;
+  color: rgba(255,255,255,.7);
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: top;
+}
+.api-table tr:last-child td { border-bottom: none; }
+.api-table .param-name {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--primary-mid);
+  font-weight: 500;
+  font-size: 12px;
+}
+.api-table .param-type {
+  font-family: 'JetBrains Mono', monospace;
+  color: #34D399;
+  font-size: 12px;
+}
+.api-table .param-required {
+  color: var(--accent-red);
+  font-size: 11px;
+  font-weight: 600;
+}
+.api-table .param-optional {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hero { padding: 48px 24px 40px; }
+  .hero h1 { font-size: 32px; }
+  .section, .api-section { padding: 40px 24px; }
+  .phone-grid { grid-template-columns: 1fr; }
+  .api-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <div class="hero-badge">Flutter Widget · lite_simple_ui</div>
+  <h1>TreeSelect<br><span>树形选择器</span></h1>
+  <p>支持本地/远程数据、懒加载、单选多选、竖向缩进与横向级联两种布局模式的全功能树形选择组件。</p>
+  <div class="hero-features">
+    <div class="hero-feature"><span class="dot" style="background:#34D399"></span>本地树形数据</div>
+    <div class="hero-feature"><span class="dot" style="background:#60A5FA"></span>远程搜索</div>
+    <div class="hero-feature"><span class="dot" style="background:#FBBF24"></span>懒加载</div>
+    <div class="hero-feature"><span class="dot" style="background:#F87171"></span>单选 / 多选</div>
+    <div class="hero-feature"><span class="dot" style="background:#A78BFA"></span>竖向缩进 / 横向级联</div>
+  </div>
+</div>
+
+<!-- ═══════════ MODE 1-5 ═══════════ -->
+<div class="section">
+  <div class="section-title">交互模式总览</div>
+  <div class="section-subtitle">6 种核心交互场景，覆盖所有业务需求</div>
+
+  <div class="phone-grid">
+
+    <!-- ── Mode 1: Vertical Single Select ── -->
+    <div class="phone-card">
+      <div class="phone-label">
+        <div class="phone-label-num">1</div>
+        <div class="phone-label-text">竖向缩进 · 单选</div>
+        <div class="phone-label-tag">本地数据</div>
+      </div>
+      <div class="phone-frame">
+        <div class="sheet">
+          <div class="sheet-drag"></div>
+          <div class="sheet-header">
+            <div class="sheet-title">选择部门</div>
+            <div class="sheet-close">✕</div>
+          </div>
+          <div class="sheet-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span>搜索部门...</span>
+          </div>
+          <div class="search-divider"></div>
+          <div class="tree-list">
+            <!-- 技术部 (expanded) -->
+            <div class="tree-item">
+              <div class="arrow expanded" style="margin-left:0">▶</div>
+              <div class="tree-label" style="font-weight:600">技术部</div>
+              <div class="tree-badge">3</div>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="tree-label">前端组</div>
+            </div>
+            <div class="tree-item selected" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="tree-label">后端组</div>
+              <svg class="tree-check" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="tree-label">测试组</div>
+            </div>
+            <!-- 产品部 (collapsed) -->
+            <div class="tree-item">
+              <div class="arrow" style="margin-left:0">▶</div>
+              <div class="tree-label" style="font-weight:600">产品部</div>
+              <div class="tree-badge">3 个子部门</div>
+            </div>
+            <!-- 设计部 (expanded) -->
+            <div class="tree-item">
+              <div class="arrow expanded" style="margin-left:0">▶</div>
+              <div class="tree-label" style="font-weight:600">设计部</div>
+              <div class="tree-badge">2</div>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="tree-label">UI 设计</div>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="tree-label">UX 设计</div>
+            </div>
+            <!-- 市场部 (collapsed) -->
+            <div class="tree-item">
+              <div class="arrow" style="margin-left:0">▶</div>
+              <div class="tree-label" style="font-weight:600">市场部</div>
+              <div class="tree-badge">5 个子部门</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mode 2: Vertical Multi Select ── -->
+    <div class="phone-card">
+      <div class="phone-label">
+        <div class="phone-label-num">2</div>
+        <div class="phone-label-text">竖向缩进 · 多选</div>
+        <div class="phone-label-tag">父子联动</div>
+      </div>
+      <div class="phone-frame">
+        <div class="sheet">
+          <div class="sheet-drag"></div>
+          <div class="sheet-header">
+            <div class="sheet-title">选择技能标签</div>
+            <div class="sheet-close">✕</div>
+          </div>
+          <div class="sheet-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span>搜索...</span>
+          </div>
+          <div class="search-divider"></div>
+          <div class="tree-list">
+            <!-- 前端技术 (partial - some children checked) -->
+            <div class="tree-item">
+              <div class="arrow expanded" style="margin-left:0">▶</div>
+              <div class="cb partial"></div>
+              <div class="tree-label" style="font-weight:600">前端技术</div>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="cb checked">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </div>
+              <div class="tree-label">Flutter</div>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="cb checked">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </div>
+              <div class="tree-label">React Native</div>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow leaf">▶</div>
+              <div class="cb"></div>
+              <div class="tree-label">Vue.js</div>
+            </div>
+            <!-- 后端技术 (all checked) -->
+            <div class="tree-item">
+              <div class="arrow" style="margin-left:0">▶</div>
+              <div class="cb checked">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </div>
+              <div class="tree-label" style="font-weight:600">后端技术</div>
+              <div class="tree-badge">全选</div>
+            </div>
+            <!-- 数据库 (none checked) -->
+            <div class="tree-item">
+              <div class="arrow" style="margin-left:0">▶</div>
+              <div class="cb"></div>
+              <div class="tree-label" style="font-weight:600">数据库</div>
+              <div class="tree-badge">4 项</div>
+            </div>
+            <!-- DevOps (collapsed) -->
+            <div class="tree-item">
+              <div class="arrow" style="margin-left:0">▶</div>
+              <div class="cb"></div>
+              <div class="tree-label" style="font-weight:600">DevOps</div>
+              <div class="tree-badge">3 项</div>
+            </div>
+          </div>
+          <div class="sheet-bottom-bar">
+            <div class="bar-count">已选 <strong style="color:var(--primary)">2</strong> 项</div>
+            <button class="bar-btn cancel">取消</button>
+            <button class="bar-btn confirm">确定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mode 3: Horizontal Cascade ── -->
+    <div class="phone-card">
+      <div class="phone-label">
+        <div class="phone-label-num">3</div>
+        <div class="phone-label-text">横向级联选择</div>
+        <div class="phone-label-tag">三级联动</div>
+      </div>
+      <div class="phone-frame">
+        <div class="sheet">
+          <div class="sheet-drag"></div>
+          <div class="sheet-header">
+            <div class="sheet-title">选择地区</div>
+            <div class="sheet-close">✕</div>
+          </div>
+          <!-- Tabs -->
+          <div class="cascade-tabs">
+            <div class="cascade-tab">
+              省份
+              <span class="tab-val">广东省</span>
+            </div>
+            <div class="cascade-tab active">
+              城市
+              <span class="tab-val">深圳市</span>
+            </div>
+            <div class="cascade-tab">
+              区县
+              <span class="tab-val">请选择</span>
+            </div>
+          </div>
+          <!-- 3 columns -->
+          <div class="cascade-body">
+            <div class="cascade-col">
+              <div class="cascade-item">北京市</div>
+              <div class="cascade-item">上海市</div>
+              <div class="cascade-item active">广东省 <span class="sub">▶</span></div>
+              <div class="cascade-item">浙江省</div>
+              <div class="cascade-item">江苏省</div>
+              <div class="cascade-item">四川省</div>
+              <div class="cascade-item">湖北省</div>
+              <div class="cascade-item">湖南省</div>
+            </div>
+            <div class="cascade-col">
+              <div class="cascade-item">广州市 <span class="sub">▶</span></div>
+              <div class="cascade-item active">深圳市 <span class="sub">▶</span></div>
+              <div class="cascade-item">东莞市</div>
+              <div class="cascade-item">佛山市</div>
+              <div class="cascade-item">珠海市</div>
+              <div class="cascade-item">惠州市</div>
+            </div>
+            <div class="cascade-col">
+              <div class="cascade-item">福田区</div>
+              <div class="cascade-item">罗湖区</div>
+              <div class="cascade-item">南山区</div>
+              <div class="cascade-item">宝安区</div>
+              <div class="cascade-item">龙岗区</div>
+              <div class="cascade-item">龙华区</div>
+              <div class="cascade-item">光明区</div>
+            </div>
+          </div>
+          <div class="sheet-bottom-bar">
+            <div class="bar-count" style="font-size:12px">广东省 / 深圳市 / <span style="color:var(--text-muted)">请选择区县</span></div>
+            <button class="bar-btn cancel">取消</button>
+            <button class="bar-btn confirm">确定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mode 4: Remote Search + Lazy Load ── -->
+    <div class="phone-card">
+      <div class="phone-label">
+        <div class="phone-label-num">4</div>
+        <div class="phone-label-text">远程搜索 + 懒加载</div>
+        <div class="phone-label-tag">异步数据</div>
+      </div>
+      <div class="phone-frame">
+        <div class="sheet">
+          <div class="sheet-drag"></div>
+          <div class="sheet-header">
+            <div class="sheet-title">搜索员工</div>
+            <div class="sheet-close">✕</div>
+          </div>
+          <div class="sheet-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" value="前端" style="border:none;background:none;outline:none;font-size:14px;color:#1A1A2E;width:100%;font-family:inherit" readonly>
+            <span style="color:#9CA3AF;cursor:pointer;font-size:16px">✕</span>
+          </div>
+          <div class="search-divider"></div>
+          <div class="tree-list">
+            <!-- Search results -->
+            <div class="search-result">
+              <div class="search-result-title"><mark>前端</mark>组</div>
+              <div class="search-result-path">
+                技术部 <span class="sep">/</span> 前端组
+              </div>
+            </div>
+            <div class="search-result">
+              <div class="search-result-title"><mark>前端</mark>开发工程师</div>
+              <div class="search-result-path">
+                技术部 <span class="sep">/</span> 前端组 <span class="sep">/</span> 前端开发工程师
+              </div>
+            </div>
+            <div class="search-result">
+              <div class="search-result-title">高级<mark>前端</mark>工程师</div>
+              <div class="search-result-path">
+                技术部 <span class="sep">/</span> 前端组 <span class="sep">/</span> 高级前端工程师
+              </div>
+            </div>
+            <div style="padding:12px 16px 6px">
+              <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">懒加载 · 展开节点</div>
+            </div>
+            <!-- Node with lazy load -->
+            <div class="tree-item">
+              <div class="arrow expanded" style="margin-left:0">▶</div>
+              <div class="tree-label" style="font-weight:600">技术部</div>
+            </div>
+            <div class="tree-item" style="padding-left:44px">
+              <div class="arrow expanded">▶</div>
+              <div class="tree-label">前端组</div>
+            </div>
+            <!-- Inline loading -->
+            <div class="node-loading" style="padding-left:88px">
+              <div class="spinner"></div>
+              <span>加载子节点...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mode 5: Empty & Loading States ── -->
+    <div class="phone-card">
+      <div class="phone-label">
+        <div class="phone-label-num">5</div>
+        <div class="phone-label-text">空状态 & 加载态</div>
+        <div class="phone-label-tag">状态管理</div>
+      </div>
+      <div class="phone-frame" style="display:flex;flex-direction:column">
+        <!-- State A: Initial -->
+        <div style="flex:1;background:#fff;border-radius:12px 12px 0 0;display:flex;flex-direction:column">
+          <div class="sheet-drag"></div>
+          <div class="sheet-header">
+            <div class="sheet-title" style="font-size:14px">初始加载</div>
+          </div>
+          <div class="state-container" style="padding:28px 24px">
+            <div class="state-icon loading"><div class="spinner"></div></div>
+            <div class="state-text">正在加载数据...</div>
+          </div>
+        </div>
+        <div style="height:8px;background:#E8EAED"></div>
+        <!-- State B: Empty search -->
+        <div style="flex:1;background:#fff;display:flex;flex-direction:column">
+          <div class="sheet-header">
+            <div class="sheet-title" style="font-size:14px">搜索无结果</div>
+          </div>
+          <div class="sheet-search" style="margin:8px 16px 0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" value="不存在的部门" style="border:none;background:none;outline:none;font-size:13px;color:#1A1A2E;width:100%;font-family:inherit" readonly>
+          </div>
+          <div class="state-container" style="padding:24px">
+            <div class="state-icon empty">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6" stroke-linecap="round"/></svg>
+            </div>
+            <div class="state-text">未找到匹配的数据<br><span style="font-size:12px">请尝试其他关键字</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mode 6: Cascade Multi Select ── -->
+    <div class="phone-card">
+      <div class="phone-label">
+        <div class="phone-label-num">6</div>
+        <div class="phone-label-text">横向级联 · 多选</div>
+        <div class="phone-label-tag">多选模式</div>
+      </div>
+      <div class="phone-frame">
+        <div class="sheet">
+          <div class="sheet-drag"></div>
+          <div class="sheet-header">
+            <div class="sheet-title">选择配送区域</div>
+            <div class="sheet-close">✕</div>
+          </div>
+          <div class="cascade-tabs">
+            <div class="cascade-tab">
+              省份
+              <span class="tab-val">已选 2</span>
+            </div>
+            <div class="cascade-tab active">
+              城市
+              <span class="tab-val">请选择</span>
+            </div>
+          </div>
+          <div class="cascade-body">
+            <div class="cascade-col">
+              <div class="cascade-item active" style="justify-content:flex-start;gap:8px">
+                <div class="cb checked" style="margin:0"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+                广东省
+              </div>
+              <div class="cascade-item active" style="justify-content:flex-start;gap:8px">
+                <div class="cb checked" style="margin:0"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+                浙江省
+              </div>
+              <div class="cascade-item" style="justify-content:flex-start;gap:8px">
+                <div class="cb" style="margin:0"></div>
+                江苏省
+              </div>
+              <div class="cascade-item" style="justify-content:flex-start;gap:8px">
+                <div class="cb" style="margin:0"></div>
+                四川省
+              </div>
+              <div class="cascade-item" style="justify-content:flex-start;gap:8px">
+                <div class="cb" style="margin:0"></div>
+                湖北省
+              </div>
+            </div>
+            <div class="cascade-col">
+              <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:14px">
+                <div style="margin-bottom:8px">👈</div>
+                请先选择省份
+              </div>
+            </div>
+          </div>
+          <div class="sheet-bottom-bar">
+            <div class="bar-count">已选 <strong style="color:var(--primary)">2</strong> 个省份</div>
+            <button class="bar-btn cancel">取消</button>
+            <button class="bar-btn confirm">确定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ API DESIGN ═══════════ -->
+<div class="api-section">
+  <div class="section-title">API 参数设计</div>
+  <div class="section-subtitle">核心数据模型、组件参数与回调定义</div>
+
+  <div class="api-grid">
+
+    <!-- Card 1: TreeSelectItem Model -->
+    <div class="api-card">
+      <div class="api-card-header">
+        <div class="api-card-icon model">M</div>
+        <div class="api-card-title">TreeSelectItem&lt;V, D&gt;</div>
+        <div class="api-card-desc">数据模型</div>
+      </div>
+      <table class="api-table">
+        <thead><tr><th>属性</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">label</td><td class="param-type">String</td><td class="param-required">✓</td><td>显示文本</td></tr>
+          <tr><td class="param-name">value</td><td class="param-type">V</td><td class="param-required">✓</td><td>实际值，用于提交</td></tr>
+          <tr><td class="param-name">data</td><td class="param-type">D?</td><td class="param-optional">—</td><td>原始数据对象</td></tr>
+          <tr><td class="param-name">children</td><td class="param-type">List&lt;TreeSelectItem&gt;?</td><td class="param-optional">—</td><td>子节点列表</td></tr>
+          <tr><td class="param-name">isLeaf</td><td class="param-type">bool</td><td class="param-optional">—</td><td>是否叶子节点（默认自动判断）</td></tr>
+          <tr><td class="param-name">disabled</td><td class="param-type">bool</td><td class="param-optional">—</td><td>是否禁用，默认 false</td></tr>
+          <tr><td class="param-name">subtitle</td><td class="param-type">String?</td><td class="param-optional">—</td><td>副标题/描述</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Card 2: TreeSelect Params -->
+    <div class="api-card">
+      <div class="api-card-header">
+        <div class="api-card-icon param">P</div>
+        <div class="api-card-title">TreeSelect 组件参数</div>
+        <div class="api-card-desc">Widget / show()</div>
+      </div>
+      <table class="api-table">
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td class="param-name">items</td><td class="param-type">List&lt;TreeSelectItem&gt;?</td><td class="param-optional">—</td><td>本地树形数据</td></tr>
+          <tr><td class="param-name">multiple</td><td class="param-type">bool</td><td class="param-optional">—</td><td>多选模式，默认 false</td></tr>
+          <tr><td class="param-name">layout</td><td class="param-type">TreeLayout</td><td class="param-optional">—</td><td>vertical | cascade</td></tr>
+          <tr><td class="param-name">cascadeLevels</td><td class="param-type">List&lt;String&gt;?</td><td class="param-optional">—</td><td>级联列标题 ["省","市","区"]</td></tr>
+          <tr><td class="param-name">onLoadChildren</td><td class="param-type">LazyLoadCallback?</td><td class="param-optional">—</td><td>懒加载子节点回调</td></tr>
+          <tr><td class="param-name">onSearch</td><td class="param-type">RemoteSearchCallback?</td><td class="param-optional">—</td><td>远程搜索回调</td></tr>
+          <tr><td class="param-name">selectedValues</td><td class="param-type">Set&lt;V&gt;?</td><td class="param-optional">—</td><td>初始选中值</td></tr>
+          <tr><td class="param-name">checkStrictly</td><td class="param-type">bool</td><td class="param-optional">—</td><td>父子联动开关，默认 true</td></tr>
+          <tr><td class="param-name">title</td><td class="param-type">String?</td><td class="param-optional">—</td><td>弹窗标题</td></tr>
+          <tr><td class="param-name">searchHint</td><td class="param-type">String</td><td class="param-optional">—</td><td>搜索框提示文字</td></tr>
+          <tr><td class="param-name">onSelect</td><td class="param-type">OnSelectChange?</td><td class="param-optional">—</td><td>单选回调</td></tr>
+          <tr><td class="param-name">onConfirm</td><td class="param-type">OnMultiSelectConfirm?</td><td class="param-optional">—</td><td>多选确认回调</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Card 3: Callbacks & Enums -->
+    <div class="api-card" style="grid-column: span 2;">
+      <div class="api-card-header">
+        <div class="api-card-icon callback">C</div>
+        <div class="api-card-title">回调 & 枚举定义</div>
+        <div class="api-card-desc">typedef / enum</div>
+      </div>
+      <table class="api-table">
+        <thead><tr><th>名称</th><th>签名</th><th colspan="2">说明</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="param-name">TreeLayout</td>
+            <td class="param-type">enum</td>
+            <td colspan="2"><code style="color:#34D399;font-family:'JetBrains Mono',monospace;font-size:12px">vertical</code> 竖向缩进 &nbsp;|&nbsp; <code style="color:#34D399;font-family:'JetBrains Mono',monospace;font-size:12px">cascade</code> 横向级联</td>
+          </tr>
+          <tr>
+            <td class="param-name">LazyLoadCallback</td>
+            <td class="param-type">Future&lt;List&lt;TreeSelectItem&lt;V,D&gt;&gt;&gt; Function(TreeSelectItem parent)</td>
+            <td colspan="2">根据父节点加载子节点</td>
+          </tr>
+          <tr>
+            <td class="param-name">TreeSearchCallback</td>
+            <td class="param-type">Future&lt;List&lt;TreeSearchResult&lt;V,D&gt;&gt;&gt; Function(String keyword)</td>
+            <td colspan="2">远程搜索，返回带路径的结果</td>
+          </tr>
+          <tr>
+            <td class="param-name">TreeSearchResult</td>
+            <td class="param-type">class</td>
+            <td colspan="2">搜索结果：item + path (面包屑路径列表)</td>
+          </tr>
+          <tr>
+            <td class="param-name">OnSelectChange</td>
+            <td class="param-type">void Function(V value, D? data)</td>
+            <td colspan="2">单选回调</td>
+          </tr>
+          <tr>
+            <td class="param-name">OnMultiSelectConfirm</td>
+            <td class="param-type">void Function(List&lt;V&gt; values, List&lt;D?&gt; datas)</td>
+            <td colspan="2">多选确认回调</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ FILE STRUCTURE ═══════════ -->
+<div class="section" style="padding-top:0">
+  <div class="section-title">文件结构规划</div>
+  <div class="section-subtitle">tree_select 目录下的模块拆分</div>
+  <div style="max-width:700px;margin:0 auto;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden">
+    <div style="padding:20px 24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2;color:rgba(255,255,255,.7)">
+      <span style="color:#34D399">lib/src/tree_select/</span><br>
+      ├── <span style="color:var(--primary-mid)">index.dart</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:rgba(255,255,255,.3)">// 统一导出入口</span><br>
+      ├── <span style="color:var(--primary-mid)">model.dart</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:rgba(255,255,255,.3)">// TreeSelectItem + 回调 + 枚举</span><br>
+      ├── <span style="color:var(--primary-mid)">tree_select.dart</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:rgba(255,255,255,.3)">// TreeSelect.show() 弹窗入口</span><br>
+      ├── <span style="color:var(--primary-mid)">tree_vertical.dart</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:rgba(255,255,255,.3)">// 竖向缩进布局（单选/多选）</span><br>
+      ├── <span style="color:var(--primary-mid)">tree_cascade.dart</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:rgba(255,255,255,.3)">// 横向级联布局（单选/多选）</span><br>
+      └── <span style="color:var(--primary-mid)">tree_widgets.dart</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:rgba(255,255,255,.3)">// 复用 UI 子组件</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
