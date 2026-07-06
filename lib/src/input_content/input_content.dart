@@ -18,6 +18,8 @@ class InputContent extends StatefulWidget {
   final TextEditingController? controller;
   // 保存函数
   final Function(String)? onSaved;
+  // 输入框内容变化时的回调
+  final Function(String)? onChange;
   // 输入框内容边距
   final EdgeInsetsGeometry? contentPadding;
   // 输入框填充颜色
@@ -91,6 +93,7 @@ class InputContent extends StatefulWidget {
     this.hintStyle,
     this.prefixIcon,
     this.suffixIcon,
+    this.onChange,
   });
   @override
   State<InputContent> createState() => _TextInputState();
@@ -136,7 +139,8 @@ class _TextInputState extends State<InputContent> {
   }
 
   // 输入内容变化
-  void onInputChange(String _) {
+  void onInputChange(String val) {
+    widget.onChange?.call(val);
     if (widget.isInputPassword) return;
     setState(() {});
   }
