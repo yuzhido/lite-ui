@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/action_sheet_demo.dart';
+import 'pages/dialog_action_demo.dart';
 import 'pages/empty_data_demo.dart';
 
 void main() {
@@ -40,6 +41,7 @@ class HomePage extends StatelessWidget {
           //   page: const TreeSelectDemoPage(),
           // ),
           _buildNavItem(context, icon: Icons.inbox_outlined, title: 'EmptyData', subtitle: '空状态数据展示组件', page: const EmptyDataDemoPage()),
+          _buildNavItem(context, icon: Icons.open_in_browser, title: 'DialogAction', subtitle: '居中弹窗操作组件', page: const DialogActionDemoPage()),
         ],
       ),
     );
