@@ -11,6 +11,11 @@ class EmptyDataDemoPage extends StatefulWidget {
 class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
   bool _hasData = false;
   bool _isNetworkError = false;
+  bool _animateEnabled = true;
+  int _animationMs = 400;
+  EmptyDataType _selectedType = EmptyDataType.empty;
+  EmptyDataStyle _selectedStyle = EmptyDataStyle.defaultStyle;
+  int _animKey = 0; // 用于触发动画重播
 
   void _toggleData() {
     setState(() {
@@ -26,13 +31,14 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
     });
   }
 
+  void _replayAnimation() {
+    setState(() => _animKey++);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('EmptyData 组件示例'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: AppBar(title: const Text('EmptyData 组件示例'), backgroundColor: Theme.of(context).colorScheme.inversePrimary),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -41,14 +47,7 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
             // ===== 8 种场景类型 =====
             Text('场景类型 (8种)', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final t in EmptyDataType.values)
-                  _buildTypeChip(context, t),
-              ],
-            ),
+            Wrap(spacing: 8, runSpacing: 8, children: [for (final t in EmptyDataType.values) _buildTypeChip(context, t)]),
             const SizedBox(height: 24),
 
             // ===== 4 种布局风格 =====
@@ -83,6 +82,108 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
             _buildTypeCard(context, '系统维护中', EmptyDataType.maintenance),
             const SizedBox(height: 24),
 
+            // ===== 动画控制 =====
+            Text('动画控制', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 开关
+                    Row(
+                      children: [
+                        const Text('入场动画', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        Switch(value: _animateEnabled, onChanged: (v) => setState(() => _animateEnabled = v)),
+                      ],
+                    ),
+                    // 时长滑块
+                    Row(
+                      children: [
+                        const Text('时长', style: TextStyle(fontSize: 13)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Slider(
+                            value: _animationMs.toDouble(),
+                            min: 100,
+                            max: 1200,
+                            divisions: 11,
+                            label: '${_animationMs}ms',
+                            onChanged: (v) => setState(() => _animationMs = v.round()),
+                          ),
+                        ),
+                        Text('${_animationMs}ms', style: const TextStyle(fontSize: 13, fontFamily: 'monospace')),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // 重播按钮
+                    Center(
+                      child: OutlinedButton.icon(onPressed: _replayAnimation, icon: const Icon(Icons.replay, size: 18), label: const Text('重播动画')),
+                    ),
+                    const SizedBox(height: 16),
+                    // 预览
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 180),
+                      child: Center(
+                        child: EmptyData(
+                          key: ValueKey(_animKey),
+                          type: _selectedType,
+                          style: _selectedStyle,
+                          animate: _animateEnabled,
+                          animationDuration: Duration(milliseconds: _animationMs),
+                          padding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // 类型/风格选择
+                    Row(
+                      children: [
+                        const Text('类型', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<EmptyDataType>(
+                            initialValue: _selectedType,
+                            isDense: true,
+                            decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8), border: OutlineInputBorder()),
+                            items: [
+                              for (final t in EmptyDataType.values)
+                                DropdownMenuItem(
+                                  value: t,
+                                  child: Text(t.name, style: const TextStyle(fontSize: 12)),
+                                ),
+                            ],
+                            onChanged: (v) => setState(() => _selectedType = v ?? EmptyDataType.empty),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('风格', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<EmptyDataStyle>(
+                            initialValue: _selectedStyle,
+                            isDense: true,
+                            decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8), border: OutlineInputBorder()),
+                            items: [
+                              for (final s in EmptyDataStyle.values)
+                                DropdownMenuItem(
+                                  value: s,
+                                  child: Text(s.name, style: const TextStyle(fontSize: 12)),
+                                ),
+                            ],
+                            onChanged: (v) => setState(() => _selectedStyle = v ?? EmptyDataStyle.defaultStyle),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // ===== 带操作按钮 =====
             Text('带操作按钮', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
@@ -93,9 +194,7 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
                   type: EmptyDataType.empty,
                   actionLabel: '添加数据',
                   onAction: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('点击了「添加数据」')),
-                    );
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('点击了「添加数据」')));
                   },
                 ),
               ),
@@ -109,9 +208,7 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
                   style: EmptyDataStyle.card,
                   actionLabel: '去下单',
                   onAction: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('点击了「去下单」')),
-                    );
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('点击了「去下单」')));
                   },
                 ),
               ),
@@ -130,25 +227,31 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
                       spacing: 8,
                       children: [
                         Expanded(
-                          child: FilledButton(
-                            onPressed: _toggleData,
-                            child: Text(_hasData ? '清空数据' : '加载数据'),
-                          ),
+                          child: FilledButton(onPressed: _toggleData, child: Text(_hasData ? '清空数据' : '加载数据')),
                         ),
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: _simulateNetworkError,
-                            child: const Text('模拟网络错误'),
-                          ),
+                          child: OutlinedButton(onPressed: _simulateNetworkError, child: const Text('模拟网络错误')),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 250),
-                      child: _buildSimulatedList(),
-                    ),
+                    ConstrainedBox(constraints: const BoxConstraints(minHeight: 250), child: _buildSimulatedList()),
                   ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ===== 禁用动画 =====
+            Text('禁用动画', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: EmptyData(
+                  type: EmptyDataType.search,
+                  style: EmptyDataStyle.card,
+                  animate: false, // 禁用动画，直接显示
                 ),
               ),
             ),
@@ -165,15 +268,8 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
                   iconBackgroundColor: const Color(0xFFFEF3C7),
                   title: '这里空空如也~',
                   description: '暂时没有内容，去别处看看吧',
-                  titleStyle: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF92400E),
-                  ),
-                  descriptionStyle: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFFB45309),
-                  ),
+                  titleStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF92400E)),
+                  descriptionStyle: const TextStyle(fontSize: 13, color: Color(0xFFB45309)),
                 ),
               ),
             ),
@@ -187,10 +283,7 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
   Widget _buildTypeChip(BuildContext context, EmptyDataType type) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: EmptyData.bgColorOf(type),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: EmptyData.bgColorOf(type), borderRadius: BorderRadius.circular(8)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -218,11 +311,7 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
             SizedBox(
               height: style == EmptyDataStyle.compact ? 60 : 180,
               child: Center(
-                child: EmptyData(
-                  type: EmptyDataType.empty,
-                  style: style,
-                  padding: EdgeInsets.zero,
-                ),
+                child: EmptyData(type: EmptyDataType.empty, style: style, padding: EdgeInsets.zero),
               ),
             ),
           ],
@@ -238,15 +327,11 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // 左侧小预览（缩小图标避免溢出）
+            // 左侧小预览
             SizedBox(
               width: 120,
               height: 150,
-              child: EmptyData(
-                type: type,
-                iconSize: 52,
-                padding: EdgeInsets.zero,
-              ),
+              child: EmptyData(type: type, iconSize: 52, padding: EdgeInsets.zero),
             ),
             const SizedBox(width: 16),
             // 右侧说明
@@ -258,17 +343,10 @@ class _EmptyDataDemoPageState extends State<EmptyDataDemoPage> {
                   const SizedBox(height: 4),
                   Text(
                     'EmptyDataType.${type.name}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontFamily: 'monospace',
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600], fontFamily: 'monospace'),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'EmptyData(type: EmptyDataType.${type.name})',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                  ),
+                  Text('EmptyData(type: EmptyDataType.${type.name})', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                 ],
               ),
             ),

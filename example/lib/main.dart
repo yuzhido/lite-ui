@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/action_sheet_demo.dart';
 import 'pages/empty_data_demo.dart';
-import 'pages/tree_select_demo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,10 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Lite UI Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7C3AED)),
-        useMaterial3: true,
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7C3AED)), useMaterial3: true),
       home: const HomePage(),
     );
   }
@@ -31,46 +27,25 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lite UI 组件库'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: AppBar(title: const Text('Lite UI 组件库'), backgroundColor: Theme.of(context).colorScheme.inversePrimary),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildNavItem(
-            context,
-            icon: Icons.menu_open,
-            title: 'ActionSheet',
-            subtitle: '底部弹窗操作面板',
-            page: const ActionSheetDemoPage(),
-          ),
-          _buildNavItem(
-            context,
-            icon: Icons.account_tree,
-            title: 'TreeSelect',
-            subtitle: '树形选择器（竖向/级联/懒加载）',
-            page: const TreeSelectDemoPage(),
-          ),
-          _buildNavItem(
-            context,
-            icon: Icons.inbox_outlined,
-            title: 'EmptyData',
-            subtitle: '空状态数据展示组件',
-            page: const EmptyDataDemoPage(),
-          ),
+          _buildNavItem(context, icon: Icons.menu_open, title: 'ActionSheet', subtitle: '底部弹窗操作面板', page: const ActionSheetDemoPage()),
+          // _buildNavItem(
+          //   context,
+          //   icon: Icons.account_tree,
+          //   title: 'TreeSelect',
+          //   subtitle: '树形选择器（竖向/级联/懒加载）',
+          //   page: const TreeSelectDemoPage(),
+          // ),
+          _buildNavItem(context, icon: Icons.inbox_outlined, title: 'EmptyData', subtitle: '空状态数据展示组件', page: const EmptyDataDemoPage()),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Widget page,
-  }) {
+  Widget _buildNavItem(BuildContext context, {required IconData icon, required String title, required String subtitle, required Widget page}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
@@ -80,9 +55,7 @@ class HomePage extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => page),
-          );
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
         },
       ),
     );
