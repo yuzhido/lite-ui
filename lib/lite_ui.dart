@@ -3,3 +3,4 @@ export 'src/tree_select/index.dart';
 export 'src/action_sheet/index.dart';
 export 'src/input_content/index.dart';
 export 'src/dialog_action/index.dart';
+export 'widgets/keyword_highlight.dart';

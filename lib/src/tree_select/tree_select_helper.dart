@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/widgets/keyword_highlight.dart';
 
 import 'model.dart';
 import 'ui/tree_select.dart';
@@ -25,6 +26,7 @@ class TreeSelectHelper {
     TreeNodeLoadChildrenCallback<T>? onLoadChildren,
     String cancelLabel = '取消',
     String confirmLabel = '确定',
+    KeywordHighlightStyle? highlightStyle,
   }) {
     return showModalBottomSheet<TreeNode<T>>(
       context: context,
@@ -48,6 +50,7 @@ class TreeSelectHelper {
                 onLoadChildren: onLoadChildren,
                 cancelLabel: cancelLabel,
                 confirmLabel: confirmLabel,
+                highlightStyle: highlightStyle,
               ),
             ),
           ),
@@ -71,6 +74,7 @@ class TreeSelectHelper {
     TreeNodeLoadChildrenCallback<T>? onLoadChildren,
     String cancelLabel = '取消',
     String confirmLabel = '确定',
+    KeywordHighlightStyle? highlightStyle,
   }) {
     return showModalBottomSheet<List<TreeNode<T>>>(
       context: context,
@@ -94,6 +98,7 @@ class TreeSelectHelper {
                 onLoadChildren: onLoadChildren,
                 cancelLabel: cancelLabel,
                 confirmLabel: confirmLabel,
+                highlightStyle: highlightStyle,
               ),
             ),
           ),

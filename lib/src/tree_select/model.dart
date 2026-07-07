@@ -1,5 +1,7 @@
 // ── 数据模型 ──
 
+import 'package:lite_ui/widgets/keyword_highlight.dart';
+
 /// 树形结构数据模型
 ///
 /// 用于 [TreeSelect] 的节点数据。
@@ -98,6 +100,10 @@ class TreeSelectConfig<T extends Object> {
   /// 确定按钮文字
   final String confirmLabel;
 
+  /// 关键字高亮样式配置
+  /// 为 null 时使用默认高亮配置（蓝色加粗），传 KeywordHighlightStyle(enabled: false) 关闭
+  final KeywordHighlightStyle? highlightStyle;
+
   const TreeSelectConfig({
     this.title = '请选择',
     this.searchHint = '搜索...',
@@ -110,5 +116,6 @@ class TreeSelectConfig<T extends Object> {
     this.onLoadChildren,
     this.cancelLabel = '取消',
     this.confirmLabel = '确定',
+    this.highlightStyle,
   });
 }

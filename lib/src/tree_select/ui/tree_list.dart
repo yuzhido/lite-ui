@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/widgets/keyword_highlight.dart';
 
 import '../model.dart';
 import '../tree_utils.dart';
@@ -41,6 +42,12 @@ class TreeList<T extends Object> extends StatefulWidget {
   /// 节点点击回调
   final TreeNodeTapCallback<T>? onNodeTap;
 
+  /// 当前搜索关键字，用于高亮匹配文本
+  final String keyword;
+
+  /// 关键字高亮样式配置
+  final KeywordHighlightStyle? highlightStyle;
+
   const TreeList({
     super.key,
     required this.nodes,
@@ -50,6 +57,8 @@ class TreeList<T extends Object> extends StatefulWidget {
     this.onLoadChildren,
     this.onNodeTap,
     this.onChildrenLoaded,
+    this.keyword = '',
+    this.highlightStyle,
   });
 
   @override
@@ -167,13 +176,17 @@ class _TreeListState<T extends Object> extends State<TreeList<T>> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            node.label,
+                          child: buildHighlightedText(
+                            text: node.label,
+                            keyword: widget.keyword,
                             style: TextStyle(
                               fontSize: 15,
                               color: isSelected || isFullySelected ? const Color(0xFF007AFF) : const Color(0xFF1A1A1A),
                               fontWeight: isSelected || isFullySelected ? FontWeight.w600 : FontWeight.normal,
                             ),
+                            highlightStyle: widget.highlightStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
 

@@ -158,6 +158,8 @@ class _TreeSelectState<T extends Object> extends State<TreeSelect<T>> with Singl
                 onLoadChildren: widget.config.onLoadChildren,
                 onChildrenLoaded: widget.config.onLoadChildren != null ? _onChildrenLoaded : null,
                 onNodeTap: _selectNode,
+                keyword: _searchController.text,
+                highlightStyle: widget.config.highlightStyle,
               ),
             ),
 
