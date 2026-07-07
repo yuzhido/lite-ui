@@ -13,19 +13,19 @@ class _DialogActionDemoPageState extends State<DialogActionDemoPage> {
 
   /// Alert 提示弹窗（使用默认值，只需传 context 和 type）
   void _showAlertDefault() async {
-    await DialogAction.show(context: context, type: DialogActionType.alert);
+    await DialogAction.show(context: context, type: DialogType.alert);
     setState(() => _result = 'Alert 默认弹窗已关闭');
   }
 
   /// Alert 提示弹窗（自定义覆盖）
   void _showAlert() async {
-    await DialogAction.show(context: context, type: DialogActionType.alert, title: '操作成功', content: '数据已保存，请稍后查看详细信息。', confirmLabel: '知道了', presetIcon: DialogPresetIcon.success);
+    await DialogAction.show(context: context, type: DialogType.alert, title: '操作成功', content: '数据已保存，请稍后查看详细信息。', confirmLabel: '知道了', presetIcon: DialogPresetIcon.success);
     setState(() => _result = 'Alert 弹窗已关闭');
   }
 
   /// Confirm 确认弹窗（使用默认值）
   void _showConfirmDefault() async {
-    final result = await DialogAction.show<bool>(context: context, type: DialogActionType.confirm);
+    final result = await DialogAction.show<bool>(context: context, type: DialogType.confirm);
     setState(() => _result = 'Confirm 默认结果：$result');
   }
 
@@ -33,7 +33,7 @@ class _DialogActionDemoPageState extends State<DialogActionDemoPage> {
   void _showConfirm() async {
     final result = await DialogAction.show<bool>(
       context: context,
-      type: DialogActionType.confirm,
+      type: DialogType.confirm,
       title: '确认删除',
       content: '删除后数据将无法恢复，是否继续？',
       confirmLabel: '删除',
@@ -45,7 +45,7 @@ class _DialogActionDemoPageState extends State<DialogActionDemoPage> {
 
   /// Input 输入弹窗（使用默认值）
   void _showInputDefault() async {
-    final result = await DialogAction.show<String>(context: context, type: DialogActionType.input);
+    final result = await DialogAction.show<String>(context: context, type: DialogType.input);
     setState(() => _result = 'Input 默认结果：${result ?? '未输入'}');
   }
 
@@ -53,7 +53,7 @@ class _DialogActionDemoPageState extends State<DialogActionDemoPage> {
   void _showInput() async {
     final result = await DialogAction.show<String>(
       context: context,
-      type: DialogActionType.input,
+      type: DialogType.input,
       title: '重命名',
       content: '请输入新的名称',
       hintText: '请输入名称',
@@ -67,7 +67,7 @@ class _DialogActionDemoPageState extends State<DialogActionDemoPage> {
   void _showMultiAction() async {
     final result = await DialogAction.show<String>(
       context: context,
-      type: DialogActionType.multiAction,
+      type: DialogType.multiAction,
       title: '选择操作',
       content: '请选择你要执行的操作',
       actions: [
@@ -85,7 +85,7 @@ class _DialogActionDemoPageState extends State<DialogActionDemoPage> {
   void _showCustom() async {
     await DialogAction.show(
       context: context,
-      type: DialogActionType.custom,
+      type: DialogType.custom,
       customChild: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -109,7 +109,7 @@ class _DialogActionDemoPageState extends State<DialogActionDemoPage> {
   void _showCustomIcon() async {
     await DialogAction.show(
       context: context,
-      type: DialogActionType.alert,
+      type: DialogType.alert,
       title: '网络错误',
       content: '请检查网络连接后重试',
       confirmLabel: '重试',

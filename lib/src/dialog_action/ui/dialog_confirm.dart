@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../model.dart';
 import 'dialog_widgets.dart';
-import 'model.dart';
 
 /// Confirm 确认弹窗
 ///

@@ -1,5 +1,5 @@
 /// 弹窗类型枚举
-enum DialogActionType {
+enum DialogType {
   /// 提示弹窗：标题 + 内容 + 单个确认按钮
   alert,
 

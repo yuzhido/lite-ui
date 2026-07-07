@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-import 'dialog_alert.dart';
-import 'dialog_confirm.dart';
-import 'dialog_custom.dart';
-import 'dialog_input.dart';
-import 'dialog_multi_action.dart';
 import 'model.dart';
+import 'ui/dialog_alert.dart';
+import 'ui/dialog_input.dart';
+import 'ui/dialog_custom.dart';
+import 'ui/dialog_confirm.dart';
+import 'ui/dialog_multi_action.dart';
 
 /// 居中弹窗组件
 ///
 /// 支持多种弹窗类型：
-/// - [DialogActionType.alert]：提示弹窗（标题+内容+确认按钮）
-/// - [DialogActionType.confirm]：确认弹窗（标题+内容+取消/确认双按钮）
-/// - [DialogActionType.input]：输入弹窗（标题+输入框+取消/确认按钮）
-/// - [DialogActionType.multiAction]：多操作弹窗（标题+内容+多按钮纵向排列）
-/// - [DialogActionType.custom]：自定义内容弹窗（仅壳子，内容由外部传入）
+/// - [DialogType.alert]：提示弹窗（标题+内容+确认按钮）
+/// - [DialogType.confirm]：确认弹窗（标题+内容+取消/确认双按钮）
+/// - [DialogType.input]：输入弹窗（标题+输入框+取消/确认按钮）
+/// - [DialogType.multiAction]：多操作弹窗（标题+内容+多按钮纵向排列）
+/// - [DialogType.custom]：自定义内容弹窗（仅壳子，内容由外部传入）
 ///
 /// 该组件只负责弹窗壳子（showDialog），
 /// 不同类型内容渲染委托给对应的子组件。
@@ -24,7 +24,7 @@ import 'model.dart';
 class DialogAction {
   /// 显示一个居中弹窗
   ///
-  /// [type] 弹窗类型，默认为 [DialogActionType.alert]
+  /// [type] 弹窗类型，默认为 [DialogType.alert]
   /// [title] 主标题
   /// [content] 内容文本
   /// [icon] 自定义图标 Widget（显示在标题上方，优先级高于 [presetIcon]）
@@ -55,7 +55,7 @@ class DialogAction {
   /// [barrierColor] 遮罩颜色
   static Future<V?> show<V>({
     required BuildContext context,
-    DialogActionType type = DialogActionType.alert,
+    DialogType type = DialogType.alert,
     String? title,
     String? content,
 
@@ -131,11 +131,11 @@ class DialogAction {
   }
 
   /// 根据 type 解析默认值，用户传值优先覆盖
-  static DialogDefaults _resolveDefaults(DialogActionType type, String? title, String? content, String? confirmLabel, String? cancelLabel, String? hintText) {
+  static DialogDefaults _resolveDefaults(DialogType type, String? title, String? content, String? confirmLabel, String? cancelLabel, String? hintText) {
     switch (type) {
-      case DialogActionType.alert:
+      case DialogType.alert:
         return DialogDefaults(title: title ?? '提示', content: content, confirmLabel: confirmLabel ?? '确定', cancelLabel: cancelLabel ?? '取消', hintText: hintText ?? '请输入');
-      case DialogActionType.confirm:
+      case DialogType.confirm:
         return DialogDefaults(
           title: title ?? '确认操作',
           content: content ?? '确定要执行此操作吗？',
@@ -143,18 +143,18 @@ class DialogAction {
           cancelLabel: cancelLabel ?? '取消',
           hintText: hintText ?? '请输入',
         );
-      case DialogActionType.input:
+      case DialogType.input:
         return DialogDefaults(title: title ?? '请输入', content: content, confirmLabel: confirmLabel ?? '确定', cancelLabel: cancelLabel ?? '取消', hintText: hintText ?? '请输入');
-      case DialogActionType.multiAction:
+      case DialogType.multiAction:
         return DialogDefaults(title: title ?? '选择操作', content: content, confirmLabel: confirmLabel ?? '确定', cancelLabel: cancelLabel ?? '取消', hintText: hintText ?? '请输入');
-      case DialogActionType.custom:
+      case DialogType.custom:
         return DialogDefaults(title: title, content: content, confirmLabel: confirmLabel ?? '确定', cancelLabel: cancelLabel ?? '取消', hintText: hintText ?? '请输入');
     }
   }
 
   /// 根据 type 渲染对应的内容组件
   static Widget _buildContent<V>({
-    required DialogActionType type,
+    required DialogType type,
     required String? title,
     required String? content,
     required Widget? icon,
@@ -174,7 +174,7 @@ class DialogAction {
     required BuildContext ctx,
   }) {
     switch (type) {
-      case DialogActionType.alert:
+      case DialogType.alert:
         return DialogAlert(
           title: title,
           content: content,
@@ -187,7 +187,7 @@ class DialogAction {
           },
         );
 
-      case DialogActionType.confirm:
+      case DialogType.confirm:
         return DialogConfirm(
           title: title,
           content: content,
@@ -206,7 +206,7 @@ class DialogAction {
           },
         );
 
-      case DialogActionType.input:
+      case DialogType.input:
         return DialogInput(
           title: title,
           content: content,
@@ -227,7 +227,7 @@ class DialogAction {
           },
         );
 
-      case DialogActionType.multiAction:
+      case DialogType.multiAction:
         return DialogMultiAction<V>(
           title: title,
           content: content,
@@ -240,7 +240,7 @@ class DialogAction {
           },
         );
 
-      case DialogActionType.custom:
+      case DialogType.custom:
         return DialogCustom(child: customChild ?? const SizedBox.shrink());
     }
   }
