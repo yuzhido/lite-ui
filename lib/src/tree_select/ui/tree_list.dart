@@ -48,6 +48,15 @@ class TreeList<T extends Object> extends StatefulWidget {
   /// 关键字高亮样式配置
   final KeywordHighlightStyle? highlightStyle;
 
+  /// 是否允许选中父节点
+  final bool parentSelectable;
+
+  /// 父节点圆圈点击回调（仅多选 + parentSelectable 时有效）
+  final void Function(TreeNode<T> node)? onParentIndicatorTap;
+
+  /// 父节点文本点击时需要展开（懒加载场景），由外部处理加载后再选中
+  final void Function(TreeNode<T> node)? onParentExpandForSelect;
+
   const TreeList({
     super.key,
     required this.nodes,
@@ -59,6 +68,9 @@ class TreeList<T extends Object> extends StatefulWidget {
     this.onChildrenLoaded,
     this.keyword = '',
     this.highlightStyle,
+    this.parentSelectable = false,
+    this.onParentIndicatorTap,
+    this.onParentExpandForSelect,
   });
 
   @override
@@ -134,8 +146,8 @@ class _TreeListState<T extends Object> extends State<TreeList<T>> {
     final hasChildren = node.children.isNotEmpty;
     final canExpand = !node.isLeaf && (hasChildren || widget.onLoadChildren != null);
     final isSelected = widget.selectedIds.contains(node.id);
-    final isHalfSelected = widget.multiple && TreeUtils.isNodeHalfSelected(node, widget.selectedIds);
-    final isFullySelected = widget.multiple && TreeUtils.isNodeFullySelected(node, widget.selectedIds);
+    final isHalfSelected = widget.multiple && !widget.parentSelectable && TreeUtils.isNodeHalfSelected(node, widget.selectedIds);
+    final isFullySelected = widget.multiple && (widget.parentSelectable ? isSelected : TreeUtils.isNodeFullySelected(node, widget.selectedIds));
     final indent = level * 24.0;
 
     return Column(
@@ -167,39 +179,7 @@ class _TreeListState<T extends Object> extends State<TreeList<T>> {
               const SizedBox(width: 4),
 
               // —— 右侧文本 + 选择器区 ——
-              Expanded(
-                child: InkWell(
-                  onTap: () => widget.onNodeTap?.call(node),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: buildHighlightedText(
-                            text: node.label,
-                            keyword: widget.keyword,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: isSelected || isFullySelected ? const Color(0xFF007AFF) : const Color(0xFF1A1A1A),
-                              fontWeight: isSelected || isFullySelected ? FontWeight.w600 : FontWeight.normal,
-                            ),
-                            highlightStyle: widget.highlightStyle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-
-                        // 子节点数量 badge
-                        if (canExpand && hasChildren) ...[const SizedBox(width: 8), _buildChildCountBadge(node)],
-
-                        // 选择指示器（放在最后，避免 badge 文字变化时挤动圆圈）
-                        if (widget.multiple) ...[const SizedBox(width: 8), _buildSelectIndicator(isFullySelected, isHalfSelected)],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              Expanded(child: _buildContentArea(node, canExpand, hasChildren, isSelected, isFullySelected, isHalfSelected)),
             ],
           ),
         ),
@@ -207,6 +187,68 @@ class _TreeListState<T extends Object> extends State<TreeList<T>> {
         // 子节点
         if (node.isExpanded && hasChildren) ...node.children.map((child) => _buildTreeNode(child, level: level + 1)),
       ],
+    );
+  }
+
+  // ── 内容区域构建 ──
+
+  Widget _buildContentArea(TreeNode<T> node, bool canExpand, bool hasChildren, bool isSelected, bool isFullySelected, bool isHalfSelected) {
+    // 多选 + parentSelectable + 非叶子节点：拆分文本区和圆圈区
+    final splitIndicator = widget.multiple && canExpand && !node.isLeaf;
+
+    return InkWell(
+      onTap: () {
+        if (!widget.parentSelectable && canExpand) {
+          // parentSelectable=false + 父节点 → 展开/折叠
+          _toggleNodeExpansion(node.id);
+        } else if (widget.parentSelectable && widget.multiple && canExpand && !node.isLeaf && !node.isChildrenLoaded) {
+          // parentSelectable=true + 多选 + 父节点未加载 → 通知外部懒加载后再选中
+          widget.onParentExpandForSelect?.call(node);
+        } else {
+          // 正常选中逻辑
+          widget.onNodeTap?.call(node);
+        }
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: buildHighlightedText(
+                text: node.label,
+                keyword: widget.keyword,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isSelected || isFullySelected ? const Color(0xFF007AFF) : const Color(0xFF1A1A1A),
+                  fontWeight: isSelected || isFullySelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+                highlightStyle: widget.highlightStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // 子节点数量 badge
+            if (canExpand && hasChildren) ...[const SizedBox(width: 8), _buildChildCountBadge(node)],
+
+            // 选择指示器
+            if (widget.multiple) ...[
+              const SizedBox(width: 8),
+              if (splitIndicator) _buildSplitIndicator(node, isFullySelected, isHalfSelected) else _buildSelectIndicator(isFullySelected, isHalfSelected),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 拆分模式下的圆圈指示器（独立点击区域，不触发行点击）
+  Widget _buildSplitIndicator(TreeNode<T> node, bool isFully, bool isHalf) {
+    return GestureDetector(
+      onTap: () => widget.onParentIndicatorTap?.call(node),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(padding: const EdgeInsets.all(2), child: _buildSelectIndicator(isFully, isHalf)),
     );
   }
 

@@ -14,6 +14,8 @@ class TreeSelectHelper {
   /// 显示树形选择器弹窗（单选模式）
   ///
   /// 选中节点后自动关闭并返回该节点，取消返回 null。
+  ///
+  /// [selectedId] 预选中的节点ID，传 null 表示无预选中。
   static Future<TreeNode<T>?> show<T extends Object>({
     required BuildContext context,
     required List<TreeNode<T>> treeData,
@@ -21,7 +23,8 @@ class TreeSelectHelper {
     String searchHint = '搜索...',
     String emptyText = '暂无数据',
     bool showSearch = true,
-    Set<T> selectedIds = const {},
+    bool parentSelectable = false,
+    T? selectedId,
     TreeNodeTapCallback<T>? onSelect,
     TreeNodeLoadChildrenCallback<T>? onLoadChildren,
     String cancelLabel = '取消',
@@ -45,7 +48,8 @@ class TreeSelectHelper {
                 emptyText: emptyText,
                 showSearch: showSearch,
                 multiple: false,
-                selectedIds: selectedIds,
+                parentSelectable: parentSelectable,
+                selectedIds: selectedId != null ? {selectedId} : const {},
                 onSelect: onSelect,
                 onLoadChildren: onLoadChildren,
                 cancelLabel: cancelLabel,
@@ -62,6 +66,9 @@ class TreeSelectHelper {
   /// 显示树形选择器弹窗（多选模式）
   ///
   /// 用户选择完成后点击"确定"关闭，返回选中的节点列表，取消返回 null。
+  ///
+  /// [selectedIds] 预选中的节点ID列表，内部自动转为 Set。
+  /// 可直接传入后端返回的 ID 列表，无需手动转换。
   static Future<List<TreeNode<T>>?> showMultiple<T extends Object>({
     required BuildContext context,
     required List<TreeNode<T>> treeData,
@@ -69,7 +76,8 @@ class TreeSelectHelper {
     String searchHint = '搜索...',
     String emptyText = '暂无数据',
     bool showSearch = true,
-    Set<T> selectedIds = const {},
+    bool parentSelectable = false,
+    List<T> selectedIds = const [],
     TreeNodeSelectCallback<T>? onConfirm,
     TreeNodeLoadChildrenCallback<T>? onLoadChildren,
     String cancelLabel = '取消',
@@ -93,7 +101,8 @@ class TreeSelectHelper {
                 emptyText: emptyText,
                 showSearch: showSearch,
                 multiple: true,
-                selectedIds: selectedIds,
+                parentSelectable: parentSelectable,
+                selectedIds: selectedIds.toSet(),
                 onConfirm: onConfirm,
                 onLoadChildren: onLoadChildren,
                 cancelLabel: cancelLabel,

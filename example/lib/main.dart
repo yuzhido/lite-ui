@@ -34,13 +34,7 @@ class HomePage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _buildNavItem(context, icon: Icons.menu_open, title: 'ActionSheet', subtitle: '底部弹窗操作面板', page: const ActionSheetDemoPage()),
-          _buildNavItem(
-            context,
-            icon: Icons.account_tree_rounded,
-            title: 'TreeSelect',
-            subtitle: '树形选择器（单选/多选）',
-            page: const TreeSelectExample(),
-          ),
+          _buildNavItem(context, icon: Icons.account_tree_rounded, title: 'TreeSelect', subtitle: '树形选择器（单选/多选）', page: const TreeSelectExamplePage()),
           _buildNavItem(context, icon: Icons.inbox_outlined, title: 'EmptyData', subtitle: '空状态数据展示组件', page: const EmptyDataDemoPage()),
           _buildNavItem(context, icon: Icons.open_in_browser, title: 'DialogAction', subtitle: '居中弹窗操作组件', page: const DialogActionDemoPage()),
         ],

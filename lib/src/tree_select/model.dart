@@ -100,6 +100,15 @@ class TreeSelectConfig<T extends Object> {
   /// 确定按钮文字
   final String confirmLabel;
 
+  /// 是否允许选中父节点
+  ///
+  /// - false（默认）：点击父节点仅展开/折叠，不选中；
+  ///   但当所有子节点被选中时，父节点自动被联动选中。
+  /// - true：父节点可被直接选中。
+  ///   多选模式下，点击父节点行 = 选中父+联动子节点；
+  ///   点击父节点圆圈 = 仅选中/取消父节点自身。
+  final bool parentSelectable;
+
   /// 关键字高亮样式配置
   /// 为 null 时使用默认高亮配置（蓝色加粗），传 KeywordHighlightStyle(enabled: false) 关闭
   final KeywordHighlightStyle? highlightStyle;
@@ -110,6 +119,7 @@ class TreeSelectConfig<T extends Object> {
     this.emptyText = '暂无数据',
     this.showSearch = true,
     this.multiple = false,
+    this.parentSelectable = false,
     this.selectedIds = const {},
     this.onSelect,
     this.onConfirm,

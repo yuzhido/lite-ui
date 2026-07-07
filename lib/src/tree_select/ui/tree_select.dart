@@ -48,6 +48,10 @@ class _TreeSelectState<T extends Object> extends State<TreeSelect<T>> with Singl
     _searchController = TextEditingController();
     _selectedIds = Set.from(widget.config.selectedIds);
     _applyFilter('');
+
+    // 展开所有选中节点的祖先路径
+    TreeUtils.expandSelectedNodeAncestors(_filteredData, _selectedIds);
+    setState(() {}); // 触发重建以应用展开状态
   }
 
   @override
@@ -64,9 +68,11 @@ class _TreeSelectState<T extends Object> extends State<TreeSelect<T>> with Singl
       }
     }
 
-    // selectedIds 变化时：同步内部选中状态
+    // selectedIds 变化时：同步内部选中状态并重新计算展开状态
     if (widget.config.selectedIds != oldWidget.config.selectedIds) {
       _selectedIds = Set.from(widget.config.selectedIds);
+      TreeUtils.expandSelectedNodeAncestors(_filteredData, _selectedIds);
+      setState(() {});
     }
   }
 
@@ -91,21 +97,75 @@ class _TreeSelectState<T extends Object> extends State<TreeSelect<T>> with Singl
   // ── 选择逻辑 ──
 
   void _selectNode(TreeNode<T> node) {
-    if (widget.config.multiple) {
-      setState(() {
-        _toggleSelectWithChildren(node);
-      });
-    } else {
-      _onNodeTap(node);
+    if (!widget.config.multiple) {
+      _onNodeTap(node); // 单选：选中并关闭
+      return;
     }
+    // 多选：联动选中/取消所有后代
+    setState(() {
+      _toggleSelectWithChildren(node);
+    });
   }
 
   void _toggleSelectWithChildren(TreeNode<T> node) {
     final isCurrentlySelected = TreeUtils.isNodeFullySelected(node, _selectedIds);
     if (isCurrentlySelected) {
       TreeUtils.removeNodeAndDescendants(node, _selectedIds);
+      if (!widget.config.parentSelectable) {
+        TreeUtils.autoDeselectParentChain(_filteredData, node, _selectedIds);
+      }
     } else {
       TreeUtils.addNodeAndDescendants(node, _selectedIds);
+      if (!widget.config.parentSelectable) {
+        TreeUtils.autoSelectParentChain(_filteredData, node, _selectedIds);
+      }
+    }
+  }
+
+  /// 多选模式下，点击父节点圆圈的独立处理
+  ///
+  /// - parentSelectable=false（默认）：联动选中/取消所有子节点
+  /// - parentSelectable=true：仅选中/取消父节点自身
+  void _onParentIndicatorTap(TreeNode<T> node) {
+    setState(() {
+      if (widget.config.parentSelectable) {
+        // 仅选中/取消父节点自身，不联动子节点，不展开
+        if (_selectedIds.contains(node.id)) {
+          _selectedIds.remove(node.id);
+        } else {
+          _selectedIds.add(node.id);
+        }
+      } else {
+        // 默认模式：联动子节点
+        _toggleSelectWithChildren(node);
+      }
+    });
+  }
+
+  /// 多选 + parentSelectable 模式下，点击父节点文本但子节点未加载时，先懒加载再全选
+  void _onParentExpandForSelect(TreeNode<T> node) async {
+    final clonedNode = TreeUtils.findNode(_filteredData, node.id);
+    if (clonedNode == null || clonedNode.isChildrenLoaded) return;
+
+    // 触发懒加载（展开 + loading）
+    setState(() {
+      clonedNode.isLoading = true;
+      clonedNode.isExpanded = true;
+    });
+    try {
+      final children = await widget.config.onLoadChildren!(clonedNode);
+      setState(() {
+        TreeUtils.setNodeChildren(_filteredData, node.id, children);
+        clonedNode.isLoading = false;
+        // 同步到原始数据
+        TreeUtils.setNodeChildren(widget.treeData, node.id, children);
+        // 加载完成后自动全选（不向上联动父节点）
+        TreeUtils.addNodeAndDescendants(clonedNode, _selectedIds);
+      });
+    } catch (_) {
+      setState(() {
+        clonedNode.isLoading = false;
+      });
     }
   }
 
@@ -160,6 +220,11 @@ class _TreeSelectState<T extends Object> extends State<TreeSelect<T>> with Singl
                 onNodeTap: _selectNode,
                 keyword: _searchController.text,
                 highlightStyle: widget.config.highlightStyle,
+                parentSelectable: widget.config.parentSelectable,
+                onParentIndicatorTap: widget.config.multiple ? _onParentIndicatorTap : null,
+                onParentExpandForSelect: widget.config.multiple && widget.config.parentSelectable
+                    ? _onParentExpandForSelect
+                    : null,
               ),
             ),
 

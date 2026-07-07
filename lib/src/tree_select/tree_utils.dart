@@ -161,4 +161,90 @@ class TreeUtils {
       removeNodeAndDescendants(child, selectedIds);
     }
   }
+
+  // ── 展开状态管理 ─
+
+  /// 展开所有选中节点的祖先路径
+  ///
+  /// 遍历树结构，找到所有在 selectedIds 中的节点，并将其所有祖先节点的 isExpanded 设为 true。
+  /// 这样当弹窗打开时，已选中的项会自动展开其父节点，方便用户查看当前选中状态。
+  static void expandSelectedNodeAncestors<T extends Object>(List<TreeNode<T>> nodes, Set<T> selectedIds) {
+    for (final node in nodes) {
+      final hasSelectedDescendant = _hasSelectedDescendant(node, selectedIds);
+      if (hasSelectedDescendant) {
+        node.isExpanded = true;
+      }
+      expandSelectedNodeAncestors(node.children, selectedIds);
+    }
+  }
+
+  /// 检查节点或其子树中是否有选中节点
+  static bool _hasSelectedDescendant<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+    if (selectedIds.contains(node.id)) return true;
+    for (final child in node.children) {
+      if (_hasSelectedDescendant(child, selectedIds)) return true;
+    }
+    return false;
+  }
+
+  // ── 自动联动父节点链 ──
+
+  /// 在树中查找指定节点的父节点（通过搜索树结构，不依赖 parentId 字段）
+  static TreeNode<T>? findParentNode<T extends Object>(List<TreeNode<T>> roots, T nodeId) {
+    for (final node in roots) {
+      for (final child in node.children) {
+        if (child.id == nodeId) return node;
+      }
+      final found = findParentNode(node.children, nodeId);
+      if (found != null) return found;
+    }
+    return null;
+  }
+
+  /// 选中节点后向上联动：若祖先的所有直接子节点都已选中，自动将祖先加入 selectedIds
+  ///
+  /// 从 [node] 的父节点开始向上逐级检查，通过搜索树结构定位父节点，
+  /// 不依赖 parentId 字段（兼容未设置 parentId 的场景）。
+  static void autoSelectParentChain<T extends Object>(
+    List<TreeNode<T>> roots,
+    TreeNode<T> node,
+    Set<T> selectedIds,
+  ) {
+    TreeNode<T>? current = node;
+    while (current != null) {
+      final parent = findParentNode(roots, current.id);
+      if (parent == null) break;
+      // 懒加载未完成的节点不参与联动
+      if (!parent.isChildrenLoaded) break;
+      // 检查所有直接子节点是否都已完全选中
+      final allChildrenSelected = parent.children.every((child) => isNodeFullySelected(child, selectedIds));
+      if (allChildrenSelected) {
+        selectedIds.add(parent.id);
+        current = parent; // 继续向上
+      } else {
+        break;
+      }
+    }
+  }
+
+  /// 取消节点后向上联动：若祖先不再完全选中，自动将祖先从 selectedIds 移除
+  ///
+  /// 从 [node] 的父节点开始向上逐级检查，通过搜索树结构定位父节点。
+  static void autoDeselectParentChain<T extends Object>(
+    List<TreeNode<T>> roots,
+    TreeNode<T> node,
+    Set<T> selectedIds,
+  ) {
+    TreeNode<T>? current = node;
+    while (current != null) {
+      final parent = findParentNode(roots, current.id);
+      if (parent == null) break;
+      if (selectedIds.contains(parent.id)) {
+        selectedIds.remove(parent.id);
+        current = parent; // 继续向上
+      } else {
+        break; // 祖先本来就没选中，无需继续
+      }
+    }
+  }
 }
