@@ -7,4 +7,5 @@ export 'src/dialog_action/index.dart';
 export 'widgets/keyword_highlight.dart';
 
 // 数据类型定义模型以及枚举统一导出
+export 'src/input_number/index.dart';
 export 'src/models/index.dart';

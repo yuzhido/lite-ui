@@ -5,6 +5,7 @@ import 'pages/empty_data_demo.dart';
 import 'pages/tree_select_example.dart';
 import 'pages/action_sheet_new_features_demo.dart';
 import 'pages/select_modal_demo.dart';
+import 'pages/input_number_demo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,6 +42,7 @@ class HomePage extends StatelessWidget {
           _buildNavItem(context, icon: Icons.account_tree_rounded, title: 'TreeSelect', subtitle: '树形选择器（单选/多选）', page: const TreeSelectExamplePage()),
           _buildNavItem(context, icon: Icons.inbox_outlined, title: 'EmptyData', subtitle: '空状态数据展示组件', page: const EmptyDataDemoPage()),
           _buildNavItem(context, icon: Icons.open_in_browser, title: 'DialogAction', subtitle: '居中弹窗操作组件', page: const DialogActionDemoPage()),
+          _buildNavItem(context, icon: Icons.dialpad, title: 'InputNumber', subtitle: '数字加减输入组件', page: const InputNumberDemoPage()),
         ],
       ),
     );
