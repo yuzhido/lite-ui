@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/src/models/dialog_action.dart';
 
-import 'model.dart';
 import 'ui/dialog_alert.dart';
 import 'ui/dialog_input.dart';
 import 'ui/dialog_custom.dart';

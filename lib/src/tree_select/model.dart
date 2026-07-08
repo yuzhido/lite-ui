@@ -34,16 +34,7 @@ class TreeNode<T extends Object> {
   /// 附加数据
   final Map<String, dynamic>? data;
 
-  TreeNode({
-    required this.id,
-    required this.label,
-    this.parentId,
-    this.children = const [],
-    this.isExpanded = false,
-    this.isLeaf = false,
-    this.isLoading = false,
-    this.data,
-  });
+  TreeNode({required this.id, required this.label, this.parentId, this.children = const [], this.isExpanded = false, this.isLeaf = false, this.isLoading = false, this.data});
 
   /// 是否有子节点（已加载的或待加载的都算）
   bool get hasChildren => children.isNotEmpty || (!isLeaf && children.isEmpty);

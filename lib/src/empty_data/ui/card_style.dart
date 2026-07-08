@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../model.dart';
-import 'empty_data_action_button.dart';
-import 'empty_data_style_params.dart';
+import '../../models/empty_data.dart';
+import 'action_button.dart';
 
 /// EmptyData 卡片风格：带顶部渐变色带的装饰卡片
 class EmptyDataCardStyle extends StatelessWidget {
@@ -79,10 +78,7 @@ class EmptyDataCardStyle extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (params.actionLabel != null || params.actionWidget != null) ...[
-                      const SizedBox(height: 20),
-                      EmptyDataActionButton(params: params, config: config),
-                    ],
+                    if (params.actionLabel != null || params.actionWidget != null) ...[const SizedBox(height: 20), EmptyDataActionButton(params: params, config: config)],
                   ],
                 ),
               ),

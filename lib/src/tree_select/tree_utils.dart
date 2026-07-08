@@ -205,11 +205,7 @@ class TreeUtils {
   ///
   /// 从 [node] 的父节点开始向上逐级检查，通过搜索树结构定位父节点，
   /// 不依赖 parentId 字段（兼容未设置 parentId 的场景）。
-  static void autoSelectParentChain<T extends Object>(
-    List<TreeNode<T>> roots,
-    TreeNode<T> node,
-    Set<T> selectedIds,
-  ) {
+  static void autoSelectParentChain<T extends Object>(List<TreeNode<T>> roots, TreeNode<T> node, Set<T> selectedIds) {
     TreeNode<T>? current = node;
     while (current != null) {
       final parent = findParentNode(roots, current.id);
@@ -230,11 +226,7 @@ class TreeUtils {
   /// 取消节点后向上联动：若祖先不再完全选中，自动将祖先从 selectedIds 移除
   ///
   /// 从 [node] 的父节点开始向上逐级检查，通过搜索树结构定位父节点。
-  static void autoDeselectParentChain<T extends Object>(
-    List<TreeNode<T>> roots,
-    TreeNode<T> node,
-    Set<T> selectedIds,
-  ) {
+  static void autoDeselectParentChain<T extends Object>(List<TreeNode<T>> roots, TreeNode<T> node, Set<T> selectedIds) {
     TreeNode<T>? current = node;
     while (current != null) {
       final parent = findParentNode(roots, current.id);

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../model.dart';
+import 'package:lite_ui/src/models/dialog_action.dart';
 import 'dialog_widgets.dart';
 
 /// MultiAction 多操作弹窗

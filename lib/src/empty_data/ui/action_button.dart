@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../model.dart';
-import 'empty_data_style_params.dart';
+import '../../models/empty_data.dart';
 
 /// EmptyData 操作按钮组件
 ///
@@ -14,12 +13,7 @@ class EmptyDataActionButton extends StatelessWidget {
   /// 是否使用紧凑尺寸（compact 风格使用更小的 padding 和字体）
   final bool compact;
 
-  const EmptyDataActionButton({
-    required this.params,
-    required this.config,
-    this.compact = false,
-    super.key,
-  });
+  const EmptyDataActionButton({required this.params, required this.config, this.compact = false, super.key});
 
   @override
   Widget build(BuildContext context) {

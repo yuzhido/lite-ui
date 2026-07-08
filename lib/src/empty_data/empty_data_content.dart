@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'model.dart';
-import 'ui/empty_data_card_style.dart';
-import 'ui/empty_data_style_params.dart';
-import 'ui/empty_data_default_style.dart';
-import 'ui/empty_data_compact_style.dart';
-import 'ui/empty_data_minimal_style.dart';
+import '../models/empty_data.dart';
+import 'ui/card_style.dart';
+import 'ui/default_style.dart';
+import 'ui/compact_style.dart';
+import 'ui/minimal_style.dart';
 
 /// 空状态数据展示组件
 ///

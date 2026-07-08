@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../model.dart';
-import 'empty_data_action_button.dart';
-import 'empty_data_style_params.dart';
+import '../../models/empty_data.dart';
+import 'action_button.dart';
 
 /// EmptyData 极简风格：圆点装饰 + 纯文字 + 渐变分隔线
 class EmptyDataMinimalStyle extends StatelessWidget {
@@ -66,10 +65,7 @@ class EmptyDataMinimalStyle extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            if (params.actionLabel != null || params.actionWidget != null) ...[
-              const SizedBox(height: 20),
-              EmptyDataActionButton(params: params, config: config),
-            ],
+            if (params.actionLabel != null || params.actionWidget != null) ...[const SizedBox(height: 20), EmptyDataActionButton(params: params, config: config)],
           ],
         ),
       ),

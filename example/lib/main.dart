@@ -3,6 +3,8 @@ import 'pages/action_sheet_demo.dart';
 import 'pages/dialog_action_demo.dart';
 import 'pages/empty_data_demo.dart';
 import 'pages/tree_select_example.dart';
+import 'pages/action_sheet_new_features_demo.dart';
+import 'pages/select_modal_demo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,6 +36,8 @@ class HomePage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _buildNavItem(context, icon: Icons.menu_open, title: 'ActionSheet', subtitle: '底部弹窗操作面板', page: const ActionSheetDemoPage()),
+          _buildNavItem(context, icon: Icons.new_releases, title: 'ActionSheet 新功能', subtitle: '分组、图标、禁用状态', page: const ActionSheetNewFeaturesDemoPage()),
+          _buildNavItem(context, icon: Icons.filter_list, title: 'SelectModal', subtitle: '可过滤/远程搜索选择器', page: const SelectModalDemoPage()),
           _buildNavItem(context, icon: Icons.account_tree_rounded, title: 'TreeSelect', subtitle: '树形选择器（单选/多选）', page: const TreeSelectExamplePage()),
           _buildNavItem(context, icon: Icons.inbox_outlined, title: 'EmptyData', subtitle: '空状态数据展示组件', page: const EmptyDataDemoPage()),
           _buildNavItem(context, icon: Icons.open_in_browser, title: 'DialogAction', subtitle: '居中弹窗操作组件', page: const DialogActionDemoPage()),

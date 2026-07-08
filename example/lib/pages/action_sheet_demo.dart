@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ui/lite_ui.dart';
 
+import '../mock/action_sheet_mock_data.dart';
+
 class ActionSheetDemoPage extends StatefulWidget {
   const ActionSheetDemoPage({super.key});
 
@@ -11,117 +13,160 @@ class ActionSheetDemoPage extends StatefulWidget {
 class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
   String _selectedResult = '暂无选择';
 
-  /// 示例数据 - 城市列表，使用 `SelectItem<String, void>`
-  final List<SelectItem<String, void>> _cityItems = const [
-    SelectItem(label: '北京', subtitle: 'Beijing · 首都', value: 'beijing'),
-    SelectItem(label: '上海', subtitle: 'Shanghai · 经济中心', value: 'shanghai'),
-    SelectItem(label: '广州', subtitle: 'Guangzhou · 华南重镇', value: 'guangzhou'),
-    SelectItem(label: '深圳', subtitle: 'Shenzhen · 科技之城', value: 'shenzhen'),
-    SelectItem(label: '杭州', subtitle: 'Hangzhou · 互联网之都', value: 'hangzhou'),
-    SelectItem(label: '成都', subtitle: 'Chengdu · 天府之国', value: 'chengdu'),
-    SelectItem(label: '武汉', subtitle: 'Wuhan · 九省通衢', value: 'wuhan'),
-    SelectItem(label: '南京', subtitle: 'Nanjing · 六朝古都', value: 'nanjing'),
-    SelectItem(label: '重庆', subtitle: 'Chongqing · 山城', value: 'chongqing'),
-    SelectItem(label: '西安', subtitle: "Xi'an · 十三朝古都", value: 'xian'),
-    SelectItem(label: '苏州', subtitle: 'Suzhou · 人间天堂', value: 'suzhou'),
-    SelectItem(label: '天津', subtitle: 'Tianjin · 直辖市', value: 'tianjin'),
-    SelectItem(label: '长沙', subtitle: 'Changsha · 星城', value: 'changsha'),
-    SelectItem(label: '青岛', subtitle: 'Qingdao · 海滨城市', value: 'qingdao'),
-    SelectItem(label: '大连', subtitle: 'Dalian · 北方明珠', value: 'dalian'),
-  ];
-
-  /// 单选 Filterable 示例
-  void _showFilterableSingle() async {
-    await ActionSheet.show<String, void>(
-      context: context,
-      type: ActionSheetType.filterable,
-      title: '选择城市',
-      description: '本地过滤选择，点击即选中',
-      items: _cityItems,
-      searchHint: '输入城市名搜索',
-      onSelect: (value, data) {
-        setState(() => _selectedResult = '单选结果：$value');
-      },
-    );
-  }
-
-  /// 多选 Filterable 示例
-  void _showFilterableMulti() async {
-    await ActionSheet.show<String, void>(
-      context: context,
-      type: ActionSheetType.filterable,
-      title: '选择多个城市',
-      description: '支持多选，点击确认后返回',
-      items: _cityItems,
-      multiple: true,
-      searchHint: '输入城市名搜索',
-      onConfirm: (values, datas) {
-        final names = values.join('、');
-        setState(() => _selectedResult = '多选结果：$names');
-      },
-    );
-  }
-
-  /// 远程搜索示例
-  void _showRemoteSearch() async {
-    await ActionSheet.show<String, void>(
-      context: context,
-      type: ActionSheetType.remote,
-      title: '远程搜索城市',
-      description: '模拟异步搜索，支持防抖',
-      searchHint: '输入关键字远程搜索',
-      onSearch: (keyword) async {
-        // 模拟网络延迟
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (keyword.isEmpty) return _cityItems;
-        final kw = keyword.toLowerCase();
-        return _cityItems.where((item) {
-          return item.label.toLowerCase().contains(kw) ||
-              (item.subtitle?.toLowerCase().contains(kw) ?? false);
-        }).toList();
-      },
-      onSelect: (value, data) {
-        setState(() => _selectedResult = '远程搜索结果：$value');
-      },
-    );
-  }
-
-  /// 本地操作列表示例
+  /// 基本本地操作列表示例
   void _showLocalActionSheet() async {
     await ActionSheet.show<String, void>(
       context: context,
       type: ActionSheetType.local,
       title: '操作菜单',
       description: '选择一个操作',
+      items: ActionSheetMockData.defaultItems,
       onSelect: (value, data) {
         setState(() => _selectedResult = '本地操作：选择了 $value');
       },
     );
   }
 
-  /// 带动态数据的 Filterable 示例
-  void _showFilterableWithDynamic() async {
+  /// 分组显示示例
+  void _showSectionedExample() async {
     await ActionSheet.show<String, void>(
       context: context,
-      type: ActionSheetType.filterable,
-      title: '选择城市（含动态数据）',
-      description: '输入关键字时会动态合并额外数据',
-      items: _cityItems.sublist(0, 8), // 只显示前8个静态数据
-      searchHint: '输入关键字搜索',
-      dynamicItems: (keyword) async {
-        // 模拟动态数据（如从接口获取）
-        await Future.delayed(const Duration(milliseconds: 300));
-        if (keyword.isEmpty) return [];
-        return [
-          SelectItem<String, void>(
-            label: '动态: $keyword',
-            subtitle: '这是动态生成的选项',
-            value: 'dynamic_$keyword',
-          ),
-        ];
-      },
+      type: ActionSheetType.local,
+      title: '文件操作',
+      description: '选择一个操作',
+      sections: ActionSheetMockData.sectionedItems,
       onSelect: (value, data) {
-        setState(() => _selectedResult = '动态数据结果：$value');
+        setState(() => _selectedResult = '分组选择：$value');
+      },
+    );
+  }
+
+  /// 带图标的列表项示例
+  void _showIconExample() async {
+    await ActionSheet.show<String, void>(
+      context: context,
+      type: ActionSheetType.local,
+      title: '操作菜单',
+      description: '每个操作项带有图标',
+      items: ActionSheetMockData.iconItems,
+      onSelect: (value, data) {
+        setState(() => _selectedResult = '图标选择：$value');
+      },
+    );
+  }
+
+  /// 禁用状态示例
+  void _showDisabledExample() async {
+    final disabledItems = [
+      SelectItem.withIcon(
+        label: '拍照',
+        value: 'camera',
+        iconData: const IconData(0xe3ae, fontFamily: 'MaterialIcons'),
+        iconColor: const Color(0xFF2196F3),
+      ),
+      SelectItem.withIcon(
+        label: '从相册选择',
+        value: 'album',
+        iconData: const IconData(0xe39a, fontFamily: 'MaterialIcons'),
+        iconColor: const Color(0xFF4CAF50),
+        disabled: true,
+        disabledLabel: '不可用',
+      ),
+      SelectItem.withIcon(
+        label: '录制视频',
+        value: 'video',
+        iconData: const IconData(0xe3b1, fontFamily: 'MaterialIcons'),
+        iconColor: const Color(0xFFF44336),
+      ),
+      SelectItem.withIcon(
+        label: '文件管理器',
+        value: 'files',
+        iconData: const IconData(0xe2bc, fontFamily: 'MaterialIcons'),
+        iconColor: const Color(0xFFFF9800),
+        disabled: true,
+        disabledLabel: '不可用',
+      ),
+      SelectItem.withIcon(
+        label: '收藏夹',
+        value: 'favorites',
+        iconData: const IconData(0xe25b, fontFamily: 'MaterialIcons'),
+        iconColor: const Color(0xFFFFC107),
+      ),
+    ];
+
+    await ActionSheet.show<String, void>(
+      context: context,
+      type: ActionSheetType.local,
+      title: '操作菜单',
+      description: '部分操作不可用',
+      showDisabledBadge: true,
+      items: disabledItems,
+      onSelect: (value, data) {
+        setState(() => _selectedResult = '禁用状态选择：$value');
+      },
+    );
+  }
+
+  /// 分组 + 图标 + 禁用状态组合示例
+  void _showCombinedExample() async {
+    await ActionSheet.show<String, void>(
+      context: context,
+      type: ActionSheetType.local,
+      title: '完整功能示例',
+      description: '分组 + 图标 + 禁用状态组合',
+      showDisabledBadge: true,
+      sections: [
+        ActionSheetSection(
+          title: '文件操作',
+          items: [
+            SelectItem.withIcon(
+              label: '新建文档',
+              value: 'new_doc',
+              iconData: const IconData(0xe234, fontFamily: 'MaterialIcons'),
+              iconColor: const Color(0xFF2196F3),
+            ),
+            SelectItem.withIcon(
+              label: '新建文件夹',
+              value: 'new_folder',
+              iconData: const IconData(0xe2bc, fontFamily: 'MaterialIcons'),
+              iconColor: const Color(0xFFFF9800),
+            ),
+            SelectItem.withIcon(
+              label: '从剪贴板粘贴',
+              value: 'paste',
+              iconData: const IconData(0xe14e, fontFamily: 'MaterialIcons'),
+              iconColor: const Color(0xFF4CAF50),
+              disabled: true,
+              disabledLabel: '不可用',
+            ),
+          ],
+        ),
+        ActionSheetSection(
+          title: '分享选项',
+          items: [
+            SelectItem.withIcon(
+              label: '微信好友',
+              value: 'wechat',
+              iconData: const IconData(0xe0a7, fontFamily: 'MaterialIcons'),
+              iconColor: const Color(0xFF4CAF50),
+            ),
+            SelectItem.withIcon(
+              label: '短信分享',
+              value: 'sms',
+              iconData: const IconData(0xe0d0, fontFamily: 'MaterialIcons'),
+              iconColor: const Color(0xFF2196F3),
+            ),
+            SelectItem.withIcon(
+              label: '复制链接',
+              value: 'copy_link',
+              iconData: const IconData(0xe157, fontFamily: 'MaterialIcons'),
+              iconColor: const Color(0xFF9C27B0),
+            ),
+          ],
+        ),
+      ],
+      onSelect: (value, data) {
+        setState(() => _selectedResult = '组合功能选择：$value');
       },
     );
   }
@@ -166,26 +211,22 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
             ),
             const SizedBox(height: 24),
 
-            // Filterable 单选
-            Text('Filterable 模式', style: Theme.of(context).textTheme.titleMedium),
+            // 基本功能
+            Text('基本功能', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            _buildButton('单选 - 本地过滤选择', Icons.filter_list, _showFilterableSingle),
-            const SizedBox(height: 8),
-            _buildButton('多选 - 本地过滤选择', Icons.filter_list_outlined, _showFilterableMulti),
-            const SizedBox(height: 8),
-            _buildButton('带动态数据 - 输入时合并新选项', Icons.add_circle_outline, _showFilterableWithDynamic),
+            _buildButton('默认操作菜单', Icons.menu, _showLocalActionSheet),
             const SizedBox(height: 24),
 
-            // Remote 搜索
-            Text('Remote 模式', style: Theme.of(context).textTheme.titleMedium),
+            // 高级功能
+            Text('高级功能', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            _buildButton('远程搜索 - 模拟异步请求', Icons.cloud, _showRemoteSearch),
-            const SizedBox(height: 24),
-
-            // Local 操作列表
-            Text('Local 模式', style: Theme.of(context).textTheme.titleMedium),
+            _buildButton('分组显示 - 操作项分组', Icons.view_list, _showSectionedExample),
             const SizedBox(height: 8),
-            _buildButton('本地操作菜单', Icons.menu, _showLocalActionSheet),
+            _buildButton('图标支持 - 列表项带图标', Icons.image, _showIconExample),
+            const SizedBox(height: 8),
+            _buildButton('禁用状态 - 部分操作不可用', Icons.block, _showDisabledExample),
+            const SizedBox(height: 8),
+            _buildButton('组合功能 - 分组+图标+禁用', Icons.dynamic_feed, _showCombinedExample),
           ],
         ),
       ),

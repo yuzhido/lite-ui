@@ -2,10 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'action_sheet_widgets.dart';
-import 'model.dart';
+import '../../models/select_item.dart';
+import '../../models/callbacks.dart';
+import '../../../../widgets/drag_indicator.dart';
+import '../../../../widgets/top_title_info.dart';
+import '../../../../widgets/input_search.dart';
+import '../../../../widgets/empty_state.dart';
+import '../../../../widgets/bottom_action_bar.dart';
+import 'widgets/check_list_item.dart';
 
-/// ActionSheet 远程搜索选择器
+/// SelectModal 远程搜索选择器
 ///
 /// 支持远程异步搜索，支持单选/多选模式。
 /// - 单选模式：点击项即选中并关闭弹窗
@@ -14,7 +20,7 @@ import 'model.dart';
 /// 泛型参数：
 /// - [V] 选项 value 的类型
 /// - [D] 选项 data 的类型（可选原始数据）
-class ActionSheetRemote<V, D> extends StatefulWidget {
+class SelectModalRemote<V, D> extends StatefulWidget {
   /// 主标题
   final String? title;
 
@@ -51,7 +57,7 @@ class ActionSheetRemote<V, D> extends StatefulWidget {
   /// 空状态提示文字
   final String emptyText;
 
-  const ActionSheetRemote({
+  const SelectModalRemote({
     super.key,
     this.title,
     this.description,
@@ -68,10 +74,10 @@ class ActionSheetRemote<V, D> extends StatefulWidget {
   });
 
   @override
-  State<ActionSheetRemote<V, D>> createState() => _ActionSheetRemoteState<V, D>();
+  State<SelectModalRemote<V, D>> createState() => _SelectModalRemoteState<V, D>();
 }
 
-class _ActionSheetRemoteState<V, D> extends State<ActionSheetRemote<V, D>> {
+class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
   final TextEditingController _searchController = TextEditingController();
 
   /// 当前搜索结果
@@ -168,8 +174,7 @@ class _ActionSheetRemoteState<V, D> extends State<ActionSheetRemote<V, D>> {
 
   /// 处理多选确认
   void _handleConfirm() {
-    final selectedItems =
-        _results.where((item) => _selectedValues.contains(item.value)).toList();
+    final selectedItems = _results.where((item) => _selectedValues.contains(item.value)).toList();
     final values = selectedItems.map((e) => e.value).toList();
     final datas = selectedItems.map((e) => e.data).toList();
     widget.onConfirm?.call(values, datas);
@@ -196,33 +201,20 @@ class _ActionSheetRemoteState<V, D> extends State<ActionSheetRemote<V, D>> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // 拖拽手柄
-          const ActionSheetDragHandle(),
+          const DragIndicator(),
 
-          // 头部：标题 + 描述 + 关闭按钮
-          ActionSheetHeader(
-              title: widget.title,
-              description: widget.description,
-              itemCount: _results.length,
-              onClose: () => Navigator.of(context).pop()),
+          // 头部：标题 + 描述 + 计数 + 关闭按钮
+          TopTitleInfo(title: widget.title ?? '', subTitle: widget.description, itemCount: _results.length, onClose: () => Navigator.of(context).pop()),
 
           // 搜索输入框
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ActionSheetSearchField(
-              hint: widget.searchHint,
-              keyword: _searchController.text,
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              onClear: _onClearSearch,
-            ),
-          ),
+          InputSearch(searchHint: widget.searchHint, searchController: _searchController, applyFilter: _onSearchChanged, onClear: _onClearSearch, keyword: _searchController.text),
 
           // 可滚动列表区域
           Expanded(child: _buildContent(theme)),
 
           // 多选模式底部栏
           if (widget.multiple)
-            ActionSheetBottomBar(
+            BottomActionBar(
               selectedCount: _selectedValues.length,
               cancelLabel: widget.cancelLabel,
               confirmLabel: widget.confirmLabel,
@@ -238,16 +230,12 @@ class _ActionSheetRemoteState<V, D> extends State<ActionSheetRemote<V, D>> {
   Widget _buildContent(ThemeData theme) {
     // Loading 状态
     if (_isLoading) {
-      return const SizedBox(
-          height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
+      return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
 
     // 空状态
     if (_results.isEmpty) {
-      return ActionSheetEmptyState(
-        message: _hasSearched ? widget.emptyText : '请输入关键字搜索',
-        icon: _hasSearched ? Icons.search_off : Icons.search,
-      );
+      return EmptyState(message: _hasSearched ? widget.emptyText : '请输入关键字搜索', icon: _hasSearched ? Icons.search_off : Icons.search);
     }
 
     // 数据列表
@@ -257,7 +245,7 @@ class _ActionSheetRemoteState<V, D> extends State<ActionSheetRemote<V, D>> {
       itemBuilder: (context, index) {
         final item = _results[index];
         final isSelected = _selectedValues.contains(item.value);
-        return ActionSheetCheckListItem(
+        return SelectModalCheckListItem(
           label: item.label,
           subtitle: item.subtitle,
           isChecked: isSelected,

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../model.dart';
-import 'empty_data_action_button.dart';
-import 'empty_data_style_params.dart';
+import '../../models/empty_data.dart';
+import 'action_button.dart';
 
 /// EmptyData 默认风格：居中圆形图标 + 文字
 class EmptyDataDefaultStyle extends StatelessWidget {

@@ -222,9 +222,7 @@ class _TreeSelectState<T extends Object> extends State<TreeSelect<T>> with Singl
                 highlightStyle: widget.config.highlightStyle,
                 parentSelectable: widget.config.parentSelectable,
                 onParentIndicatorTap: widget.config.multiple ? _onParentIndicatorTap : null,
-                onParentExpandForSelect: widget.config.multiple && widget.config.parentSelectable
-                    ? _onParentExpandForSelect
-                    : null,
+                onParentExpandForSelect: widget.config.multiple && widget.config.parentSelectable ? _onParentExpandForSelect : null,
               ),
             ),
 

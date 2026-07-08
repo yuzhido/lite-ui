@@ -1,9 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'action_sheet_widgets.dart';
-import 'model.dart';
 
-/// ActionSheet 可过滤选择器
+import '../../models/select_item.dart';
+import '../../models/callbacks.dart';
+import '../../../../widgets/drag_indicator.dart';
+import '../../../../widgets/top_title_info.dart';
+import '../../../../widgets/input_search.dart';
+import '../../../../widgets/empty_state.dart';
+import '../../../../widgets/bottom_action_bar.dart';
+import 'widgets/check_list_item.dart';
+
+/// SelectModal 可过滤选择器
 ///
 /// 支持本地过滤 + 动态数据合并，支持单选/多选模式。
 /// - 单选模式：点击项即选中并关闭弹窗
@@ -12,7 +19,7 @@ import 'model.dart';
 /// 泛型参数：
 /// - [V] 选项 value 的类型
 /// - [D] 选项 data 的类型（可选原始数据）
-class ActionSheetFilterable<V, D> extends StatefulWidget {
+class SelectModalFilterable<V, D> extends StatefulWidget {
   /// 主标题
   final String? title;
 
@@ -46,7 +53,7 @@ class ActionSheetFilterable<V, D> extends StatefulWidget {
   /// 确定按钮文字
   final String confirmLabel;
 
-  const ActionSheetFilterable({
+  const SelectModalFilterable({
     super.key,
     this.title,
     this.description,
@@ -62,10 +69,10 @@ class ActionSheetFilterable<V, D> extends StatefulWidget {
   });
 
   @override
-  State<ActionSheetFilterable<V, D>> createState() => _ActionSheetFilterableState<V, D>();
+  State<SelectModalFilterable<V, D>> createState() => _SelectModalFilterableState<V, D>();
 }
 
-class _ActionSheetFilterableState<V, D> extends State<ActionSheetFilterable<V, D>> {
+class _SelectModalFilterableState<V, D> extends State<SelectModalFilterable<V, D>> {
   final TextEditingController _searchController = TextEditingController();
 
   /// 当前搜索关键字
@@ -105,15 +112,13 @@ class _ActionSheetFilterableState<V, D> extends State<ActionSheetFilterable<V, D
         ? widget.items
         : widget.items.where((item) {
             final kw = _keyword.toLowerCase();
-            return item.label.toLowerCase().contains(kw) ||
-                (item.subtitle?.toLowerCase().contains(kw) ?? false);
+            return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
           }).toList();
 
     // 2. 合并动态数据（去重，基于 value）
     if (_dynamicResults.isEmpty) return filteredStatic;
     final staticValues = filteredStatic.map((e) => e.value).toSet();
-    final uniqueDynamic =
-        _dynamicResults.where((item) => !staticValues.contains(item.value)).toList();
+    final uniqueDynamic = _dynamicResults.where((item) => !staticValues.contains(item.value)).toList();
 
     return [...filteredStatic, ...uniqueDynamic];
   }
@@ -143,7 +148,7 @@ class _ActionSheetFilterableState<V, D> extends State<ActionSheetFilterable<V, D
   }
 
   /// 清除搜索
-  void _onClearSearch(String val) {
+  void _onClearSearch() {
     _searchController.clear();
     _onSearchChanged('');
   }
@@ -169,8 +174,7 @@ class _ActionSheetFilterableState<V, D> extends State<ActionSheetFilterable<V, D
 
   /// 处理多选确认
   void _handleConfirm() {
-    final selectedItems =
-        _filteredItems.where((item) => _selectedValues.contains(item.value)).toList();
+    final selectedItems = _filteredItems.where((item) => _selectedValues.contains(item.value)).toList();
     final values = selectedItems.map((e) => e.value).toList();
     final datas = selectedItems.map((e) => e.data).toList();
     widget.onConfirm?.call(values, datas);
@@ -191,56 +195,45 @@ class _ActionSheetFilterableState<V, D> extends State<ActionSheetFilterable<V, D
         mainAxisSize: MainAxisSize.min,
         children: [
           // 拖拽手柄
-          const ActionSheetDragHandle(),
+          const DragIndicator(),
 
-          // 头部：标题 + 描述 + 关闭按钮
-          ActionSheetHeader(
-              title: widget.title,
-              description: widget.description,
-              itemCount: filteredItems.length,
-              onClose: () => Navigator.of(context).pop()),
+          // 头部：标题 + 描述 + 计数 + 关闭按钮
+          TopTitleInfo(title: widget.title ?? '', subTitle: widget.description, itemCount: filteredItems.length, onClose: () => Navigator.of(context).pop()),
 
           // 搜索输入框
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ActionSheetSearchField(
-              hint: widget.searchHint,
-              keyword: _keyword,
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              onClear: () => _onClearSearch(''),
-            ),
-          ),
+          InputSearch(searchHint: widget.searchHint, searchController: _searchController, applyFilter: _onSearchChanged, onClear: _onClearSearch, keyword: _keyword),
 
           // 可滚动列表区域
           Expanded(
             child: _isLoadingDynamic && filteredItems.isEmpty
-                ? const SizedBox(
-                    height: 120,
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
+                ? const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
                 : filteredItems.isEmpty
-                    ? const ActionSheetEmptyState(message: '无匹配数据')
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: filteredItems.length,
-                        itemBuilder: (context, index) {
-                          final item = filteredItems[index];
-                          final isSelected = _selectedValues.contains(item.value);
-                          return ActionSheetCheckListItem(
-                            label: item.label,
-                            subtitle: item.subtitle,
-                            isChecked: isSelected,
-                            isDisabled: item.disabled,
-                            multiple: widget.multiple,
-                            onTap: () => _handleItemTap(item),
-                          );
-                        },
-                      ),
+                ? const EmptyState(message: '无匹配数据')
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      final isSelected = _selectedValues.contains(item.value);
+                      return SelectModalCheckListItem(
+                        label: item.label,
+                        subtitle: item.subtitle,
+                        icon: item.icon,
+                        iconData: item.iconData,
+                        iconColor: item.iconColor,
+                        iconSize: item.iconSize,
+                        isChecked: isSelected,
+                        isDisabled: item.disabled,
+                        multiple: widget.multiple,
+                        onTap: () => _handleItemTap(item),
+                      );
+                    },
+                  ),
           ),
 
           // 多选模式底部栏
           if (widget.multiple)
-            ActionSheetBottomBar(
+            BottomActionBar(
               selectedCount: _selectedValues.length,
               cancelLabel: widget.cancelLabel,
               confirmLabel: widget.confirmLabel,

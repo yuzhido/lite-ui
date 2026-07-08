@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/src/models/dialog_action.dart';
 
-import '../model.dart';
 import 'dialog_widgets.dart';
 
 /// Alert 提示弹窗
