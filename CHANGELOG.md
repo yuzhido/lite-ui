@@ -1,3 +1,6 @@
-## 0.0.1
+# 修改变化日志
 
-* TODO: Describe initial release.
+## 1.0.0
+
+- 初始化发布基础工具类
+- 新增Toast、屏幕适配工具
