@@ -35,7 +35,7 @@ class DialogTitleSection extends StatelessWidget {
           if (title != null)
             Text(
               title!,
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, height: 1.3),
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, height: 1.3, fontSize: 18),
               textAlign: TextAlign.center,
             ),
           if (title != null && content != null) const SizedBox(height: 8),
@@ -43,7 +43,7 @@ class DialogTitleSection extends StatelessWidget {
           if (content != null)
             Text(
               content!,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65), height: 1.5),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.85), height: 1.5),
               textAlign: TextAlign.center,
             ),
         ],
