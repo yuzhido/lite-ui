@@ -189,20 +189,32 @@ class _UploadActionAreaState extends State<UploadActionArea> {
       return GestureDetector(
         onTap: _onTapUpload,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
           decoration: BoxDecoration(
-            color: primaryColor.withValues(alpha: 0.04),
+            gradient: LinearGradient(colors: [primaryColor.withValues(alpha: 0.04), primaryColor.withValues(alpha: 0.08)], begin: Alignment.topLeft, end: Alignment.bottomRight),
             borderRadius: BorderRadius.circular(widget.borderRadius),
             border: Border.all(color: borderColor, width: 1),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              widget.icon ?? Icon(Icons.cloud_upload_outlined, color: primaryColor.withValues(alpha: 0.55), size: 22),
-              const SizedBox(width: 8),
-              Text(
-                widget.title,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.7)),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                child: widget.icon ?? Icon(Icons.cloud_upload_outlined, color: primaryColor.withValues(alpha: 0.7), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.8)),
+                ),
+              ),
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
+                child: Icon(Icons.arrow_forward_ios_rounded, color: primaryColor.withValues(alpha: 0.4), size: 13),
               ),
             ],
           ),

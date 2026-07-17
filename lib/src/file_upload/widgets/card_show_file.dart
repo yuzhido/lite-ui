@@ -32,57 +32,78 @@ class CardShowFile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (fileInfo.isImage) {
-      return SizedBox(
-        width: size,
-        height: size,
-        child: Stack(
-          children: [
-            FileStatus(
-              status: fileInfo.status,
-              size: size,
-              progress: fileInfo.progress,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(borderRadius),
-                child: Image.file(
-                  File(fileInfo.path),
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => FileType(fileInfo: fileInfo),
+    final theme = Theme.of(context);
+    final borderColor = theme.colorScheme.primary.withValues(alpha: 0.25);
+
+    // 构建卡片内容
+    Widget cardContent = fileInfo.isImage
+        ? Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.file(
+              File(fileInfo.path),
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => FileType(fileInfo: fileInfo),
+            ),
+          )
+        : Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            padding: EdgeInsets.all(size * 0.08),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FileType(fileInfo: fileInfo),
+                SizedBox(height: size * 0.08),
+                Text(fileInfo.name, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
+                Text(fileInfo.formatSize, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+              ],
+            ),
+          );
+
+    // 上传中：在卡片内容上方叠加进度填充动画
+    final displayContent = _isUploading
+        ? Stack(
+            children: [
+              cardContent,
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FractionallySizedBox(
+                      heightFactor: fileInfo.progress,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [theme.colorScheme.primary.withValues(alpha: 0.40), theme.colorScheme.primary.withValues(alpha: 0.12)],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            if (!_isUploading) CardDeleteBtn(onRemove: onRemove),
-          ],
-        ),
-      );
-    }
+            ],
+          )
+        : cardContent;
+
     return SizedBox(
       width: size,
       height: size,
       child: Stack(
         children: [
-          FileStatus(
-            status: fileInfo.status,
-            size: size,
-            progress: fileInfo.progress,
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-              padding: EdgeInsets.all(size * 0.08),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FileType(fileInfo: fileInfo),
-                  SizedBox(height: size * 0.08),
-                  Text(fileInfo.name, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
-                  Text(fileInfo.formatSize, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
-                ],
-              ),
-            ),
-          ),
+          FileStatus(status: fileInfo.status, size: size, progress: fileInfo.progress, child: displayContent),
           if (!_isUploading) CardDeleteBtn(onRemove: onRemove),
         ],
       ),
