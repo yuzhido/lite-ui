@@ -8,7 +8,7 @@ import 'model/file_info.dart';
 ///
 /// 封装 [file_picker] 和 [image_picker] 的文件选择操作，
 /// 返回统一的 [FileInfo] 列表，与 UI 层完全解耦。
-class FilePickerController {
+class PickFileController {
   /// 使用 [file_picker] 选择文件
   ///
   /// [multiple] 是否支持多选，默认为 true

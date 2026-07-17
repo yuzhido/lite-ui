@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// 判断是否为图片文件
 bool isImageFile(String? fileName) {
   if (fileName == null) return false;
@@ -12,4 +14,37 @@ String fileSizeFormat(int bytes) {
   if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB';
   if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
   return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+}
+
+/// 根据文件扩展名返回对应图标
+IconData getFileIcon(String extension) {
+  switch (extension.toLowerCase()) {
+    case 'pdf':
+      return Icons.picture_as_pdf;
+    case 'doc':
+    case 'docx':
+      return Icons.description;
+    case 'xls':
+    case 'xlsx':
+    case 'csv':
+      return Icons.table_chart;
+    case 'zip':
+    case 'rar':
+    case '7z':
+    case 'tar':
+    case 'gz':
+      return Icons.folder_zip;
+    case 'mp3':
+    case 'wav':
+    case 'aac':
+    case 'flac':
+      return Icons.audio_file;
+    case 'mp4':
+    case 'avi':
+    case 'mkv':
+    case 'mov':
+      return Icons.video_file;
+    default:
+      return Icons.insert_drive_file;
+  }
 }
