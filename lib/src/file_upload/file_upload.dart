@@ -5,10 +5,11 @@ import 'controller.dart';
 import 'model/enum.dart';
 import 'model/file_info.dart';
 import 'model/upload_config.dart';
-import 'widgets/file_preview.dart';
 import 'widgets/upload_area.dart';
 import 'widgets/picker_sheet.dart';
 import 'service/upload_service.dart';
+import 'widgets/file_card_preview.dart';
+import 'widgets/file_list_preview.dart';
 
 class FileUpload extends StatefulWidget {
   /// 选择器操作类型
@@ -68,6 +69,24 @@ class FileUpload extends StatefulWidget {
   /// 标题
   final String title;
 
+  /// 文件列表展示类型
+  /// - [ShowType.card]：卡片模式（默认），正方形网格布局
+  /// - [ShowType.textInfo]：列表模式，横向行展示文件信息
+  /// - [ShowType.custom]：自定义模式，需传入 [itemBuilder]
+  final ShowType showType;
+
+  /// 自定义文件项构建器
+  ///
+  /// 仅在 [showType] 为 [ShowType.custom] 时生效。
+  /// 参数依次为：文件信息、索引、删除回调。
+  final Widget Function(FileInfo fileInfo, int index, VoidCallback onRemove)? itemBuilder;
+
+  /// 自定义上传按钮构建器
+  ///
+  /// 传入后将覆盖默认上传按钮样式，所有模式均可使用。
+  /// 参数为点击上传的回调函数。
+  final Widget Function(VoidCallback onTap)? uploadButtonBuilder;
+
   const FileUpload({
     super.key,
     this.pickerAction = PickerAction.all,
@@ -82,7 +101,10 @@ class FileUpload extends StatefulWidget {
     this.uploadConfig,
     this.onProgress,
     this.icon,
-    this.borderRadius = 10,
+    this.borderRadius = 7,
+    this.showType = ShowType.card,
+    this.itemBuilder,
+    this.uploadButtonBuilder,
   }) : assert(previewSize == null || columns == null, 'previewSize 和 columns 不能同时设置，二者互斥');
 
   @override
@@ -371,22 +393,111 @@ class FileUploadState extends State<FileUpload> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final useColumns = widget.columns != null;
-        final cardSize = useColumns ? (constraints.maxWidth - (widget.columns! - 1) * widget.spacing) / widget.columns! : (widget.previewSize ?? 120);
-
-        return SizedBox(
-          width: double.infinity,
-          child: Wrap(
-            alignment: useColumns ? WrapAlignment.start : widget.alignment,
-            spacing: widget.spacing,
-            runSpacing: widget.spacing,
-            children: [
-              ..._files.map((f) => FilePreview(key: ValueKey(f.path), fileInfo: f, borderRadius: widget.borderRadius, size: cardSize, onRemove: () => _removeFile(f))),
-              UploadArea(icon: widget.icon, borderRadius: widget.borderRadius, title: widget.title, size: cardSize, onTap: _onTapUpload),
-            ],
-          ),
-        );
+        switch (widget.showType) {
+          case ShowType.card:
+            return _buildCardMode(constraints);
+          case ShowType.textInfo:
+            return _buildListMode();
+          case ShowType.custom:
+            return _buildCustomMode();
+        }
       },
+    );
+  }
+
+  /// 卡片模式（默认）
+  Widget _buildCardMode(BoxConstraints constraints) {
+    final useColumns = widget.columns != null;
+    final cardSize = useColumns ? (constraints.maxWidth - (widget.columns! - 1) * widget.spacing) / widget.columns! : (widget.previewSize ?? 120);
+
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        alignment: useColumns ? WrapAlignment.start : widget.alignment,
+        spacing: widget.spacing,
+        runSpacing: widget.spacing,
+        children: [
+          ..._files.map((f) => FileCardPreview(key: ValueKey(f.path), fileInfo: f, borderRadius: widget.borderRadius, size: cardSize, onRemove: () => _removeFile(f))),
+          UploadArea(
+            icon: widget.icon,
+            borderRadius: widget.borderRadius,
+            title: widget.title,
+            size: cardSize,
+            onTap: _onTapUpload,
+            fullWidth: false,
+            uploadButtonBuilder: widget.uploadButtonBuilder,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 列表模式
+  Widget _buildListMode() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ..._files.asMap().entries.map((entry) {
+          final index = entry.key;
+          final file = entry.value;
+          return Padding(
+            padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
+            child: FileListPreview(
+              key: ValueKey(file.path),
+              fileInfo: file,
+              borderRadius: widget.borderRadius,
+              onRemove: () => _removeFile(file),
+              onCancel: () => cancelUpload(file.path),
+            ),
+          );
+        }),
+        if (_files.isNotEmpty) const SizedBox(height: 8),
+        UploadArea(
+          icon: widget.icon,
+          borderRadius: widget.borderRadius,
+          title: widget.title,
+          size: 120,
+          onTap: _onTapUpload,
+          fullWidth: true,
+          uploadButtonBuilder: widget.uploadButtonBuilder,
+        ),
+      ],
+    );
+  }
+
+  /// 自定义模式
+  Widget _buildCustomMode() {
+    if (widget.itemBuilder == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('custom 模式需要提供 itemBuilder', style: TextStyle(color: Colors.red)),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ..._files.asMap().entries.map((entry) {
+          final index = entry.key;
+          final file = entry.value;
+          return Padding(
+            padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
+            child: widget.itemBuilder!(file, index, () => _removeFile(file)),
+          );
+        }),
+        if (_files.isNotEmpty) const SizedBox(height: 8),
+        UploadArea(
+          icon: widget.icon,
+          borderRadius: widget.borderRadius,
+          title: widget.title,
+          size: 120,
+          onTap: _onTapUpload,
+          fullWidth: true,
+          uploadButtonBuilder: widget.uploadButtonBuilder,
+        ),
+      ],
     );
   }
 }

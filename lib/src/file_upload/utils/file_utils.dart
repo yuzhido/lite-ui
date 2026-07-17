@@ -48,3 +48,30 @@ IconData getFileIcon(String extension) {
       return Icons.insert_drive_file;
   }
 }
+
+/// 获取文件类型颜色
+Color getFileColor(String extension) {
+  const extMap = {
+    'jpg': Color(0xFFD97706),
+    'jpeg': Color(0xFFD97706),
+    'png': Color(0xFFD97706),
+    'gif': Color(0xFFD97706),
+    'bmp': Color(0xFFD97706),
+    'webp': Color(0xFFD97706),
+    'svg': Color(0xFFD97706),
+    'pdf': Color(0xFFDC2626),
+    'doc': Color(0xFF2563EB),
+    'docx': Color(0xFF2563EB),
+    'xls': Color(0xFF059669),
+    'xlsx': Color(0xFF059669),
+    'ppt': Color(0xFFEA580C),
+    'pptx': Color(0xFFEA580C),
+    'zip': Color(0xFF7C3AED),
+    'rar': Color(0xFF7C3AED),
+    'mp4': Color(0xFFDB2777),
+    'mov': Color(0xFFDB2777),
+    'mp3': Color(0xFF0891B2),
+    'wav': Color(0xFF0891B2),
+  };
+  return extMap[extension.toLowerCase()] ?? const Color(0xFF6B7280);
+}

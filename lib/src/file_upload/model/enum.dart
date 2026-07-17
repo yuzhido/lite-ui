@@ -14,7 +14,7 @@ enum UploadStatus {
 }
 
 /// 文件列表展示类型
-enum FileShowType {
+enum ShowType {
   /// 卡片模式（默认）
   card,
 

@@ -94,11 +94,11 @@ class FileStatus extends StatelessWidget {
           /// 上传成功：左上角绿色对勾徽标
           if (status == UploadStatus.success)
             Positioned(
-              top: 2,
-              left: 2,
+              top: 0,
+              left: 0,
               child: Container(
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 22,
                 decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
                 child: const Icon(Icons.check, color: Colors.white, size: 14),
               ),

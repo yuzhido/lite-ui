@@ -12,7 +12,7 @@ import 'file_status.dart';
 ///
 /// 图片文件展示缩略图，非图片文件展示文件类型图标。
 /// 根据 [FileInfo.status] 叠加对应的上传状态指示层。
-class FilePreview extends StatelessWidget {
+class FileCardPreview extends StatelessWidget {
   /// 文件信息
   final FileInfo fileInfo;
 
@@ -25,7 +25,7 @@ class FilePreview extends StatelessWidget {
   /// 圆角半径，默认 5
   final double borderRadius;
 
-  const FilePreview({super.key, required this.borderRadius, required this.fileInfo, this.onRemove, this.size = 120});
+  const FileCardPreview({super.key, required this.borderRadius, required this.fileInfo, this.onRemove, this.size = 120});
 
   /// 上传中时隐藏删除按钮
   bool get _isUploading => fileInfo.status == UploadStatus.uploading;
