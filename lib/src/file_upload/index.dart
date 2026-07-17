@@ -1,3 +1,4 @@
+export 'controller.dart';
 export 'file_upload.dart';
 export 'model/enum.dart';
 export 'model/file_info.dart';

@@ -45,7 +45,7 @@ IconData getFileIcon(String extension) {
     case 'mov':
       return Icons.video_file;
     default:
-      return Icons.insert_drive_file;
+      return Icons.upload_file_rounded;
   }
 }
 

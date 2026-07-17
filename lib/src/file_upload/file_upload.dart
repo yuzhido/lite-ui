@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
-import 'controller.dart';
 import 'model/enum.dart';
 import 'model/file_info.dart';
 import 'model/upload_config.dart';
-import 'widgets/upload_area.dart';
-import 'widgets/picker_sheet.dart';
-import 'service/upload_service.dart';
-import 'widgets/file_card_preview.dart';
-import 'widgets/file_list_preview.dart';
+import 'widgets/card_show_file.dart';
+import 'widgets/list_show_file.dart';
+import 'service/upload_controller.dart';
+import 'widgets/upload_action_area.dart';
 
 class FileUpload extends StatefulWidget {
   /// 选择器操作类型
@@ -22,6 +19,11 @@ class FileUpload extends StatefulWidget {
 
   /// 是否支持多选，默认为 true；设为 false 时只能单选
   final bool multiple;
+
+  /// 上传文件数量限制，默认 -1 表示不限制；设置为正整数时最多允许上传的文件数。
+  ///
+  /// 达到上限后上传按钮自动隐藏，删除文件后可继续添加。
+  final int limit;
 
   /// 允许的文件扩展名列表（如 ['pdf', 'docx']），仅在 [PickerAction.file] 时生效
   final List<String>? allowedExtensions;
@@ -91,6 +93,7 @@ class FileUpload extends StatefulWidget {
     super.key,
     this.pickerAction = PickerAction.all,
     this.multiple = true,
+    this.limit = -1,
     this.allowedExtensions,
     this.title = '点击上传',
     this.onFileChanged,
@@ -105,7 +108,8 @@ class FileUpload extends StatefulWidget {
     this.showType = ShowType.card,
     this.itemBuilder,
     this.uploadButtonBuilder,
-  }) : assert(previewSize == null || columns == null, 'previewSize 和 columns 不能同时设置，二者互斥');
+  }) : assert(previewSize == null || columns == null, 'previewSize 和 columns 不能同时设置，二者互斥'),
+       assert(limit == -1 || limit > 0, 'limit 必须为 -1 或正整数');
 
   @override
   State<FileUpload> createState() => FileUploadState();
@@ -119,38 +123,10 @@ class FileUpload extends StatefulWidget {
 /// - [updateFileStatus]：手动更新文件状态
 class FileUploadState extends State<FileUpload> {
   final List<FileInfo> _files = [];
-  bool _isPicking = false;
-
-  /// 当前活跃的上传任务数
-  int _activeUploadCount = 0;
-
-  /// 用于取消上传的标志
-  final Map<String, bool> _cancelFlags = {};
+  UploadController? _controller;
 
   /// 获取当前文件列表
   List<FileInfo> get files => List.unmodifiable(_files);
-
-  // ==================== 文件选择操作 ====================
-
-  /// 使用 [PickFileController.pickFiles] 选择文件
-  Future<void> _pickFiles() async {
-    final files = await PickFileController.pickFiles(multiple: widget.multiple, allowedExtensions: widget.allowedExtensions);
-    if (files.isNotEmpty) {
-      setState(() => _files.addAll(files));
-      widget.onFileChanged?.call(files, FileAction.add);
-      _autoUpload(files);
-    }
-  }
-
-  /// 使用 [PickFileController.pickImage] 选择图片
-  Future<void> _pickImage(ImageSource source) async {
-    final files = await PickFileController.pickImage(source, multiple: widget.multiple);
-    if (files.isNotEmpty) {
-      setState(() => _files.addAll(files));
-      widget.onFileChanged?.call(files, FileAction.add);
-      _autoUpload(files);
-    }
-  }
 
   /// 删除单个文件
   void _removeFile(FileInfo file) {
@@ -174,32 +150,31 @@ class FileUploadState extends State<FileUpload> {
     });
   }
 
-  /// 更新指定文件的进度值
-  void _updateFileProgress(String path, double progress) {
-    setState(() {
-      final index = _files.indexWhere((f) => f.path == path);
-      if (index != -1) {
-        _files[index] = _files[index].copyWith(progress: progress);
-      }
-    });
-    widget.onProgress?.call(path, progress);
-    widget.onFileChanged?.call([_files.firstWhere((f) => f.path == path, orElse: () => _files.first)], FileAction.progress);
-  }
-
   // ==================== 上传自动触发 ====================
 
   /// 自动上传（[UploadMode.auto] 和 [UploadMode.custom] 模式下生效）
   void _autoUpload(List<FileInfo> files) {
     if (widget.uploadConfig == null || widget.uploadConfig!.mode == UploadMode.manual) return;
+    _ensureController();
     for (final file in files) {
-      startUpload(file.path);
+      _controller!.startUpload(file.path);
     }
   }
 
   // ==================== 上传控制 - 公开方法 ====================
 
   /// 获取当前正在上传的文件数量
-  int get activeUploadCount => _activeUploadCount;
+  int get activeUploadCount => _controller?.activeUploadCount ?? 0;
+
+  UploadController _ensureController() {
+    _controller ??= UploadController(
+      config: widget.uploadConfig!,
+      getFile: (path) => _files.firstWhere((f) => f.path == path),
+      onFileStatusChanged: _onUploadFileStatusChanged,
+      onFileProgress: _onUploadFileProgress,
+    );
+    return _controller!;
+  }
 
   /// 开始上传指定文件（[UploadMode.manual] 和 [UploadMode.custom] 模式下使用）
   ///
@@ -210,17 +185,7 @@ class FileUploadState extends State<FileUpload> {
   /// ```
   Future<void> startUpload(String path) async {
     if (widget.uploadConfig == null) return;
-
-    final index = _files.indexWhere((f) => f.path == path);
-    if (index == -1) return;
-    if (_files[index].status == UploadStatus.uploading) return;
-
-    // 并发控制：等待直到活跃数低于上限
-    while (_activeUploadCount >= widget.uploadConfig!.maxConcurrent) {
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-    }
-
-    await _executeUpload(index);
+    await _ensureController().startUpload(path);
   }
 
   /// 开始上传所有待上传（pending）的文件
@@ -229,161 +194,65 @@ class FileUploadState extends State<FileUpload> {
   Future<void> startAllUpload() async {
     if (widget.uploadConfig == null) return;
 
-    final pendingPaths = _files.where((f) => f.status == UploadStatus.pending).map((f) => f.path).toList();
-
-    // 逐个启动上传，内部通过 _activeUploadCount 控制并发
-    final futures = pendingPaths.map((path) => startUpload(path));
-    await Future.wait(futures);
+    final pendingPaths = _files.where((f) => f.status == UploadStatus.pending).map((f) => f.path);
+    await _ensureController().startAllUpload(pendingPaths);
   }
 
   /// 取消指定文件的上传
   ///
   /// 将文件状态恢复为 [UploadStatus.pending]，可再次上传。
   void cancelUpload(String path) {
-    _cancelFlags[path] = true;
-    updateFileStatus(path, UploadStatus.pending);
-  }
-
-  // ==================== 上传执行 ====================
-
-  /// 执行实际上传，含重试逻辑
-  Future<void> _executeUpload(int index) async {
-    final path = _files[index].path;
-    _cancelFlags.remove(path);
-
-    // 更新状态为上传中
-    updateFileStatus(path, UploadStatus.uploading);
-    widget.onFileChanged?.call([_files[index]], FileAction.uploading);
-
-    _activeUploadCount++;
-    UploadResult? result;
-
-    try {
-      for (int attempt = 0; attempt <= widget.uploadConfig!.retryCount; attempt++) {
-        // 检查是否被取消
-        if (_cancelFlags[path] == true) return;
-
-        if (attempt > 0) {
-          // 重试前短暂延迟
-          updateFileStatus(path, UploadStatus.uploading);
-          await Future<void>.delayed(Duration(seconds: attempt));
-        }
-
-        // 执行上传
-        result = widget.uploadConfig!.mode == UploadMode.custom && widget.uploadConfig!.customUpload != null ? await _customUpload(path, index) : await _builtinUpload(path, index);
-
-        if (result.success) break;
-      }
-
-      // 处理结果
-      if (_cancelFlags[path] == true) return;
-
-      if (result != null && result.success) {
-        // 业务校验：如果提供了 validateResult，检查服务端响应体
-        final isValid = widget.uploadConfig!.validateResult == null || widget.uploadConfig!.validateResult!(result.responseBody);
-
-        if (isValid) {
-          setState(() {
-            final i = _files.indexWhere((f) => f.path == path);
-            if (i != -1) {
-              _files[i] = _files[i].copyWith(status: UploadStatus.success, responseBody: result!.responseBody);
-            }
-          });
-          widget.onFileChanged?.call([_files[index]], FileAction.success);
-        } else {
-          debugPrint('[FileUpload] 业务校验失败: path=$path, response=${result.responseBody}');
-          updateFileStatus(path, UploadStatus.failed);
-          widget.onFileChanged?.call([_files[index]], FileAction.failed);
-        }
-      } else {
-        debugPrint('[FileUpload] 上传失败: path=$path, error=${result?.error}');
-        updateFileStatus(path, UploadStatus.failed);
-        widget.onFileChanged?.call([_files[index]], FileAction.failed);
-      }
-    } finally {
-      _activeUploadCount--;
-      _cancelFlags.remove(path);
+    if (_controller != null) {
+      _controller!.cancelUpload(path);
+    } else {
+      updateFileStatus(path, UploadStatus.pending);
     }
   }
 
-  /// 自定义上传
-  Future<UploadResult> _customUpload(String path, int index) async {
-    try {
-      final result = await widget.uploadConfig!.customUpload!(_files[index], (progress) {
-        if (_cancelFlags[path] == true) return;
-        _updateFileProgress(path, progress);
-      });
-      return result;
-    } catch (e) {
-      return UploadResult.failure(error: e.toString());
-    }
-  }
+  // ==================== 控制器回调 ====================
 
-  /// 内置 HTTP 上传
-  Future<UploadResult> _builtinUpload(String path, int index) async {
-    if (widget.uploadConfig!.url == null) {
-      return UploadResult.failure(error: '未配置上传地址（url）');
-    }
+  void _onUploadFileStatusChanged(String path, UploadStatus status, {UploadResult? result}) {
+    setState(() {
+      final index = _files.indexWhere((f) => f.path == path);
+      if (index == -1) return;
+      _files[index] = _files[index].copyWith(status: status, responseBody: result?.responseBody);
+    });
 
-    try {
-      final result = await UploadService.upload(
-        filePath: path,
-        url: widget.uploadConfig!.url!,
-        method: widget.uploadConfig!.method,
-        headers: widget.uploadConfig!.headers,
-        fields: widget.uploadConfig!.fields,
-        fileField: widget.uploadConfig!.fileField,
-        fileName: _files[index].name,
-        onProgress: (progress) {
-          if (_cancelFlags[path] == true) return;
-          _updateFileProgress(path, progress);
-        },
-      );
-      return result;
-    } catch (e) {
-      return UploadResult.failure(error: e.toString());
-    }
-  }
-
-  // ==================== 点击上传入口 ====================
-
-  /// 点击上传入口：直接选择或弹窗选择后执行
-  Future<void> _onTapUpload() async {
-    if (_isPicking) return;
-    _isPicking = true;
-    try {
-      switch (widget.pickerAction) {
-        case PickerAction.file:
-          await _pickFiles();
-        case PickerAction.gallery:
-          await _pickImage(ImageSource.gallery);
-        case PickerAction.camera:
-          await _pickImage(ImageSource.camera);
-        case PickerAction.all:
-        case PickerAction.imageOrCamera:
-          final action = await PickerSheet.show(context: context, pickerAction: widget.pickerAction);
-          if (action != null) {
-            await _handlePickerAction(action);
-          }
-      }
-    } finally {
-      _isPicking = false;
-    }
-  }
-
-  /// 执行具体的 [PickerAction]（分发到对应的文件选择方法）
-  Future<void> _handlePickerAction(PickerAction action) async {
-    switch (action) {
-      case PickerAction.file:
-        await _pickFiles();
-      case PickerAction.gallery:
-        await _pickImage(ImageSource.gallery);
-      case PickerAction.camera:
-        await _pickImage(ImageSource.camera);
-      case PickerAction.all:
-      case PickerAction.imageOrCamera:
+    FileAction? action;
+    switch (status) {
+      case UploadStatus.uploading:
+        action = FileAction.uploading;
+      case UploadStatus.success:
+        action = FileAction.success;
+      case UploadStatus.failed:
+        action = FileAction.failed;
+      default:
         break;
     }
+    if (action != null) {
+      final file = _files.firstWhere((f) => f.path == path, orElse: () => _files.first);
+      widget.onFileChanged?.call([file], action);
+    }
+  }
+
+  void _onUploadFileProgress(String path, double progress) {
+    setState(() {
+      final index = _files.indexWhere((f) => f.path == path);
+      if (index != -1) {
+        _files[index] = _files[index].copyWith(progress: progress);
+      }
+    });
+    widget.onProgress?.call(path, progress);
+    final file = _files.firstWhere((f) => f.path == path, orElse: () => _files.first);
+    widget.onFileChanged?.call([file], FileAction.progress);
+  }
+
+  // ==================== 已选文件处理 ====================
+
+  void _onFilesPicked(List<FileInfo> files) {
+    setState(() => _files.addAll(files));
+    widget.onFileChanged?.call(files, FileAction.add);
+    _autoUpload(files);
   }
 
   // ==================== UI 构建 ====================
@@ -393,111 +262,117 @@ class FileUploadState extends State<FileUpload> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        switch (widget.showType) {
-          case ShowType.card:
-            return _buildCardMode(constraints);
-          case ShowType.textInfo:
-            return _buildListMode();
-          case ShowType.custom:
-            return _buildCustomMode();
-        }
-      },
-    );
-  }
+        /// 卡片模式（默认）
+        if (widget.showType == ShowType.card) {
+          final useColumns = widget.columns != null;
+          final cardSize = useColumns ? (constraints.maxWidth - (widget.columns! - 1) * widget.spacing) / widget.columns! : (widget.previewSize ?? 120);
 
-  /// 卡片模式（默认）
-  Widget _buildCardMode(BoxConstraints constraints) {
-    final useColumns = widget.columns != null;
-    final cardSize = useColumns ? (constraints.maxWidth - (widget.columns! - 1) * widget.spacing) / widget.columns! : (widget.previewSize ?? 120);
-
-    return SizedBox(
-      width: double.infinity,
-      child: Wrap(
-        alignment: useColumns ? WrapAlignment.start : widget.alignment,
-        spacing: widget.spacing,
-        runSpacing: widget.spacing,
-        children: [
-          ..._files.map((f) => FileCardPreview(key: ValueKey(f.path), fileInfo: f, borderRadius: widget.borderRadius, size: cardSize, onRemove: () => _removeFile(f))),
-          UploadArea(
-            icon: widget.icon,
-            borderRadius: widget.borderRadius,
-            title: widget.title,
-            size: cardSize,
-            onTap: _onTapUpload,
-            fullWidth: false,
-            uploadButtonBuilder: widget.uploadButtonBuilder,
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 列表模式
-  Widget _buildListMode() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ..._files.asMap().entries.map((entry) {
-          final index = entry.key;
-          final file = entry.value;
-          return Padding(
-            padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
-            child: FileListPreview(
-              key: ValueKey(file.path),
-              fileInfo: file,
-              borderRadius: widget.borderRadius,
-              onRemove: () => _removeFile(file),
-              onCancel: () => cancelUpload(file.path),
+          return SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              alignment: useColumns ? WrapAlignment.start : widget.alignment,
+              spacing: widget.spacing,
+              runSpacing: widget.spacing,
+              children: [
+                ..._files.map((f) => CardShowFile(key: ValueKey(f.path), fileInfo: f, borderRadius: widget.borderRadius, size: cardSize, onRemove: () => _removeFile(f))),
+                if (widget.limit == -1 || _files.length < widget.limit)
+                  UploadActionArea(
+                    icon: widget.icon,
+                    borderRadius: widget.borderRadius,
+                    title: widget.title,
+                    size: cardSize,
+                    showType: widget.showType,
+                    uploadButtonBuilder: widget.uploadButtonBuilder,
+                    pickerAction: widget.pickerAction,
+                    multiple: widget.multiple,
+                    allowedExtensions: widget.allowedExtensions,
+                    limit: widget.limit,
+                    currentFileCount: _files.length,
+                    onPicked: _onFilesPicked,
+                  ),
+              ],
             ),
           );
-        }),
-        if (_files.isNotEmpty) const SizedBox(height: 8),
-        UploadArea(
-          icon: widget.icon,
-          borderRadius: widget.borderRadius,
-          title: widget.title,
-          size: 120,
-          onTap: _onTapUpload,
-          fullWidth: true,
-          uploadButtonBuilder: widget.uploadButtonBuilder,
-        ),
-      ],
-    );
-  }
-
-  /// 自定义模式
-  Widget _buildCustomMode() {
-    if (widget.itemBuilder == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text('custom 模式需要提供 itemBuilder', style: TextStyle(color: Colors.red)),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ..._files.asMap().entries.map((entry) {
-          final index = entry.key;
-          final file = entry.value;
-          return Padding(
-            padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
-            child: widget.itemBuilder!(file, index, () => _removeFile(file)),
+        } else if (widget.showType == ShowType.textInfo) {
+          /// 列表模式
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ..._files.asMap().entries.map((entry) {
+                final index = entry.key;
+                final file = entry.value;
+                return Padding(
+                  padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
+                  child: ListShowFile(
+                    key: ValueKey(file.path),
+                    fileInfo: file,
+                    borderRadius: widget.borderRadius,
+                    onRemove: () => _removeFile(file),
+                    onCancel: () => cancelUpload(file.path),
+                  ),
+                );
+              }),
+              if (_files.isNotEmpty) const SizedBox(height: 8),
+              if (widget.limit == -1 || _files.length < widget.limit)
+                UploadActionArea(
+                  icon: widget.icon,
+                  borderRadius: widget.borderRadius,
+                  title: widget.title,
+                  size: 120,
+                  showType: widget.showType,
+                  uploadButtonBuilder: widget.uploadButtonBuilder,
+                  pickerAction: widget.pickerAction,
+                  multiple: widget.multiple,
+                  allowedExtensions: widget.allowedExtensions,
+                  limit: widget.limit,
+                  currentFileCount: _files.length,
+                  onPicked: _onFilesPicked,
+                ),
+            ],
           );
-        }),
-        if (_files.isNotEmpty) const SizedBox(height: 8),
-        UploadArea(
-          icon: widget.icon,
-          borderRadius: widget.borderRadius,
-          title: widget.title,
-          size: 120,
-          onTap: _onTapUpload,
-          fullWidth: true,
-          uploadButtonBuilder: widget.uploadButtonBuilder,
-        ),
-      ],
+        } else if (widget.showType == ShowType.custom && widget.itemBuilder == null) {
+          /// 自定义模式没提供 itemBuilder
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('custom 模式需要提供 itemBuilder', style: TextStyle(color: Colors.red)),
+            ),
+          );
+        } else if (widget.showType == ShowType.custom && widget.itemBuilder != null) {
+          /// 自定义模式
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ..._files.asMap().entries.map((entry) {
+                final index = entry.key;
+                final file = entry.value;
+                return Padding(
+                  padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
+                  child: widget.itemBuilder!(file, index, () => _removeFile(file)),
+                );
+              }),
+              if (_files.isNotEmpty) const SizedBox(height: 8),
+              if (widget.limit == -1 || _files.length < widget.limit)
+                UploadActionArea(
+                  icon: widget.icon,
+                  borderRadius: widget.borderRadius,
+                  title: widget.title,
+                  size: 120,
+                  showType: widget.showType,
+                  uploadButtonBuilder: widget.uploadButtonBuilder,
+                  pickerAction: widget.pickerAction,
+                  multiple: widget.multiple,
+                  allowedExtensions: widget.allowedExtensions,
+                  limit: widget.limit,
+                  currentFileCount: _files.length,
+                  onPicked: _onFilesPicked,
+                ),
+            ],
+          );
+        } else {
+          return const SizedBox.shrink();
+        }
+      },
     );
   }
 }

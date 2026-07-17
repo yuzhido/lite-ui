@@ -13,14 +13,19 @@ class PickFileController {
   ///
   /// [multiple] 是否支持多选，默认为 true
   /// [allowedExtensions] 允许的文件扩展名列表，如 ['pdf', 'doc']，仅在 [PickerAction.file] 时生效
-  static Future<List<FileInfo>> pickFiles({bool multiple = true, List<String>? allowedExtensions}) async {
+  /// [remaining] 允许选择的剩余文件数（配合 limit 限制使用），null 表示不限制
+  static Future<List<FileInfo>> pickFiles({bool multiple = true, List<String>? allowedExtensions, int? remaining}) async {
     if (multiple) {
       // FileType.any 在部分 Android 设备上多选不生效，改用 FileType.custom
       // 以触发系统 DocumentsUI 的多选模式
       final type = allowedExtensions != null ? FileType.custom : FileType.any;
       final result = await FilePicker.pickFiles(type: type, allowedExtensions: allowedExtensions);
       if (result == null || result.files.isEmpty) return [];
-      return result.files.map((f) => FileInfo(name: f.name, path: f.path ?? '', size: f.size, source: FileSource.file)).toList();
+      var files = result.files.map((f) => FileInfo(name: f.name, path: f.path ?? '', size: f.size, source: FileSource.file)).toList();
+      if (remaining != null && files.length > remaining) {
+        files = files.take(remaining).toList();
+      }
+      return files;
     } else {
       final file = await FilePicker.pickFile(allowedExtensions: allowedExtensions);
       if (file == null) return [];
@@ -32,7 +37,8 @@ class PickFileController {
   ///
   /// [source] 为图片来源：[ImageSource.gallery]（相册）或 [ImageSource.camera]（拍照）
   /// [multiple] 是否支持多选（仅相册生效），默认为 true
-  static Future<List<FileInfo>> pickImage(ImageSource source, {bool multiple = true}) async {
+  /// [remaining] 允许选择的剩余文件数（配合 limit 限制使用），null 表示不限制
+  static Future<List<FileInfo>> pickImage(ImageSource source, {bool multiple = true, int? remaining}) async {
     final picker = ImagePicker();
 
     // 相册多选：使用 pickMultiImage
@@ -40,10 +46,13 @@ class PickFileController {
       final xFiles = await picker.pickMultiImage();
       if (xFiles.isEmpty) return [];
 
-      final files = <FileInfo>[];
+      var files = <FileInfo>[];
       for (final xFile in xFiles) {
         final bytes = await xFile.length();
         files.add(FileInfo(name: xFile.name, path: xFile.path, size: bytes, source: FileSource.image));
+      }
+      if (remaining != null && files.length > remaining) {
+        files = files.take(remaining).toList();
       }
       return files;
     }

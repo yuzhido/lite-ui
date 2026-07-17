@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import '../model/enum.dart';
 import '../model/file_info.dart';
 
-import 'delete_btn.dart';
 import 'file_type.dart';
 import 'file_status.dart';
+import 'card_delete_btn.dart';
 
 /// 单个文件预览卡片
 ///
 /// 图片文件展示缩略图，非图片文件展示文件类型图标。
 /// 根据 [FileInfo.status] 叠加对应的上传状态指示层。
-class FileCardPreview extends StatelessWidget {
+class CardShowFile extends StatelessWidget {
   /// 文件信息
   final FileInfo fileInfo;
 
@@ -25,7 +25,7 @@ class FileCardPreview extends StatelessWidget {
   /// 圆角半径，默认 5
   final double borderRadius;
 
-  const FileCardPreview({super.key, required this.borderRadius, required this.fileInfo, this.onRemove, this.size = 120});
+  const CardShowFile({super.key, required this.borderRadius, required this.fileInfo, this.onRemove, this.size = 120});
 
   /// 上传中时隐藏删除按钮
   bool get _isUploading => fileInfo.status == UploadStatus.uploading;
@@ -53,7 +53,7 @@ class FileCardPreview extends StatelessWidget {
                 ),
               ),
             ),
-            if (!_isUploading) DeleteBtn(onRemove: onRemove),
+            if (!_isUploading) CardDeleteBtn(onRemove: onRemove),
           ],
         ),
       );
@@ -83,7 +83,7 @@ class FileCardPreview extends StatelessWidget {
               ),
             ),
           ),
-          if (!_isUploading) DeleteBtn(onRemove: onRemove),
+          if (!_isUploading) CardDeleteBtn(onRemove: onRemove),
         ],
       ),
     );

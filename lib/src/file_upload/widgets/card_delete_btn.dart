@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// 右上角删除按钮
-class DeleteBtn extends StatelessWidget {
+class CardDeleteBtn extends StatelessWidget {
   final VoidCallback? onRemove;
-  const DeleteBtn({this.onRemove, super.key});
+  const CardDeleteBtn({this.onRemove, super.key});
   @override
   Widget build(BuildContext context) {
     return Positioned(
