@@ -66,6 +66,7 @@ class ProgressStatus extends StatelessWidget {
     }
 
     /// 非上传状态：状态点 + 文件大小 · 状态文本
+    final hasSize = fileInfo.size > 0;
     return Row(
       children: [
         Container(
@@ -75,7 +76,7 @@ class ProgressStatus extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         Text(
-          '${fileInfo.formatSize} · ${_getStatusText()}',
+          hasSize ? '${fileInfo.formatSize} · ${_getStatusText()}' : _getStatusText(),
           style: theme.textTheme.bodySmall?.copyWith(color: statusColor.withValues(alpha: 0.9), fontSize: 11, fontWeight: FontWeight.w500),
         ),
       ],

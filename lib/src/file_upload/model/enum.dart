@@ -71,7 +71,7 @@ enum FileAction {
 }
 
 /// 选择器操作
-enum PickerAction {
+enum PickFile {
   /// 文件选择
   file,
 

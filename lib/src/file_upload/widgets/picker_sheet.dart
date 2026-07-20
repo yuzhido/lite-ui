@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../model/enum.dart';
 
-/// 底部选择弹窗 — Apple 风格，根据 [PickerAction] 展示对应的文件选择操作选项
+/// 底部选择弹窗 — Apple 风格，根据 [PickFile] 展示对应的文件选择操作选项
 class PickerSheet {
-  /// 显示底部选择弹窗，返回用户选择的 [PickerAction]，取消返回 `null`
-  static Future<PickerAction?> show({required BuildContext context, required PickerAction pickerAction}) {
-    final options = _buildOptions(pickerAction);
+  /// 显示底部选择弹窗，返回用户选择的 [PickFile]，取消返回 `null`
+  static Future<PickFile?> show({required BuildContext context, required PickFile pickFile}) {
+    final options = _buildOptions(pickFile);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return showModalBottomSheet<PickerAction>(
+    return showModalBottomSheet<PickFile>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -18,19 +18,19 @@ class PickerSheet {
     );
   }
 
-  /// 根据 [PickerAction] 构建弹窗选项列表
-  static List<_SheetOption> _buildOptions(PickerAction pickerAction) {
-    switch (pickerAction) {
-      case PickerAction.all:
+  /// 根据 [PickFile] 构建弹窗选项列表
+  static List<_SheetOption> _buildOptions(PickFile pickFile) {
+    switch (pickFile) {
+      case PickFile.all:
         return [
-          const _SheetOption(label: '选择文件', icon: Icons.folder_open, action: PickerAction.file),
-          const _SheetOption(label: '从相册选择', icon: Icons.photo_library, action: PickerAction.gallery),
-          const _SheetOption(label: '拍照', icon: Icons.camera_alt, action: PickerAction.camera),
+          const _SheetOption(label: '选择文件', icon: Icons.folder_open, action: PickFile.file),
+          const _SheetOption(label: '从相册选择', icon: Icons.photo_library, action: PickFile.gallery),
+          const _SheetOption(label: '拍照', icon: Icons.camera_alt, action: PickFile.camera),
         ];
-      case PickerAction.imageOrCamera:
+      case PickFile.imageOrCamera:
         return [
-          const _SheetOption(label: '从相册选择', icon: Icons.photo_library, action: PickerAction.gallery),
-          const _SheetOption(label: '拍照', icon: Icons.camera_alt, action: PickerAction.camera),
+          const _SheetOption(label: '从相册选择', icon: Icons.photo_library, action: PickFile.gallery),
+          const _SheetOption(label: '拍照', icon: Icons.camera_alt, action: PickFile.camera),
         ];
       default:
         return [];
@@ -42,7 +42,7 @@ class PickerSheet {
 class _AppleSheetBody extends StatelessWidget {
   final List<_SheetOption> options;
   final bool isDark;
-  final ValueChanged<PickerAction> onSelected;
+  final ValueChanged<PickFile> onSelected;
   final VoidCallback onCancel;
 
   const _AppleSheetBody({required this.options, required this.isDark, required this.onSelected, required this.onCancel});
@@ -161,7 +161,7 @@ class _AppleOptionTile extends StatelessWidget {
 class _SheetOption {
   final String label;
   final IconData icon;
-  final PickerAction action;
+  final PickFile action;
 
   const _SheetOption({required this.label, required this.icon, required this.action});
 }

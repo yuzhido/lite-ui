@@ -10,12 +10,12 @@ import 'widgets/upload_action_area.dart';
 
 class FileUpload extends StatefulWidget {
   /// 选择器操作类型
-  /// - [PickerAction.file]：直接选择文件
-  /// - [PickerAction.gallery]：直接选择相册
-  /// - [PickerAction.camera]：直接拍照
-  /// - [PickerAction.imageOrCamera]：弹窗选择相册或拍照
-  /// - [PickerAction.all]：弹窗选择文件/相册/拍照
-  final PickerAction pickerAction;
+  /// - [PickFile.file]：直接选择文件
+  /// - [PickFile.gallery]：直接选择相册
+  /// - [PickFile.camera]：直接拍照
+  /// - [PickFile.imageOrCamera]：弹窗选择相册或拍照
+  /// - [PickFile.all]：弹窗选择文件/相册/拍照
+  final PickFile pickFile;
 
   /// 是否支持多选，默认为 true；设为 false 时只能单选
   final bool multiple;
@@ -25,7 +25,7 @@ class FileUpload extends StatefulWidget {
   /// 达到上限后上传按钮自动隐藏，删除文件后可继续添加。
   final int limit;
 
-  /// 允许的文件扩展名列表（如 ['pdf', 'docx']），仅在 [PickerAction.file] 时生效
+  /// 允许的文件扩展名列表（如 ['pdf', 'docx']），仅在 [PickFile.file] 时生效
   final List<String>? allowedExtensions;
 
   /// 文件变更回调，选择/删除文件后触发
@@ -60,8 +60,10 @@ class FileUpload extends StatefulWidget {
   /// - [UploadMode.custom]：自定义上传函数
   final UploadConfig? uploadConfig;
 
-  /// 上传进度回调，参数为文件路径和 0.0~1.0 的进度
-  final void Function(String path, double progress)? onProgress;
+  /// 上传进度回调
+  ///
+  /// 参数依次为：文件 id、文件本地路径、进度值 0.0~1.0
+  final void Function(String id, String path, double progress)? onProgress;
 
   final Widget? icon;
 
@@ -89,9 +91,15 @@ class FileUpload extends StatefulWidget {
   /// 参数为点击上传的回调函数。
   final Widget Function(VoidCallback onTap)? uploadButtonBuilder;
 
+  /// 初始文件列表（编辑模式回显）
+  ///
+  /// 传入已存在的文件列表，组件初始化时直接显示。
+  /// 推荐使用 [FileInfo.existing] 构造函数，通过 [url] 设置网络地址。
+  final List<FileInfo>? fileList;
+
   const FileUpload({
     super.key,
-    this.pickerAction = PickerAction.all,
+    this.pickFile = PickFile.all,
     this.multiple = true,
     this.limit = -1,
     this.allowedExtensions,
@@ -108,6 +116,7 @@ class FileUpload extends StatefulWidget {
     this.showType = ShowType.card,
     this.itemBuilder,
     this.uploadButtonBuilder,
+    this.fileList,
   }) : assert(previewSize == null || columns == null, 'previewSize 和 columns 不能同时设置，二者互斥'),
        assert(limit == -1 || limit > 0, 'limit 必须为 -1 或正整数');
 
@@ -125,14 +134,73 @@ class FileUploadState extends State<FileUpload> {
   final List<FileInfo> _files = [];
   UploadController? _controller;
 
+  /// 记录上一次已加载的 fileList 引用，用于检测外部数据变化
+  List<FileInfo>? _loadedFileList;
+
+  /// 标记初始文件同步通知是否已发送，避免重复触发父组件 setState 导致无限 rebuild
+  bool _initialSyncNotified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncInitialFiles();
+  }
+
+  @override
+  void didUpdateWidget(covariant FileUpload oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 外部 fileList 引用变化时（如异步数据返回），同步更新内部列表
+    // 仅当 fileList 内容实际发生变化时才同步，避免因父组件 rebuild 导致的无效触发
+    if (!identical(widget.fileList, _loadedFileList) && _isFileListChanged(widget.fileList, _loadedFileList)) {
+      _syncInitialFiles();
+    }
+  }
+
+  /// 比较两个 fileList 内容是否真正发生变化
+  ///
+  /// 优先使用 url 比较（编辑模式下 url 是稳定标识），
+  /// 其次比较 id、name、size 等属性，避免因父组件 rebuild 创建新对象导致的无效触发。
+  bool _isFileListChanged(List<FileInfo>? newList, List<FileInfo>? oldList) {
+    if (newList == null && oldList == null) return false;
+    if (newList == null || oldList == null) return true;
+    if (newList.length != oldList.length) return true;
+    // 基于 url + name + size 生成稳定签名进行比较
+    String sig(FileInfo f) => '${f.url ?? ''}|${f.name}|${f.size}';
+    final newSigs = newList.map(sig).toSet();
+    final oldSigs = oldList.map(sig).toSet();
+    return !newSigs.containsAll(oldSigs);
+  }
+
+  /// 将 external fileList 同步到内部 _files 列表
+  void _syncInitialFiles() {
+    final incoming = widget.fileList;
+    if (incoming == null || incoming.isEmpty) {
+      _loadedFileList = null;
+      return;
+    }
+    // 移除上一轮加载的回显文件，保留用户手动添加的文件
+    if (_loadedFileList != null) {
+      _files.removeWhere((f) => _loadedFileList!.any((ini) => f.id == ini.id));
+    }
+    // 插入新的回显文件到列表头部
+    _files.insertAll(0, incoming);
+    _loadedFileList = incoming;
+    if (!_initialSyncNotified) {
+      _initialSyncNotified = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onFileChanged?.call(List.unmodifiable(_files), FileAction.defaultLoad);
+      });
+    }
+  }
+
   /// 获取当前文件列表
   List<FileInfo> get files => List.unmodifiable(_files);
 
-  /// 删除单个文件
+  /// 删除单个文件（基于 id 匹配）
   void _removeFile(FileInfo file) {
     // 上传中的文件不让删除
     if (file.status == UploadStatus.uploading) return;
-    setState(() => _files.remove(file));
+    setState(() => _files.removeWhere((f) => f.id == file.id));
     widget.onFileChanged?.call([file], FileAction.remove);
   }
 
@@ -140,10 +208,10 @@ class FileUploadState extends State<FileUpload> {
 
   /// 更新指定文件的上传状态
   ///
-  /// 通过 [path] 匹配文件，更新其 [status] 并触发重建。
-  void updateFileStatus(String path, UploadStatus status) {
+  /// 通过 [id] 匹配文件，更新其 [status] 并触发重建。
+  void updateFileStatus(String id, UploadStatus status) {
     setState(() {
-      final index = _files.indexWhere((f) => f.path == path);
+      final index = _files.indexWhere((f) => f.id == id);
       if (index != -1) {
         _files[index] = _files[index].copyWith(status: status);
       }
@@ -157,7 +225,7 @@ class FileUploadState extends State<FileUpload> {
     if (widget.uploadConfig == null || widget.uploadConfig!.mode == UploadMode.manual) return;
     _ensureController();
     for (final file in files) {
-      _controller!.startUpload(file.path);
+      _controller!.startUpload(file.id);
     }
   }
 
@@ -169,7 +237,7 @@ class FileUploadState extends State<FileUpload> {
   UploadController _ensureController() {
     _controller ??= UploadController(
       config: widget.uploadConfig!,
-      getFile: (path) => _files.firstWhere((f) => f.path == path),
+      getFile: (id) => _files.firstWhere((f) => f.id == id),
       onFileStatusChanged: _onUploadFileStatusChanged,
       onFileProgress: _onUploadFileProgress,
     );
@@ -178,14 +246,14 @@ class FileUploadState extends State<FileUpload> {
 
   /// 开始上传指定文件（[UploadMode.manual] 和 [UploadMode.custom] 模式下使用）
   ///
-  /// 如果文件正在上传或没有上传配置则忽略。
+  /// 通过文件 [id] 标识指定文件。如果文件正在上传或没有上传配置则忽略。
   /// 可通过 [GlobalKey<FileUploadState>] 在外部调用：
   /// ```dart
-  /// key.currentState?.startUpload(file.path);
+  /// key.currentState?.startUpload(fileId);
   /// ```
-  Future<void> startUpload(String path) async {
+  Future<void> startUpload(String id) async {
     if (widget.uploadConfig == null) return;
-    await _ensureController().startUpload(path);
+    await _ensureController().startUpload(id);
   }
 
   /// 开始上传所有待上传（pending）的文件
@@ -194,28 +262,28 @@ class FileUploadState extends State<FileUpload> {
   Future<void> startAllUpload() async {
     if (widget.uploadConfig == null) return;
 
-    final pendingPaths = _files.where((f) => f.status == UploadStatus.pending).map((f) => f.path);
-    await _ensureController().startAllUpload(pendingPaths);
+    final pendingIds = _files.where((f) => f.status == UploadStatus.pending).map((f) => f.id);
+    await _ensureController().startAllUpload(pendingIds);
   }
 
   /// 取消指定文件的上传
   ///
   /// 将文件状态恢复为 [UploadStatus.pending]，可再次上传。
-  void cancelUpload(String path) {
+  void cancelUpload(String id) {
     if (_controller != null) {
-      _controller!.cancelUpload(path);
+      _controller!.cancelUpload(id);
     } else {
-      updateFileStatus(path, UploadStatus.pending);
+      updateFileStatus(id, UploadStatus.pending);
     }
   }
 
   // ==================== 控制器回调 ====================
 
-  void _onUploadFileStatusChanged(String path, UploadStatus status, {UploadResult? result}) {
+  void _onUploadFileStatusChanged(String id, UploadStatus status, {Map<String, dynamic>? data}) {
     setState(() {
-      final index = _files.indexWhere((f) => f.path == path);
+      final index = _files.indexWhere((f) => f.id == id);
       if (index == -1) return;
-      _files[index] = _files[index].copyWith(status: status, responseBody: result?.responseBody);
+      _files[index] = _files[index].copyWith(status: status, data: data);
     });
 
     FileAction? action;
@@ -230,20 +298,20 @@ class FileUploadState extends State<FileUpload> {
         break;
     }
     if (action != null) {
-      final file = _files.firstWhere((f) => f.path == path, orElse: () => _files.first);
+      final file = _files.firstWhere((f) => f.id == id, orElse: () => _files.first);
       widget.onFileChanged?.call([file], action);
     }
   }
 
-  void _onUploadFileProgress(String path, double progress) {
+  void _onUploadFileProgress(String id, double progress) {
     setState(() {
-      final index = _files.indexWhere((f) => f.path == path);
+      final index = _files.indexWhere((f) => f.id == id);
       if (index != -1) {
         _files[index] = _files[index].copyWith(progress: progress);
       }
     });
-    widget.onProgress?.call(path, progress);
-    final file = _files.firstWhere((f) => f.path == path, orElse: () => _files.first);
+    final file = _files.firstWhere((f) => f.id == id, orElse: () => _files.first);
+    widget.onProgress?.call(id, file.path ?? '', progress);
     widget.onFileChanged?.call([file], FileAction.progress);
   }
 
@@ -274,7 +342,16 @@ class FileUploadState extends State<FileUpload> {
               spacing: widget.spacing,
               runSpacing: widget.spacing,
               children: [
-                ..._files.map((f) => CardShowFile(key: ValueKey(f.path), fileInfo: f, borderRadius: widget.borderRadius, size: cardSize, onRemove: () => _removeFile(f), onRetry: widget.uploadConfig == null ? null : () => startUpload(f.path))),
+                ..._files.map(
+                  (f) => CardShowFile(
+                    key: ValueKey(f.id),
+                    fileInfo: f,
+                    borderRadius: widget.borderRadius,
+                    size: cardSize,
+                    onRemove: () => _removeFile(f),
+                    onRetry: widget.uploadConfig == null ? null : () => startUpload(f.id),
+                  ),
+                ),
                 if (widget.limit == -1 || _files.length < widget.limit)
                   UploadActionArea(
                     icon: widget.icon,
@@ -283,7 +360,7 @@ class FileUploadState extends State<FileUpload> {
                     size: cardSize,
                     showType: widget.showType,
                     uploadButtonBuilder: widget.uploadButtonBuilder,
-                    pickerAction: widget.pickerAction,
+                    pickFile: widget.pickFile,
                     multiple: widget.multiple,
                     allowedExtensions: widget.allowedExtensions,
                     limit: widget.limit,
@@ -304,12 +381,12 @@ class FileUploadState extends State<FileUpload> {
                 return Padding(
                   padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
                   child: ListShowFile(
-                    key: ValueKey(file.path),
+                    key: ValueKey(file.id),
                     fileInfo: file,
                     borderRadius: widget.borderRadius,
                     onRemove: () => _removeFile(file),
-                    onCancel: () => cancelUpload(file.path),
-                    onRetry: widget.uploadConfig == null ? null : () => startUpload(file.path),
+                    onCancel: () => cancelUpload(file.id),
+                    onRetry: widget.uploadConfig == null ? null : () => startUpload(file.id),
                   ),
                 );
               }),
@@ -322,7 +399,7 @@ class FileUploadState extends State<FileUpload> {
                   size: 120,
                   showType: widget.showType,
                   uploadButtonBuilder: widget.uploadButtonBuilder,
-                  pickerAction: widget.pickerAction,
+                  pickFile: widget.pickFile,
                   multiple: widget.multiple,
                   allowedExtensions: widget.allowedExtensions,
                   limit: widget.limit,
@@ -361,7 +438,7 @@ class FileUploadState extends State<FileUpload> {
                   size: 120,
                   showType: widget.showType,
                   uploadButtonBuilder: widget.uploadButtonBuilder,
-                  pickerAction: widget.pickerAction,
+                  pickFile: widget.pickFile,
                   multiple: widget.multiple,
                   allowedExtensions: widget.allowedExtensions,
                   limit: widget.limit,

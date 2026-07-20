@@ -91,17 +91,20 @@ class FileStatus extends StatelessWidget {
               ),
             ),
 
-          /// 上传成功：左上角绿色对勾徽标
+          /// 上传成功：左上角绿色实心对勾徽标
           if (status == UploadStatus.success)
             Positioned(
               top: 2,
               left: 2,
-              child: DecoratedBox(
+              child: Container(
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50),
                   shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 3, offset: const Offset(0, 1))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 3, offset: const Offset(0, 1))],
                 ),
-                child: const Icon(Icons.check_circle, color: Colors.green, size: 22),
+                child: const Icon(Icons.check, color: Colors.white, size: 14),
               ),
             ),
 

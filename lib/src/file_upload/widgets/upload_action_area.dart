@@ -9,7 +9,7 @@ import 'picker_sheet.dart';
 
 /// 上传操作区域
 ///
-/// 默认模式下点击触发文件选择（根据 [pickerAction] 自动选择文件/相册/拍照），
+/// 默认模式下点击触发文件选择（根据 [pickFile] 自动选择文件/相册/拍照），
 /// 选择完成后通过 [onPicked] 回调返回。
 ///
 /// 自定义模式下（[uploadButtonBuilder]）使用外部传入的 [onTap] 完全控制行为。
@@ -35,7 +35,7 @@ class UploadActionArea extends StatefulWidget {
   // ==================== 选择器配置 ====================
 
   /// 选择器操作类型
-  final PickerAction pickerAction;
+  final PickFile pickFile;
 
   /// 是否支持多选
   final bool multiple;
@@ -68,7 +68,7 @@ class UploadActionArea extends StatefulWidget {
     required this.title,
     required this.borderRadius,
     required this.showType,
-    required this.pickerAction,
+    required this.pickFile,
     this.multiple = true,
     this.allowedExtensions,
     this.limit = -1,
@@ -98,16 +98,16 @@ class _UploadActionAreaState extends State<UploadActionArea> {
     }
     _isPicking = true;
     try {
-      switch (widget.pickerAction) {
-        case PickerAction.file:
+      switch (widget.pickFile) {
+        case PickFile.file:
           await _pickFiles();
-        case PickerAction.gallery:
+        case PickFile.gallery:
           await _pickImage(ImageSource.gallery);
-        case PickerAction.camera:
+        case PickFile.camera:
           await _pickImage(ImageSource.camera);
-        case PickerAction.all:
-        case PickerAction.imageOrCamera:
-          final action = await PickerSheet.show(context: context, pickerAction: widget.pickerAction);
+        case PickFile.all:
+        case PickFile.imageOrCamera:
+          final action = await PickerSheet.show(context: context, pickFile: widget.pickFile);
           if (action != null) {
             await _handlePickerAction(action);
           }
@@ -117,16 +117,16 @@ class _UploadActionAreaState extends State<UploadActionArea> {
     }
   }
 
-  Future<void> _handlePickerAction(PickerAction action) async {
+  Future<void> _handlePickerAction(PickFile action) async {
     switch (action) {
-      case PickerAction.file:
+      case PickFile.file:
         await _pickFiles();
-      case PickerAction.gallery:
+      case PickFile.gallery:
         await _pickImage(ImageSource.gallery);
-      case PickerAction.camera:
+      case PickFile.camera:
         await _pickImage(ImageSource.camera);
-      case PickerAction.all:
-      case PickerAction.imageOrCamera:
+      case PickFile.all:
+      case PickFile.imageOrCamera:
         break;
     }
   }
@@ -178,6 +178,9 @@ class _UploadActionAreaState extends State<UploadActionArea> {
               widget.icon ?? Icon(Icons.add, color: primaryColor.withValues(alpha: 0.55), size: widget.size * 0.2),
               Text(
                 widget.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: widget.size * 0.1, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.55)),
               ),
             ],
