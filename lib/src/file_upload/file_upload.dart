@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
+import 'controller.dart';
 import 'model/enum.dart';
 import 'model/file_info.dart';
 import 'model/upload_config.dart';
 import 'widgets/card_show_file.dart';
+import 'widgets/file_action_sheet.dart';
 import 'widgets/list_show_file.dart';
+import 'widgets/picker_sheet.dart';
 import 'service/upload_controller.dart';
 import 'widgets/upload_action_area.dart';
 
@@ -335,6 +339,69 @@ class FileUploadState extends State<FileUpload> {
     _autoUpload(files);
   }
 
+  // ==================== 卡片点击操作（仅 success 状态） ====================
+
+  /// 点击已上传成功的卡片 → 弹出操作 Sheet
+  Future<void> _onCardTap(FileInfo file) async {
+    if (file.status != UploadStatus.success) return;
+    final action = await FileActionSheet.show(context: context, fileName: file.name);
+    if (action == null) return;
+    switch (action) {
+      case FileSheetAction.replace:
+        await _replaceFile(file.id);
+      case FileSheetAction.delete:
+        _removeFile(file);
+    }
+  }
+
+  /// 原位替换指定文件
+  ///
+  /// 弹出文件选择器，选中新文件后替换到 [oldFileId] 所在位置，
+  /// 保持列表顺序不变，并自动触发上传。
+  Future<void> _replaceFile(String oldFileId) async {
+    final index = _files.indexWhere((f) => f.id == oldFileId);
+    if (index == -1) return;
+    // 弹出文件选择器（复用 pickFile 配置）
+    List<FileInfo> picked = [];
+    switch (widget.pickFile) {
+      case PickFile.file:
+        picked = await PickFileController.pickFiles(
+          multiple: false,
+          allowedExtensions: widget.allowedExtensions,
+        );
+      case PickFile.gallery:
+        picked = await PickFileController.pickImage(ImageSource.gallery, multiple: false);
+      case PickFile.camera:
+        picked = await PickFileController.pickImage(ImageSource.camera, multiple: false);
+      case PickFile.all:
+      case PickFile.imageOrCamera:
+        // 替换场景固定走 imageOrCamera（替换通常是图片）
+        final subAction = await PickerSheet.show(context: context, pickFile: widget.pickFile);
+        if (subAction == null) return;
+        switch (subAction) {
+          case PickFile.file:
+            picked = await PickFileController.pickFiles(multiple: false, allowedExtensions: widget.allowedExtensions);
+          case PickFile.gallery:
+            picked = await PickFileController.pickImage(ImageSource.gallery, multiple: false);
+          case PickFile.camera:
+            picked = await PickFileController.pickImage(ImageSource.camera, multiple: false);
+          case PickFile.all:
+          case PickFile.imageOrCamera:
+            return;
+        }
+    }
+    if (picked.isEmpty) return;
+    final newFile = picked.first;
+    final oldFile = _files[index];
+    setState(() {
+      _files[index] = newFile;
+    });
+    // 通知外部：先移除旧文件，再添加新文件
+    widget.onFileChanged?.call([oldFile], FileAction.remove);
+    widget.onFileChanged?.call([newFile], FileAction.add);
+    _autoUpload([newFile]);
+  }
+
   // ==================== UI 构建 ====================
 
   /// 构建组件 UI
@@ -355,13 +422,16 @@ class FileUploadState extends State<FileUpload> {
               runSpacing: widget.spacing,
               children: [
                 ..._files.map(
-                  (f) => CardShowFile(
-                    key: ValueKey(f.id),
-                    fileInfo: f,
-                    borderRadius: widget.borderRadius,
-                    size: cardSize,
-                    onRemove: () => _removeFile(f),
-                    onRetry: widget.uploadConfig == null ? null : () => startUpload(f.id),
+                  (f) => GestureDetector(
+                    onTap: f.status == UploadStatus.success ? () => _onCardTap(f) : null,
+                    child: CardShowFile(
+                      key: ValueKey(f.id),
+                      fileInfo: f,
+                      borderRadius: widget.borderRadius,
+                      size: cardSize,
+                      onRemove: () => _removeFile(f),
+                      onRetry: widget.uploadConfig == null ? null : () => startUpload(f.id),
+                    ),
                   ),
                 ),
                 if (widget.limit == -1 || _files.length < widget.limit)
@@ -394,13 +464,16 @@ class FileUploadState extends State<FileUpload> {
                 final file = entry.value;
                 return Padding(
                   padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
-                  child: ListShowFile(
-                    key: ValueKey(file.id),
-                    fileInfo: file,
-                    borderRadius: widget.borderRadius,
-                    onRemove: () => _removeFile(file),
-                    onCancel: () => cancelUpload(file.id),
-                    onRetry: widget.uploadConfig == null ? null : () => startUpload(file.id),
+                  child: GestureDetector(
+                    onTap: file.status == UploadStatus.success ? () => _onCardTap(file) : null,
+                    child: ListShowFile(
+                      key: ValueKey(file.id),
+                      fileInfo: file,
+                      borderRadius: widget.borderRadius,
+                      onRemove: () => _removeFile(file),
+                      onCancel: () => cancelUpload(file.id),
+                      onRetry: widget.uploadConfig == null ? null : () => startUpload(file.id),
+                    ),
                   ),
                 );
               }),

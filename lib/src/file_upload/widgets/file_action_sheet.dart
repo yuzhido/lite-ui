@@ -1,0 +1,185 @@
+import 'package:flutter/material.dart';
+
+/// 文件操作类型
+enum FileSheetAction {
+  /// 替换文件
+  replace,
+
+  /// 删除文件
+  delete,
+}
+
+/// 文件操作底部弹窗（Apple 风格）
+///
+/// 点击已上传成功的文件卡片时弹出，提供「替换」「删除」两个操作选项。
+/// 返回用户选择的 [FileSheetAction]，取消返回 `null`。
+class FileActionSheet {
+  /// 显示文件操作弹窗
+  ///
+  /// [fileName] 当前文件名（展示给用户确认操作对象）
+  static Future<FileSheetAction?> show({required BuildContext context, required String fileName}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return showModalBottomSheet<FileSheetAction>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _FileActionSheetBody(fileName: fileName, isDark: isDark, onSelected: (action) => Navigator.pop(ctx, action), onCancel: () => Navigator.pop(ctx)),
+    );
+  }
+}
+
+/// 文件操作弹窗内容体
+class _FileActionSheetBody extends StatelessWidget {
+  final String fileName;
+  final bool isDark;
+  final ValueChanged<FileSheetAction> onSelected;
+  final VoidCallback onCancel;
+
+  const _FileActionSheetBody({required this.fileName, required this.isDark, required this.onSelected, required this.onCancel});
+
+  @override
+  Widget build(BuildContext context) {
+    final cardColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+    final dividerColor = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(left: 10, right: 10, bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 选项卡片
+            Container(
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14)),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 文件名标题
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(color: isDark ? const Color(0xFF636366) : const Color(0xFFD1D1D6), borderRadius: BorderRadius.circular(2)),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          fileName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 16, height: 1, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF98989D) : const Color(0xFF696969)),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Divider(height: 0.5, thickness: 0.5, color: dividerColor),
+                  _ActionTile(
+                    label: '替换文件',
+                    icon: Icons.swap_horiz,
+                    iconColor: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF),
+                    iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2F7),
+                    textColor: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                    onTap: () => onSelected(FileSheetAction.replace),
+                  ),
+                  Divider(height: 0.5, thickness: 0.5, color: dividerColor, indent: 56),
+                  _ActionTile(
+                    label: '删除文件',
+                    icon: Icons.delete_outline,
+                    iconColor: const Color(0xFFEF4444),
+                    iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFFEF2F2),
+                    textColor: const Color(0xFFEF4444),
+                    onTap: () => onSelected(FileSheetAction.delete),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // 取消按钮
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14)),
+              clipBehavior: Clip.antiAlias,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onCancel,
+                  splashColor: Colors.transparent,
+                  highlightColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '取消',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 单个操作选项行
+class _ActionTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBgColor;
+  final Color textColor;
+  final VoidCallback onTap;
+
+  const _ActionTile({required this.label, required this.icon, required this.iconColor, required this.iconBgColor, required this.textColor, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.transparent,
+        highlightColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              // 图标容器
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(color: iconBgColor, borderRadius: BorderRadius.circular(8)),
+                child: Icon(icon, size: 20, color: iconColor),
+              ),
+              const SizedBox(width: 14),
+              // 文字
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, color: textColor),
+                ),
+              ),
+              // 箭头
+              Icon(Icons.chevron_right, size: 20, color: isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
