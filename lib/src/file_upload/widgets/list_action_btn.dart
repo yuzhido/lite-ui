@@ -19,7 +19,10 @@ class ListActionBtn extends StatelessWidget {
   /// 取消上传回调（上传中时调用，未提供则走 onRemove）
   final VoidCallback? onCancel;
 
-  const ListActionBtn({super.key, required this.fileInfo, this.onRemove, this.onCancel});
+  /// 重试上传回调（上传失败时调用）
+  final VoidCallback? onRetry;
+
+  const ListActionBtn({super.key, required this.fileInfo, this.onRemove, this.onCancel, this.onRetry});
 
   bool get _isUploading => fileInfo.status == UploadStatus.uploading;
   bool get _isFailed => fileInfo.status == UploadStatus.failed;
@@ -48,7 +51,7 @@ class ListActionBtn extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: GestureDetector(
-              onTap: onRemove,
+              onTap: onRetry,
               child: Container(
                 width: 28,
                 height: 28,

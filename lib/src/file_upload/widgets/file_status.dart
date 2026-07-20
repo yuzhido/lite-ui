@@ -94,17 +94,18 @@ class FileStatus extends StatelessWidget {
           /// 上传成功：左上角绿色对勾徽标
           if (status == UploadStatus.success)
             Positioned(
-              top: 0,
-              left: 0,
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                child: const Icon(Icons.check, color: Colors.white, size: 14),
+              top: 2,
+              left: 2,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 3, offset: const Offset(0, 1))],
+                ),
+                child: const Icon(Icons.check_circle, color: Colors.green, size: 22),
               ),
             ),
 
-          /// 上传失败：遮罩 + 错误图标
+          /// 上传失败：遮罩 + 错误图标 + 点击重试提示
           if (status == UploadStatus.failed)
             Container(
               decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
@@ -114,7 +115,7 @@ class FileStatus extends StatelessWidget {
                   children: [
                     Icon(Icons.error_outline, color: Colors.redAccent, size: 28),
                     SizedBox(height: 4),
-                    Text('上传失败', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    Text('上传失败，点击重试', style: TextStyle(color: Colors.white, fontSize: 12)),
                   ],
                 ),
               ),

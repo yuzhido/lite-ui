@@ -274,7 +274,7 @@ class FileUploadState extends State<FileUpload> {
               spacing: widget.spacing,
               runSpacing: widget.spacing,
               children: [
-                ..._files.map((f) => CardShowFile(key: ValueKey(f.path), fileInfo: f, borderRadius: widget.borderRadius, size: cardSize, onRemove: () => _removeFile(f))),
+                ..._files.map((f) => CardShowFile(key: ValueKey(f.path), fileInfo: f, borderRadius: widget.borderRadius, size: cardSize, onRemove: () => _removeFile(f), onRetry: widget.uploadConfig == null ? null : () => startUpload(f.path))),
                 if (widget.limit == -1 || _files.length < widget.limit)
                   UploadActionArea(
                     icon: widget.icon,
@@ -309,6 +309,7 @@ class FileUploadState extends State<FileUpload> {
                     borderRadius: widget.borderRadius,
                     onRemove: () => _removeFile(file),
                     onCancel: () => cancelUpload(file.path),
+                    onRetry: widget.uploadConfig == null ? null : () => startUpload(file.path),
                   ),
                 );
               }),

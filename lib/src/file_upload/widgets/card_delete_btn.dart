@@ -7,15 +7,20 @@ class CardDeleteBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: 0,
-      right: 0,
+      top: 2,
+      right: 2,
       child: GestureDetector(
         onTap: onRemove,
         child: Container(
           width: 22,
           height: 22,
-          decoration: const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
-          child: const Icon(Icons.close, color: Colors.white, size: 14),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.55),
+            shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 3, offset: const Offset(0, 1))],
+          ),
+          alignment: Alignment.center,
+          child: const Icon(Icons.close_rounded, color: Colors.white, size: 14),
         ),
       ),
     );

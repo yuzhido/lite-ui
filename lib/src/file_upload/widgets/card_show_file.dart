@@ -19,13 +19,16 @@ class CardShowFile extends StatelessWidget {
   /// 删除回调
   final VoidCallback? onRemove;
 
+  /// 重试上传回调（上传失败时点击失败遮罩触发）
+  final VoidCallback? onRetry;
+
   /// 预览卡片尺寸（宽高一致的正方形），默认 100
   final double size;
 
   /// 圆角半径，默认 5
   final double borderRadius;
 
-  const CardShowFile({super.key, required this.borderRadius, required this.fileInfo, this.onRemove, this.size = 120});
+  const CardShowFile({super.key, required this.borderRadius, required this.fileInfo, this.onRemove, this.onRetry, this.size = 120});
 
   /// 上传中时隐藏删除按钮
   bool get _isUploading => fileInfo.status == UploadStatus.uploading;
@@ -98,12 +101,25 @@ class CardShowFile extends StatelessWidget {
           )
         : cardContent;
 
+    // 失败状态下整个卡片可点击触发重试
+    final isFailed = fileInfo.status == UploadStatus.failed;
+    final statusLayer = FileStatus(status: fileInfo.status, size: size, progress: fileInfo.progress, child: displayContent);
+
     return SizedBox(
       width: size,
       height: size,
       child: Stack(
         children: [
-          FileStatus(status: fileInfo.status, size: size, progress: fileInfo.progress, child: displayContent),
+          if (isFailed && onRetry != null)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: onRetry,
+                behavior: HitTestBehavior.opaque,
+                child: statusLayer,
+              ),
+            )
+          else
+            statusLayer,
           if (!_isUploading) CardDeleteBtn(onRemove: onRemove),
         ],
       ),

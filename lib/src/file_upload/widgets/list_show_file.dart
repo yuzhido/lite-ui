@@ -21,10 +21,13 @@ class ListShowFile extends StatelessWidget {
   /// 取消上传回调
   final VoidCallback? onCancel;
 
+  /// 重试上传回调（上传失败时调用）
+  final VoidCallback? onRetry;
+
   /// 圆角半径，默认 8
   final double borderRadius;
 
-  const ListShowFile({super.key, required this.fileInfo, this.onRemove, this.onCancel, this.borderRadius = 8});
+  const ListShowFile({super.key, required this.fileInfo, this.onRemove, this.onCancel, this.onRetry, this.borderRadius = 8});
 
   bool get _isUploading => fileInfo.status == UploadStatus.uploading;
   bool get _isSuccess => fileInfo.status == UploadStatus.success;
@@ -128,7 +131,7 @@ class ListShowFile extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         // 右侧操作区
-        ListActionBtn(fileInfo: fileInfo, onRemove: onRemove, onCancel: onCancel),
+        ListActionBtn(fileInfo: fileInfo, onRemove: onRemove, onCancel: onCancel, onRetry: onRetry),
       ],
     );
   }
