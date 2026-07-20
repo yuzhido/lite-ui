@@ -2,29 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../model/enum.dart';
 
-/// 底部选择弹窗 — 根据 [PickerAction] 展示对应的文件选择操作选项
+/// 底部选择弹窗 — Apple 风格，根据 [PickerAction] 展示对应的文件选择操作选项
 class PickerSheet {
   /// 显示底部选择弹窗，返回用户选择的 [PickerAction]，取消返回 `null`
   static Future<PickerAction?> show({required BuildContext context, required PickerAction pickerAction}) {
     final options = _buildOptions(pickerAction);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return showModalBottomSheet<PickerAction>(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: options
-              .map(
-                (opt) => ListTile(
-                  leading: Icon(opt.icon, color: Theme.of(context).colorScheme.primary),
-                  title: Text(opt.label),
-                  onTap: () => Navigator.pop(ctx, opt.action),
-                ),
-              )
-              .toList(),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _AppleSheetBody(options: options, isDark: isDark, onSelected: (action) => Navigator.pop(ctx, action), onCancel: () => Navigator.pop(ctx)),
     );
   }
 
@@ -45,6 +35,125 @@ class PickerSheet {
       default:
         return [];
     }
+  }
+}
+
+/// Apple 风格弹窗内容
+class _AppleSheetBody extends StatelessWidget {
+  final List<_SheetOption> options;
+  final bool isDark;
+  final ValueChanged<PickerAction> onSelected;
+  final VoidCallback onCancel;
+
+  const _AppleSheetBody({required this.options, required this.isDark, required this.onSelected, required this.onCancel});
+
+  @override
+  Widget build(BuildContext context) {
+    final cardColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+    final dividerColor = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA);
+    final subtitleColor = isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(left: 10, right: 10, bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 选项卡片
+            Container(
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14)),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // // 顶部拖拽指示条
+                  // Container(
+                  //   margin: const EdgeInsets.only(top: 8, bottom: 12),
+                  //   width: 36,
+                  //   height: 5,
+                  //   decoration: BoxDecoration(color: isDark ? const Color(0xFF636366) : const Color(0xFFD1D1D6), borderRadius: BorderRadius.circular(2.5)),
+                  // ),
+                  for (int i = 0; i < options.length; i++) ...[
+                    if (i > 0) Divider(height: 0.5, thickness: 0.5, color: dividerColor, indent: 56),
+                    _AppleOptionTile(option: options[i], subtitleColor: subtitleColor, onTap: () => onSelected(options[i].action)),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // 取消按钮
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14)),
+              clipBehavior: Clip.antiAlias,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onCancel,
+                  splashColor: Colors.transparent,
+                  highlightColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '取消',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 单个选项行
+class _AppleOptionTile extends StatelessWidget {
+  final _SheetOption option;
+  final Color subtitleColor;
+  final VoidCallback onTap;
+
+  const _AppleOptionTile({required this.option, required this.subtitleColor, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.transparent,
+        highlightColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              // 图标容器
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(color: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2F7), borderRadius: BorderRadius.circular(8)),
+                child: Icon(option.icon, size: 20, color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF)),
+              ),
+              const SizedBox(width: 14),
+              // 文字
+              Expanded(
+                child: Text(
+                  option.label,
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, color: isDark ? Colors.white : const Color(0xFF1C1C1E)),
+                ),
+              ),
+              // 箭头
+              Icon(Icons.chevron_right, size: 20, color: subtitleColor),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
