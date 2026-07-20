@@ -91,6 +91,16 @@ class FileUpload extends StatefulWidget {
   /// 参数为点击上传的回调函数。
   final Widget Function(VoidCallback onTap)? uploadButtonBuilder;
 
+  /// 上传按钮区域的装饰样式，可自定义背景色、边框、圆角、阴影等
+  ///
+  /// 为空时使用默认装饰，传入后将完全覆盖默认的 [BoxDecoration]。
+  final BoxDecoration? actionDecoration;
+
+  /// 上传按钮区域的提示文字样式
+  ///
+  /// 为空时使用默认样式，传入后覆盖卡片模式和列表模式的文字样式。
+  final TextStyle? actionTitleStyle;
+
   /// 初始文件列表（编辑模式回显）
   ///
   /// 传入已存在的文件列表，组件初始化时直接显示。
@@ -116,6 +126,8 @@ class FileUpload extends StatefulWidget {
     this.showType = ShowType.card,
     this.itemBuilder,
     this.uploadButtonBuilder,
+    this.actionDecoration,
+    this.actionTitleStyle,
     this.fileList,
   }) : assert(previewSize == null || columns == null, 'previewSize 和 columns 不能同时设置，二者互斥'),
        assert(limit == -1 || limit > 0, 'limit 必须为 -1 或正整数');
@@ -356,6 +368,8 @@ class FileUploadState extends State<FileUpload> {
                   UploadActionArea(
                     icon: widget.icon,
                     borderRadius: widget.borderRadius,
+                    decoration: widget.actionDecoration,
+                    titleStyle: widget.actionTitleStyle,
                     title: widget.title,
                     size: cardSize,
                     showType: widget.showType,
@@ -395,6 +409,8 @@ class FileUploadState extends State<FileUpload> {
                 UploadActionArea(
                   icon: widget.icon,
                   borderRadius: widget.borderRadius,
+                  decoration: widget.actionDecoration,
+                  titleStyle: widget.actionTitleStyle,
                   title: widget.title,
                   size: 120,
                   showType: widget.showType,
@@ -434,6 +450,8 @@ class FileUploadState extends State<FileUpload> {
                 UploadActionArea(
                   icon: widget.icon,
                   borderRadius: widget.borderRadius,
+                  decoration: widget.actionDecoration,
+                  titleStyle: widget.actionTitleStyle,
                   title: widget.title,
                   size: 120,
                   showType: widget.showType,

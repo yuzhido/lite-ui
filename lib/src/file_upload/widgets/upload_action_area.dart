@@ -26,8 +26,17 @@ class UploadActionArea extends StatefulWidget {
   /// 提示文字
   final String title;
 
+  /// 提示文字样式，为空时使用默认样式
+  final TextStyle? titleStyle;
+
   /// 圆角半径，默认 8
   final double borderRadius;
+
+  /// 上传区域的装饰样式，可自定义背景色、边框、圆角、阴影等
+  ///
+  /// 为空时使用默认装饰（主题色浅背景 + 主题色边框 + [borderRadius] 圆角）。
+  /// 传入后将完全覆盖默认的 [BoxDecoration]（包括背景色、边框、圆角、渐变、阴影等）。
+  final BoxDecoration? decoration;
 
   /// 展示类型，决定布局样式
   final ShowType showType;
@@ -66,7 +75,9 @@ class UploadActionArea extends StatefulWidget {
     this.backgroundImage,
     this.icon,
     required this.title,
+    this.titleStyle,
     required this.borderRadius,
+    this.decoration,
     required this.showType,
     required this.pickFile,
     this.multiple = true,
@@ -153,7 +164,7 @@ class _UploadActionAreaState extends State<UploadActionArea> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
-    final borderColor = primaryColor.withValues(alpha: 0.35);
+    final defaultBorderColor = primaryColor.withValues(alpha: 0.35);
 
     if (widget.uploadButtonBuilder != null && widget.onTap != null) {
       return widget.uploadButtonBuilder!(widget.onTap!);
@@ -164,14 +175,16 @@ class _UploadActionAreaState extends State<UploadActionArea> {
         child: Container(
           width: widget.size,
           height: widget.size,
-          decoration: BoxDecoration(
-            color: primaryColor.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            border: Border.all(color: borderColor, width: 1),
-            image: widget.backgroundImage != null
-                ? DecorationImage(image: widget.backgroundImage!, fit: BoxFit.cover, colorFilter: ColorFilter.mode(Colors.white, BlendMode.lighten))
-                : null,
-          ),
+          decoration:
+              widget.decoration ??
+              BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                border: Border.all(color: defaultBorderColor, width: 1),
+                image: widget.backgroundImage != null
+                    ? DecorationImage(image: widget.backgroundImage!, fit: BoxFit.cover, colorFilter: ColorFilter.mode(Colors.white, BlendMode.lighten))
+                    : null,
+              ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -181,7 +194,7 @@ class _UploadActionAreaState extends State<UploadActionArea> {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: widget.size * 0.1, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.55)),
+                style: widget.titleStyle ?? TextStyle(fontSize: widget.size * 0.1, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.55)),
               ),
             ],
           ),
@@ -193,11 +206,17 @@ class _UploadActionAreaState extends State<UploadActionArea> {
         onTap: _onTapUpload,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [primaryColor.withValues(alpha: 0.04), primaryColor.withValues(alpha: 0.08)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            border: Border.all(color: borderColor, width: 1),
-          ),
+          decoration:
+              widget.decoration ??
+              BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [primaryColor.withValues(alpha: 0.04), primaryColor.withValues(alpha: 0.08)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                border: Border.all(color: defaultBorderColor, width: 1),
+              ),
           child: Row(
             children: [
               Container(
@@ -210,7 +229,7 @@ class _UploadActionAreaState extends State<UploadActionArea> {
               Expanded(
                 child: Text(
                   widget.title,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.8)),
+                  style: widget.titleStyle ?? TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.8)),
                 ),
               ),
               Container(

@@ -64,11 +64,11 @@ class UploadConfig {
   ///
   /// 典型用法：
   /// ```dart
-  /// validateResult: (body) {
-  ///   return body?['success'] == true;
+  /// validateResult: (data) {
+  ///   return data?['success'] == true;
   /// },
   /// ```
-  final bool Function(Map<String, dynamic>? body)? validateResult;
+  final bool Function(Map<String, dynamic>? data)? validateResult;
 
   const UploadConfig({
     required this.mode,
@@ -89,19 +89,19 @@ class UploadResult {
   /// 是否上传成功
   final bool success;
 
-  /// 服务端返回的响应体（已解析为 JSON Map，解析失败时为 null）
-  final Map<String, dynamic>? responseBody;
+  /// 服务端返回的响应数据（已解析为 JSON Map，解析失败时为 null）
+  final Map<String, dynamic>? data;
 
   /// 错误信息
   final String? error;
 
-  const UploadResult._({required this.success, this.responseBody, this.error});
+  const UploadResult._({required this.success, this.data, this.error});
 
   /// 创建成功结果
   ///
-  /// [responseBody] 为已解析的 JSON Map，自定义上传可直接传入业务数据。
-  factory UploadResult.success({Map<String, dynamic>? responseBody}) {
-    return UploadResult._(success: true, responseBody: responseBody);
+  /// [data] 为已解析的 JSON Map，自定义上传可直接传入业务数据。
+  factory UploadResult.success({Map<String, dynamic>? data}) {
+    return UploadResult._(success: true, data: data);
   }
 
   /// 创建失败结果
@@ -111,14 +111,14 @@ class UploadResult {
 
   /// 从原始响应字符串解析并创建成功结果（内置上传使用）
   ///
-  /// 尝试将 [rawBody] 解析为 JSON，解析失败时 [responseBody] 为 null。
+  /// 尝试将 [rawBody] 解析为 JSON，解析失败时 [data] 为 null。
   factory UploadResult.successFromRaw(String rawBody) {
     Map<String, dynamic>? parsed;
     try {
       parsed = jsonDecode(rawBody) as Map<String, dynamic>;
     } catch (_) {
-      // 非 JSON 格式，responseBody 保持 null
+      // 非 JSON 格式，data 保持 null
     }
-    return UploadResult._(success: true, responseBody: parsed);
+    return UploadResult._(success: true, data: parsed);
   }
 }

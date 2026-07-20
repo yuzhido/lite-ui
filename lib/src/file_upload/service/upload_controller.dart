@@ -31,12 +31,7 @@ class UploadController {
   /// 当前正在上传的文件数量
   int get activeUploadCount => _activeUploadCount;
 
-  UploadController({
-    required this._config,
-    required this._getFile,
-    required this._onFileStatusChanged,
-    required this._onFileProgress,
-  });
+  UploadController({required this._config, required this._getFile, required this._onFileStatusChanged, required this._onFileProgress});
 
   /// 开始上传指定文件（通过文件 id 标识）
   ///
@@ -99,9 +94,7 @@ class UploadController {
         }
 
         // 执行上传
-        result = _config.mode == UploadMode.custom && _config.customUpload != null
-            ? await _customUpload(id, filePath)
-            : await _builtinUpload(id, filePath);
+        result = _config.mode == UploadMode.custom && _config.customUpload != null ? await _customUpload(id, filePath) : await _builtinUpload(id, filePath);
 
         if (result.success) break;
       }
@@ -110,12 +103,12 @@ class UploadController {
 
       if (result != null && result.success) {
         // 业务校验
-        final isValid = _config.validateResult == null || _config.validateResult!(result.responseBody);
+        final isValid = _config.validateResult == null || _config.validateResult!(result.data);
 
         if (isValid) {
-          _onFileStatusChanged(id, UploadStatus.success, data: result.responseBody);
+          _onFileStatusChanged(id, UploadStatus.success, data: result.data);
         } else {
-          debugPrint('[UploadController] 业务校验失败: id=$id, response=${result.responseBody}');
+          debugPrint('[UploadController] 业务校验失败: id=$id, response=${result.data}');
           _onFileStatusChanged(id, UploadStatus.failed);
         }
       } else {
