@@ -2,6 +2,20 @@ import 'dart:convert';
 
 import 'file_info.dart';
 
+/// 使用方式
+enum UseType {
+  /// 普通模式（默认），不限制文件数量和选择方式
+  normal,
+
+  /// 头像模式
+  ///
+  /// 内部自动覆盖以下配置，无需手动设置：
+  /// - [FileUpload.limit] 固定为 1
+  /// - [FileUpload.multiple] 固定为 false
+  /// - [FileUpload.pickFile] 固定为 [PickFile.imageOrCamera]（相册或拍照）
+  avatar,
+}
+
 /// 上传模式
 enum UploadMode {
   /// 选择文件后自动开始上传

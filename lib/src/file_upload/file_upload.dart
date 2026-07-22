@@ -105,6 +105,13 @@ class FileUpload extends StatefulWidget {
   /// 为空时使用默认样式，传入后覆盖卡片模式和列表模式的文字样式。
   final TextStyle? actionTitleStyle;
 
+  /// 使用方式，默认 [UseType.normal]
+  ///
+  /// - [UseType.normal]：普通模式，不限制文件数量和选择方式
+  /// - [UseType.avatar]：头像模式，内部自动覆盖 limit=1、multiple=false、pickFile=imageOrCamera，
+  ///   开发者无需传入这些参数
+  final UseType useType;
+
   /// 初始文件列表（编辑模式回显）
   ///
   /// 传入已存在的文件列表，组件初始化时直接显示。
@@ -132,9 +139,14 @@ class FileUpload extends StatefulWidget {
     this.uploadButtonBuilder,
     this.actionDecoration,
     this.actionTitleStyle,
+    this.useType = UseType.normal,
     this.fileList,
   }) : assert(previewSize == null || columns == null, 'previewSize 和 columns 不能同时设置，二者互斥'),
-       assert(limit == -1 || limit > 0, 'limit 必须为 -1 或正整数');
+       assert(limit == -1 || limit > 0, 'limit 必须为 -1 或正整数'),
+       assert(
+         useType != UseType.avatar || pickFile == PickFile.gallery || pickFile == PickFile.camera || pickFile == PickFile.imageOrCamera,
+         '头像模式下 pickFile 仅支持 PickFile.gallery / PickFile.camera / PickFile.imageOrCamera',
+       );
 
   @override
   State<FileUpload> createState() => FileUploadState();
@@ -208,6 +220,18 @@ class FileUploadState extends State<FileUpload> {
       });
     }
   }
+
+  /// 当前是否头像模式
+  bool get _isAvatar => widget.useType == UseType.avatar;
+
+  /// 实际生效的 limit（头像模式强制为 1）
+  int get _effectiveLimit => _isAvatar ? 1 : widget.limit;
+
+  /// 实际生效的 multiple（头像模式强制为 false）
+  bool get _effectiveMultiple => _isAvatar ? false : widget.multiple;
+
+  /// 实际生效的 pickFile（头像模式强制为 imageOrCamera）
+  PickFile get _effectivePickFile => _isAvatar ? PickFile.imageOrCamera : widget.pickFile;
 
   /// 获取当前文件列表
   List<FileInfo> get files => List.unmodifiable(_files);
@@ -339,11 +363,10 @@ class FileUploadState extends State<FileUpload> {
     _autoUpload(files);
   }
 
-  // ==================== 卡片点击操作（仅 success 状态） ====================
+  // ==================== 卡片点击操作 ====================
 
-  /// 点击已上传成功的卡片 → 弹出操作 Sheet
+  /// 点击卡片 → 弹出操作 Sheet
   Future<void> _onCardTap(FileInfo file) async {
-    if (file.status != UploadStatus.success) return;
     final action = await FileActionSheet.show(context: context, fileName: file.name);
     if (action == null) return;
     switch (action) {
@@ -363,12 +386,9 @@ class FileUploadState extends State<FileUpload> {
     if (index == -1) return;
     // 弹出文件选择器（复用 pickFile 配置）
     List<FileInfo> picked = [];
-    switch (widget.pickFile) {
+    switch (_effectivePickFile) {
       case PickFile.file:
-        picked = await PickFileController.pickFiles(
-          multiple: false,
-          allowedExtensions: widget.allowedExtensions,
-        );
+        picked = await PickFileController.pickFiles(multiple: false, allowedExtensions: widget.allowedExtensions);
       case PickFile.gallery:
         picked = await PickFileController.pickImage(ImageSource.gallery, multiple: false);
       case PickFile.camera:
@@ -376,7 +396,7 @@ class FileUploadState extends State<FileUpload> {
       case PickFile.all:
       case PickFile.imageOrCamera:
         // 替换场景固定走 imageOrCamera（替换通常是图片）
-        final subAction = await PickerSheet.show(context: context, pickFile: widget.pickFile);
+        final subAction = await PickerSheet.show(context: context, pickFile: _effectivePickFile);
         if (subAction == null) return;
         switch (subAction) {
           case PickFile.file:
@@ -422,19 +442,18 @@ class FileUploadState extends State<FileUpload> {
               runSpacing: widget.spacing,
               children: [
                 ..._files.map(
-                  (f) => GestureDetector(
-                    onTap: f.status == UploadStatus.success ? () => _onCardTap(f) : null,
-                    child: CardShowFile(
-                      key: ValueKey(f.id),
-                      fileInfo: f,
-                      borderRadius: widget.borderRadius,
-                      size: cardSize,
-                      onRemove: () => _removeFile(f),
-                      onRetry: widget.uploadConfig == null ? null : () => startUpload(f.id),
-                    ),
+                  (f) => CardShowFile(
+                    key: ValueKey(f.id),
+                    fileInfo: f,
+                    borderRadius: widget.borderRadius,
+                    size: cardSize,
+                    showSuccessBadge: !_isAvatar,
+                    showDeleteBtn: !_isAvatar,
+                    onRemove: () => _removeFile(f),
+                    onTap: () => _onCardTap(f),
                   ),
                 ),
-                if (widget.limit == -1 || _files.length < widget.limit)
+                if (_effectiveLimit == -1 || _files.length < _effectiveLimit)
                   UploadActionArea(
                     icon: widget.icon,
                     borderRadius: widget.borderRadius,
@@ -444,10 +463,10 @@ class FileUploadState extends State<FileUpload> {
                     size: cardSize,
                     showType: widget.showType,
                     uploadButtonBuilder: widget.uploadButtonBuilder,
-                    pickFile: widget.pickFile,
-                    multiple: widget.multiple,
+                    pickFile: _effectivePickFile,
+                    multiple: _effectiveMultiple,
                     allowedExtensions: widget.allowedExtensions,
-                    limit: widget.limit,
+                    limit: _effectiveLimit,
                     currentFileCount: _files.length,
                     onPicked: _onFilesPicked,
                   ),
@@ -478,7 +497,7 @@ class FileUploadState extends State<FileUpload> {
                 );
               }),
               if (_files.isNotEmpty) const SizedBox(height: 8),
-              if (widget.limit == -1 || _files.length < widget.limit)
+              if (_effectiveLimit == -1 || _files.length < _effectiveLimit)
                 UploadActionArea(
                   icon: widget.icon,
                   borderRadius: widget.borderRadius,
@@ -488,10 +507,10 @@ class FileUploadState extends State<FileUpload> {
                   size: 120,
                   showType: widget.showType,
                   uploadButtonBuilder: widget.uploadButtonBuilder,
-                  pickFile: widget.pickFile,
-                  multiple: widget.multiple,
+                  pickFile: _effectivePickFile,
+                  multiple: _effectiveMultiple,
                   allowedExtensions: widget.allowedExtensions,
-                  limit: widget.limit,
+                  limit: _effectiveLimit,
                   currentFileCount: _files.length,
                   onPicked: _onFilesPicked,
                 ),
@@ -519,7 +538,7 @@ class FileUploadState extends State<FileUpload> {
                 );
               }),
               if (_files.isNotEmpty) const SizedBox(height: 8),
-              if (widget.limit == -1 || _files.length < widget.limit)
+              if (_effectiveLimit == -1 || _files.length < _effectiveLimit)
                 UploadActionArea(
                   icon: widget.icon,
                   borderRadius: widget.borderRadius,
@@ -529,10 +548,10 @@ class FileUploadState extends State<FileUpload> {
                   size: 120,
                   showType: widget.showType,
                   uploadButtonBuilder: widget.uploadButtonBuilder,
-                  pickFile: widget.pickFile,
-                  multiple: widget.multiple,
+                  pickFile: _effectivePickFile,
+                  multiple: _effectiveMultiple,
                   allowedExtensions: widget.allowedExtensions,
-                  limit: widget.limit,
+                  limit: _effectiveLimit,
                   currentFileCount: _files.length,
                   onPicked: _onFilesPicked,
                 ),

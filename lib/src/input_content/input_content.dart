@@ -60,6 +60,10 @@ class InputContent extends StatefulWidget {
   final Icon? prefixIcon;
   // 后置图标
   final Icon? suffixIcon;
+  // label 区域宽度
+  final double? labelWidth;
+  // 输入框是否启用
+  final bool enabled;
 
   const InputContent({
     super.key,
@@ -94,6 +98,8 @@ class InputContent extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.onChange,
+    this.labelWidth,
+    this.enabled = true,
   });
   @override
   State<InputContent> createState() => _TextInputState();
@@ -160,6 +166,7 @@ class _TextInputState extends State<InputContent> {
           children: [
             ...buildColumnLabel(state),
             TextFormField(
+              enabled: widget.enabled,
               obscureText: widget.isInputPassword ? isShowPassword : false,
               controller: controller,
               focusNode: _focusNode,
@@ -181,6 +188,7 @@ class _TextInputState extends State<InputContent> {
                 prefixIcon: buildPrefixIcon(),
                 prefixIconConstraints: BoxConstraints(minWidth: 40, minHeight: 40),
                 suffixIcon: TextInputSuffixIcon(
+                  enabled: widget.enabled,
                   suffixIcon: widget.suffixIcon,
                   isShowPassword: isShowPassword,
                   isInputPassword: widget.isInputPassword,
@@ -191,7 +199,7 @@ class _TextInputState extends State<InputContent> {
                 enabledBorder: buildBorder(BorderType.enabledBorder, hasError: state.hasError),
                 focusedBorder: buildBorder(BorderType.focusedBorder, hasError: state.hasError),
                 filled: true,
-                fillColor: widget.fillColor ?? Colors.white,
+                fillColor: widget.enabled == false ? Color(0xfff2f6fa) : widget.fillColor ?? Colors.white,
                 contentPadding: widget.contentPadding ?? EdgeInsets.symmetric(horizontal: 10, vertical: 15),
               ),
             ),
@@ -286,25 +294,17 @@ class _TextInputState extends State<InputContent> {
     } else if (widget.formLabel != null && widget.prefixIcon == null && widget.formLayout == FormLayout.column || widget.formLabel == null && widget.prefixIcon == null) {
       return null;
     }
-    return Padding(
+    return Container(
+      width: widget.labelWidth ?? 120,
       padding: EdgeInsetsGeometry.only(left: 15),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 2,
         children: [
-          if (widget.required && widget.formLabel != null && widget.formLayout == FormLayout.row) Text('*', style: TextStyle(color: Colors.red, fontSize: 16)),
           // 是否显示前置图标
           widget.prefixIcon ?? SizedBox.shrink(),
-          if (widget.formLabel != null && widget.formLayout == FormLayout.row) ...[
-            Text('${widget.formLabel}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-            SizedBox(
-              height: 18,
-              child: Padding(
-                padding: EdgeInsetsGeometry.only(left: 5),
-                child: VerticalDivider(width: 1, thickness: 1, color: const Color(0xFF999999)),
-              ),
-            ),
-          ],
+          if (widget.formLabel != null && widget.formLayout == FormLayout.row) Text('${widget.formLabel}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          if (widget.required && widget.formLabel != null && widget.formLayout == FormLayout.row) Text('*', style: TextStyle(color: Colors.red, fontSize: 16)),
         ],
       ),
     );
@@ -355,6 +355,7 @@ class TextInputSuffixIcon extends StatelessWidget {
   final bool isInputPassword;
   final Function(SuffixIconEvent event)? onHandle;
   final bool isShowPassword;
+  final bool? enabled;
 
   const TextInputSuffixIcon({
     super.key,
@@ -365,9 +366,11 @@ class TextInputSuffixIcon extends StatelessWidget {
     this.inputContent,
     this.onHandle,
     this.isShowPassword = false,
+    this.enabled,
   });
   @override
   Widget build(BuildContext context) {
+    if (enabled == false) return const SizedBox.shrink();
     if (isInputPassword) {
       return GestureDetector(
         onTap: () => onHandle?.call(SuffixIconEvent.showPassword),

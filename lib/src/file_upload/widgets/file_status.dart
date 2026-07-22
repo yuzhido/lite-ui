@@ -10,7 +10,7 @@ import '../model/enum.dart';
 /// - success：左上角绿色对勾徽标
 /// - failed：全遮罩 + 红色错误图标 + 「上传失败」
 class FileStatus extends StatelessWidget {
-  const FileStatus({super.key, required this.child, required this.status, required this.size, this.progress = 0.0});
+  const FileStatus({super.key, required this.child, required this.status, required this.size, this.progress = 0.0, this.showSuccessBadge = true});
 
   /// 被包裹的预览内容（图片缩略图 / 文件卡片）
   final Widget child;
@@ -23,6 +23,11 @@ class FileStatus extends StatelessWidget {
 
   /// 上传进度 0.0 ~ 1.0（仅 [UploadStatus.uploading] 时有效）
   final double progress;
+
+  /// 是否显示上传成功的对勾徽标，默认 true
+  ///
+  /// 头像模式下设为 false，避免小尺寸卡片上显示突兀
+  final bool showSuccessBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +97,7 @@ class FileStatus extends StatelessWidget {
             ),
 
           /// 上传成功：左上角绿色实心对勾徽标
-          if (status == UploadStatus.success)
+          if (status == UploadStatus.success && showSuccessBadge)
             Positioned(
               top: 2,
               left: 2,
