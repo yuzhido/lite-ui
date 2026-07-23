@@ -294,19 +294,30 @@ class _TextInputState extends State<InputContent> {
     } else if (widget.formLabel != null && widget.prefixIcon == null && widget.formLayout == FormLayout.column || widget.formLabel == null && widget.prefixIcon == null) {
       return null;
     }
-    return Container(
-      width: widget.labelWidth ?? 120,
-      padding: EdgeInsetsGeometry.only(left: 15),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 2,
-        children: [
-          // 是否显示前置图标
-          widget.prefixIcon ?? SizedBox.shrink(),
-          if (widget.formLabel != null && widget.formLayout == FormLayout.row) Text('${widget.formLabel}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-          if (widget.required && widget.formLabel != null && widget.formLayout == FormLayout.row) Text('*', style: TextStyle(color: Colors.red, fontSize: 16)),
-        ],
-      ),
+    return Stack(
+      alignment: Alignment.centerLeft,
+      children: [
+        Positioned(
+          left: 6,
+          child: widget.required && widget.formLabel != null && widget.formLayout == FormLayout.row
+              ? Text('*', style: TextStyle(color: Colors.red, fontSize: 16))
+              : SizedBox.shrink(),
+        ),
+        Container(
+          width: widget.labelWidth ?? 120,
+          padding: EdgeInsetsGeometry.only(left: 15),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 2,
+            children: [
+              // 是否显示前置图标
+              widget.prefixIcon ?? SizedBox.shrink(),
+              if (widget.formLabel != null && widget.formLayout == FormLayout.row) Text('${widget.formLabel}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              // if (widget.required && widget.formLabel != null && widget.formLayout == FormLayout.row) Text('*', style: TextStyle(color: Colors.red, fontSize: 16)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

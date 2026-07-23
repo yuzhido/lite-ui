@@ -63,7 +63,7 @@ class CardShowFile extends StatelessWidget {
             onTap: onTap,
             behavior: HitTestBehavior.opaque,
             child: FileStatus(
-              status: UploadStatus.success,
+              status: fileInfo.status,
               size: size,
               progress: fileInfo.progress,
               showSuccessBadge: showSuccessBadge,
@@ -73,6 +73,7 @@ class CardShowFile extends StatelessWidget {
                   if (fileInfo.isImage) ShowImage(fileInfo: fileInfo, size: size, borderRadius: borderRadius, borderColor: borderColor),
                   // 显示非图片的时候
                   if (fileInfo.isImage != true) ShowFile(fileInfo: fileInfo, size: size, borderRadius: borderRadius, borderColor: borderColor),
+                  // 上传中时显示背景渐变动画进度条
                   if (_isUploading)
                     Positioned.fill(
                       child: ClipRRect(
