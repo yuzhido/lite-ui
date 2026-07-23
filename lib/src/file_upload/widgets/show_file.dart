@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../model/file_info.dart';
-import 'file_type.dart';
+import '../utils/file_utils.dart';
 
 /// 非图片文件卡片内容
 ///
@@ -29,11 +29,15 @@ class ShowFile extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: borderColor, width: 1),
       ),
-      padding: EdgeInsets.all(size * 0.08),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FileType(fileInfo: fileInfo),
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(color: getFileColor(fileInfo.extension).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            child: Icon(getFileIcon(fileInfo.extension), color: getFileColor(fileInfo.extension), size: size * 0.5),
+          ),
           SizedBox(height: size * 0.08),
           Text(fileInfo.name, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
           Text(fileInfo.formatSize, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),

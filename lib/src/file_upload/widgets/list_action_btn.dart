@@ -55,7 +55,7 @@ class ListActionBtn extends StatelessWidget {
               child: Container(
                 width: 28,
                 height: 28,
-                decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(6)),
+                decoration: BoxDecoration(color: const Color(0xFFE0E7FF), borderRadius: BorderRadius.circular(6)),
                 child: Icon(Icons.refresh, color: const Color(0xFF6366F1), size: 16),
               ),
             ),
@@ -66,7 +66,7 @@ class ListActionBtn extends StatelessWidget {
           child: Container(
             width: 28,
             height: 28,
-            decoration: BoxDecoration(color: const Color(0xFFFEF2F2), borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(color: const Color(0xFFFEE2E2), borderRadius: BorderRadius.circular(6)),
             child: Icon(Icons.delete_forever_rounded, color: const Color(0xFFEF4444), size: 16),
           ),
         ),

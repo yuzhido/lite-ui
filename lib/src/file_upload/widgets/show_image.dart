@@ -25,55 +25,59 @@ class ShowImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: borderColor, width: 1),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: fileInfo.isNetwork
+            ? Image.network(
+                fileInfo.url!,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                cacheWidth: (size * 2).toInt(),
+                cacheHeight: (size * 2).toInt(),
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  // 图片已加载（同步或异步首帧渲染完成）→ 直接显示
+                  if (wasSynchronouslyLoaded || frame != null) {
+                    return child;
+                  }
+                  // 第一帧且图片尚未加载 → 显示加载动画（填补 loadingBuilder 接管前的空白）
+                  return LoadingStatus(size: size, borderRadius: borderRadius, progress: 0);
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  }
+                  final expected = loadingProgress.expectedTotalBytes ?? 1;
+                  final loaded = loadingProgress.cumulativeBytesLoaded;
+                  final progress = (loaded / expected).clamp(0.0, 1.0);
+                  return LoadingStatus(size: size, borderRadius: borderRadius, progress: progress);
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('[ShowImage] 网络图片加载失败: id=${fileInfo.id}, url=${fileInfo.url}, error=$error');
+                  return _ImageErrorPlaceholder(name: fileInfo.name, size: size, borderRadius: borderRadius);
+                },
+              )
+            : Image.file(
+                File(fileInfo.path!),
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                cacheWidth: (size * 2).toInt(),
+                cacheHeight: (size * 2).toInt(),
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('[ShowImage] 本地图片加载失败: id=${fileInfo.id}, path=${fileInfo.path}, error=$error');
+                  return _ImageErrorPlaceholder(name: fileInfo.name, size: size, borderRadius: borderRadius);
+                },
+              ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: fileInfo.isNetwork
-          ? Image.network(
-              fileInfo.url!,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              cacheWidth: (size * 2).toInt(),
-              cacheHeight: (size * 2).toInt(),
-              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                // 图片已加载（同步或异步首帧渲染完成）→ 直接显示
-                if (wasSynchronouslyLoaded || frame != null) {
-                  return child;
-                }
-                // 第一帧且图片尚未加载 → 显示加载动画（填补 loadingBuilder 接管前的空白）
-                return LoadingStatus(size: size, borderRadius: borderRadius, progress: 0);
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) {
-                  return child;
-                }
-                final expected = loadingProgress.expectedTotalBytes ?? 1;
-                final loaded = loadingProgress.cumulativeBytesLoaded;
-                final progress = (loaded / expected).clamp(0.0, 1.0);
-                return LoadingStatus(size: size, borderRadius: borderRadius, progress: progress);
-              },
-              errorBuilder: (context, error, stackTrace) {
-                debugPrint('[ShowImage] 网络图片加载失败: id=${fileInfo.id}, url=${fileInfo.url}, error=$error');
-                return _ImageErrorPlaceholder(name: fileInfo.name, size: size, borderRadius: borderRadius);
-              },
-            )
-          : Image.file(
-              File(fileInfo.path!),
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              cacheWidth: (size * 2).toInt(),
-              cacheHeight: (size * 2).toInt(),
-              errorBuilder: (context, error, stackTrace) {
-                debugPrint('[ShowImage] 本地图片加载失败: id=${fileInfo.id}, path=${fileInfo.path}, error=$error');
-                return _ImageErrorPlaceholder(name: fileInfo.name, size: size, borderRadius: borderRadius);
-              },
-            ),
     );
   }
 }

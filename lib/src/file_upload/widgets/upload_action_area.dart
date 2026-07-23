@@ -17,6 +17,12 @@ class UploadActionArea extends StatefulWidget {
   /// 正方形模式下区域尺寸，默认 120
   final double size;
 
+  /// 文件圆角半径
+  final double? fileRadius;
+
+  /// 预览图尺寸
+  final double? previewSize;
+
   /// 可选的背景图片，传入后作为卡片背景展示
   final ImageProvider? backgroundImage;
 
@@ -72,9 +78,11 @@ class UploadActionArea extends StatefulWidget {
   const UploadActionArea({
     super.key,
     this.size = 120,
+    this.fileRadius,
     this.backgroundImage,
     this.icon,
     required this.title,
+    this.previewSize,
     this.titleStyle,
     required this.borderRadius,
     this.decoration,
@@ -205,7 +213,6 @@ class _UploadActionAreaState extends State<UploadActionArea> {
       return GestureDetector(
         onTap: _onTapUpload,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
           decoration:
               widget.decoration ??
               BoxDecoration(
@@ -217,28 +224,37 @@ class _UploadActionAreaState extends State<UploadActionArea> {
                 borderRadius: BorderRadius.circular(widget.borderRadius),
                 border: Border.all(color: defaultBorderColor, width: 1),
               ),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: widget.icon ?? Icon(Icons.cloud_upload_outlined, color: primaryColor.withValues(alpha: 0.7), size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.title,
-                  style: widget.titleStyle ?? TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.8)),
+          child: Padding(
+            padding: EdgeInsets.all(10),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(widget.fileRadius ?? 8),
+                  child: Container(
+                    decoration: BoxDecoration(border: Border.all(width: 1, color: Colors.transparent)),
+                    child: Container(
+                      width: widget.previewSize,
+                      height: widget.previewSize,
+                      decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(widget.fileRadius ?? 8)),
+                      child: widget.icon ?? Icon(Icons.cloud_upload_outlined, color: primaryColor.withValues(alpha: 0.7), size: 20),
+                    ),
+                  ),
                 ),
-              ),
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
-                child: Icon(Icons.arrow_forward_ios_rounded, color: primaryColor.withValues(alpha: 0.4), size: 13),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: widget.titleStyle ?? TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor.withValues(alpha: 0.8)),
+                  ),
+                ),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
+                  child: Icon(Icons.arrow_forward_ios_rounded, color: primaryColor.withValues(alpha: 0.4), size: 13),
+                ),
+              ],
+            ),
           ),
         ),
       );

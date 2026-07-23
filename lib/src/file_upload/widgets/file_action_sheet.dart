@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 /// 文件操作类型
 enum FileSheetAction {
+  /// 重新上传
+  retry,
+
   /// 替换文件
   replace,
 
@@ -17,7 +20,8 @@ class FileActionSheet {
   /// 显示文件操作弹窗
   ///
   /// [fileName] 当前文件名（展示给用户确认操作对象）
-  static Future<FileSheetAction?> show({required BuildContext context, required String fileName}) {
+  /// [hasFailed] 文件是否上传失败，为 true 时额外显示「重新上传」选项
+  static Future<FileSheetAction?> show({required BuildContext context, required String fileName, bool hasFailed = false}) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -25,7 +29,8 @@ class FileActionSheet {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => _FileActionSheetBody(fileName: fileName, isDark: isDark, onSelected: (action) => Navigator.pop(ctx, action), onCancel: () => Navigator.pop(ctx)),
+      builder: (ctx) =>
+          _FileActionSheetBody(fileName: fileName, isDark: isDark, hasFailed: hasFailed, onSelected: (action) => Navigator.pop(ctx, action), onCancel: () => Navigator.pop(ctx)),
     );
   }
 }
@@ -34,10 +39,11 @@ class FileActionSheet {
 class _FileActionSheetBody extends StatelessWidget {
   final String fileName;
   final bool isDark;
+  final bool hasFailed;
   final ValueChanged<FileSheetAction> onSelected;
   final VoidCallback onCancel;
 
-  const _FileActionSheetBody({required this.fileName, required this.isDark, required this.onSelected, required this.onCancel});
+  const _FileActionSheetBody({required this.fileName, required this.isDark, required this.hasFailed, required this.onSelected, required this.onCancel});
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +90,16 @@ class _FileActionSheetBody extends StatelessWidget {
                   ),
 
                   Divider(height: 0.5, thickness: 0.5, color: dividerColor),
+                  if (hasFailed)
+                    _ActionTile(
+                      label: '上传重试',
+                      icon: Icons.refresh,
+                      iconColor: isDark ? const Color(0xFF30D158) : const Color(0xFF34C759),
+                      iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF0FDF4),
+                      textColor: isDark ? const Color(0xFF30D158) : const Color(0xFF34C759),
+                      onTap: () => onSelected(FileSheetAction.retry),
+                    ),
+                  if (hasFailed) Divider(height: 0.5, thickness: 0.5, color: dividerColor, indent: 56),
                   _ActionTile(
                     label: '替换文件',
                     icon: Icons.swap_horiz,
@@ -95,7 +111,7 @@ class _FileActionSheetBody extends StatelessWidget {
                   Divider(height: 0.5, thickness: 0.5, color: dividerColor, indent: 56),
                   _ActionTile(
                     label: '删除文件',
-                    icon: Icons.delete_outline,
+                    icon: Icons.delete_forever_outlined,
                     iconColor: const Color(0xFFEF4444),
                     iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFFEF2F2),
                     textColor: const Color(0xFFEF4444),

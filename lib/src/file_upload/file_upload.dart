@@ -71,8 +71,13 @@ class FileUpload extends StatefulWidget {
 
   final Widget? icon;
 
-  /// 圆角半径，默认 5
+  /// 外层容器圆角半径，默认 7
   final double borderRadius;
+
+  /// 文件卡片内部圆角半径，默认 5
+  ///
+  /// 控制文件预览内容（图片/文件图标）的圆角，与外层容器 [borderRadius] 独立。
+  final double fileRadius;
 
   /// 标题
   final String title;
@@ -127,13 +132,14 @@ class FileUpload extends StatefulWidget {
     this.title = '点击上传',
     this.onFileChanged,
     this.previewSize,
-    this.columns = 3,
+    this.columns,
     this.spacing = 10,
     this.alignment = WrapAlignment.start,
     this.uploadConfig,
     this.onProgress,
     this.icon,
     this.borderRadius = 7,
+    this.fileRadius = 7,
     this.showType = ShowType.card,
     this.itemBuilder,
     this.uploadButtonBuilder,
@@ -230,8 +236,15 @@ class FileUploadState extends State<FileUpload> {
   /// 实际生效的 multiple（头像模式强制为 false）
   bool get _effectiveMultiple => _isAvatar ? false : widget.multiple;
 
-  /// 实际生效的 pickFile（头像模式强制为 imageOrCamera）
-  PickFile get _effectivePickFile => _isAvatar ? PickFile.imageOrCamera : widget.pickFile;
+  /// 实际生效的 pickFile（头像模式下，若用户未明确指定 gallery/camera，则默认 imageOrCamera）
+  PickFile get _effectivePickFile {
+    if (!_isAvatar) return widget.pickFile;
+    // 头像模式：用户已明确指定 gallery 或 camera 时尊重选择，否则默认 imageOrCamera
+    if (widget.pickFile == PickFile.gallery || widget.pickFile == PickFile.camera) {
+      return widget.pickFile;
+    }
+    return PickFile.imageOrCamera;
+  }
 
   /// 获取当前文件列表
   List<FileInfo> get files => List.unmodifiable(_files);
@@ -367,9 +380,12 @@ class FileUploadState extends State<FileUpload> {
 
   /// 点击卡片 → 弹出操作 Sheet
   Future<void> _onCardTap(FileInfo file) async {
-    final action = await FileActionSheet.show(context: context, fileName: file.name);
+    final hasFailed = file.status == UploadStatus.failed;
+    final action = await FileActionSheet.show(context: context, fileName: file.name, hasFailed: hasFailed);
     if (action == null) return;
     switch (action) {
+      case FileSheetAction.retry:
+        startUpload(file.id);
       case FileSheetAction.replace:
         await _replaceFile(file.id);
       case FileSheetAction.delete:
@@ -446,11 +462,14 @@ class FileUploadState extends State<FileUpload> {
                     key: ValueKey(f.id),
                     fileInfo: f,
                     borderRadius: widget.borderRadius,
+                    fileRadius: widget.fileRadius,
                     size: cardSize,
                     showSuccessBadge: !_isAvatar,
                     showDeleteBtn: !_isAvatar,
+                    isAvatar: _isAvatar,
                     onRemove: () => _removeFile(f),
                     onTap: () => _onCardTap(f),
+                    onRetry: widget.uploadConfig == null ? null : () => startUpload(f.id),
                   ),
                 ),
                 if (_effectiveLimit == -1 || _files.length < _effectiveLimit)
@@ -477,26 +496,25 @@ class FileUploadState extends State<FileUpload> {
           /// 列表模式
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 8,
             children: [
               ..._files.asMap().entries.map((entry) {
-                final index = entry.key;
                 final file = entry.value;
-                return Padding(
-                  padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
-                  child: GestureDetector(
-                    onTap: file.status == UploadStatus.success ? () => _onCardTap(file) : null,
-                    child: ListShowFile(
-                      key: ValueKey(file.id),
-                      fileInfo: file,
-                      borderRadius: widget.borderRadius,
-                      onRemove: () => _removeFile(file),
-                      onCancel: () => cancelUpload(file.id),
-                      onRetry: widget.uploadConfig == null ? null : () => startUpload(file.id),
-                    ),
+                return GestureDetector(
+                  onTap: () => _onCardTap(file),
+                  behavior: HitTestBehavior.opaque,
+                  child: ListShowFile(
+                    key: ValueKey(file.id),
+                    fileInfo: file,
+                    fileRadius: widget.fileRadius,
+                    borderRadius: widget.borderRadius,
+                    previewSize: widget.previewSize ?? 40,
+                    onRemove: () => _removeFile(file),
+                    onCancel: () => cancelUpload(file.id),
+                    onRetry: widget.uploadConfig == null ? null : () => startUpload(file.id),
                   ),
                 );
               }),
-              if (_files.isNotEmpty) const SizedBox(height: 8),
               if (_effectiveLimit == -1 || _files.length < _effectiveLimit)
                 UploadActionArea(
                   icon: widget.icon,
@@ -504,7 +522,8 @@ class FileUploadState extends State<FileUpload> {
                   decoration: widget.actionDecoration,
                   titleStyle: widget.actionTitleStyle,
                   title: widget.title,
-                  size: 120,
+                  fileRadius: widget.fileRadius,
+                  previewSize: widget.previewSize ?? 40,
                   showType: widget.showType,
                   uploadButtonBuilder: widget.uploadButtonBuilder,
                   pickFile: _effectivePickFile,
@@ -532,10 +551,7 @@ class FileUploadState extends State<FileUpload> {
               ..._files.asMap().entries.map((entry) {
                 final index = entry.key;
                 final file = entry.value;
-                return Padding(
-                  padding: EdgeInsets.only(bottom: index < _files.length - 1 ? 8 : 0),
-                  child: widget.itemBuilder!(file, index, () => _removeFile(file)),
-                );
+                return widget.itemBuilder!(file, index, () => _removeFile(file));
               }),
               if (_files.isNotEmpty) const SizedBox(height: 8),
               if (_effectiveLimit == -1 || _files.length < _effectiveLimit)
@@ -545,7 +561,6 @@ class FileUploadState extends State<FileUpload> {
                   decoration: widget.actionDecoration,
                   titleStyle: widget.actionTitleStyle,
                   title: widget.title,
-                  size: 120,
                   showType: widget.showType,
                   uploadButtonBuilder: widget.uploadButtonBuilder,
                   pickFile: _effectivePickFile,

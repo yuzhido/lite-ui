@@ -75,9 +75,11 @@ class ProgressStatus extends StatelessWidget {
           decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(
-          hasSize ? '${fileInfo.formatSize} · ${_getStatusText()}' : _getStatusText(),
-          style: theme.textTheme.bodySmall?.copyWith(color: statusColor.withValues(alpha: 0.9), fontSize: 11, fontWeight: FontWeight.w500),
+        Expanded(
+          child: Text(
+            hasSize ? '${fileInfo.formatSize} · ${_getStatusText()}' : _getStatusText(),
+            style: theme.textTheme.bodySmall?.copyWith(color: statusColor.withValues(alpha: 0.9), fontSize: 11, fontWeight: FontWeight.w500),
+          ),
         ),
       ],
     );
