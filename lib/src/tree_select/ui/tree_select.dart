@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lite_ui/widgets/drag_indicator.dart';
-import 'package:lite_ui/widgets/input_search.dart';
-import 'package:lite_ui/widgets/top_title_info.dart';
+import '../../widgets/drag_indicator.dart';
+import '../../widgets/input_search.dart';
+import '../../widgets/top_title_info.dart';
 
 import '../model.dart';
 import '../tree_utils.dart';

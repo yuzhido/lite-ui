@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lite_ui/widgets/keyword_highlight.dart';
+import '../../widgets/keyword_highlight.dart';
 
 import '../model.dart';
 import '../tree_utils.dart';

@@ -1,6 +1,6 @@
 // ── 数据模型 ──
 
-import 'package:lite_ui/widgets/keyword_highlight.dart';
+import '../widgets/keyword_highlight.dart';
 
 /// 树形结构数据模型
 ///

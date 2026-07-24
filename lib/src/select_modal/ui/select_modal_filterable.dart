@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../models/select_item.dart';
 import '../../models/callbacks.dart';
-import '../../../../widgets/drag_indicator.dart';
-import '../../../../widgets/top_title_info.dart';
-import '../../../../widgets/input_search.dart';
-import '../../../../widgets/empty_state.dart';
-import '../../../../widgets/bottom_action_bar.dart';
+import '../../models/select_item.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/input_search.dart';
+import '../../widgets/drag_indicator.dart';
+import '../../widgets/top_title_info.dart';
+import '../../widgets/bottom_action_bar.dart';
+
 import 'widgets/check_list_item.dart';
 
 /// SelectModal 可过滤选择器
