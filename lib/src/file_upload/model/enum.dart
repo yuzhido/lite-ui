@@ -87,3 +87,15 @@ enum PickFile {
   /// 相机或者相册
   imageOrCamera,
 }
+
+/// 文件操作类型
+enum ActionFileSheet {
+  /// 重新上传
+  retry,
+
+  /// 替换文件
+  replace,
+
+  /// 删除文件
+  delete,
+}

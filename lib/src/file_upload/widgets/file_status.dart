@@ -126,17 +126,23 @@ class FileStatus extends StatelessWidget {
     /// 上传成功：左上角绿色实心对勾徽标
     if (status == UploadStatus.success && showSuccessBadge) {
       return Positioned(
-        top: 2,
-        left: 2,
-        child: Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: const Color(0xFF4CAF50),
-            shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 3, offset: const Offset(0, 1))],
+        top: 0,
+        left: 0,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Container(
+            height: 22,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+            decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(20)),
+            child: Row(
+              spacing: 5,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle, color: Colors.green.shade600, size: 12),
+                Text('已上传', style: TextStyle(color: Colors.green.shade600, fontSize: 11, height: 1)),
+              ],
+            ),
           ),
-          child: const Icon(Icons.check, color: Colors.white, size: 14),
         ),
       );
     }

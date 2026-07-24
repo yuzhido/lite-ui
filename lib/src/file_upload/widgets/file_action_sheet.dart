@@ -1,31 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// 文件操作类型
-enum FileSheetAction {
-  /// 重新上传
-  retry,
-
-  /// 替换文件
-  replace,
-
-  /// 删除文件
-  delete,
-}
+import '../model/enum.dart';
 
 /// 文件操作底部弹窗（Apple 风格）
 ///
 /// 点击已上传成功的文件卡片时弹出，提供「替换」「删除」两个操作选项。
-/// 返回用户选择的 [FileSheetAction]，取消返回 `null`。
+/// 返回用户选择的 [ActionFileSheet]，取消返回 `null`。
 class FileActionSheet {
   /// 显示文件操作弹窗
   ///
   /// [fileName] 当前文件名（展示给用户确认操作对象）
   /// [hasFailed] 文件是否上传失败，为 true 时额外显示「重新上传」选项
-  static Future<FileSheetAction?> show({required BuildContext context, required String fileName, bool hasFailed = false}) {
+  static Future<ActionFileSheet?> show({required BuildContext context, required String fileName, bool hasFailed = false}) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return showModalBottomSheet<FileSheetAction>(
+    return showModalBottomSheet<ActionFileSheet>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -40,7 +30,7 @@ class _FileActionSheetBody extends StatelessWidget {
   final String fileName;
   final bool isDark;
   final bool hasFailed;
-  final ValueChanged<FileSheetAction> onSelected;
+  final ValueChanged<ActionFileSheet> onSelected;
   final VoidCallback onCancel;
 
   const _FileActionSheetBody({required this.fileName, required this.isDark, required this.hasFailed, required this.onSelected, required this.onCancel});
@@ -58,7 +48,7 @@ class _FileActionSheetBody extends StatelessWidget {
           children: [
             // 选项卡片
             Container(
-              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(10)),
               clipBehavior: Clip.antiAlias,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -66,26 +56,14 @@ class _FileActionSheetBody extends StatelessWidget {
                   // 文件名标题
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 4,
-                          decoration: BoxDecoration(color: isDark ? const Color(0xFF636366) : const Color(0xFFD1D1D6), borderRadius: BorderRadius.circular(2)),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          fileName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 16, height: 1, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF98989D) : const Color(0xFF696969)),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    decoration: BoxDecoration(color: cardColor),
+                    child: Text(
+                      fileName,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 16, height: 1, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF98989D) : const Color(0xFF696969)),
                     ),
                   ),
 
@@ -97,25 +75,25 @@ class _FileActionSheetBody extends StatelessWidget {
                       iconColor: isDark ? const Color(0xFF30D158) : const Color(0xFF34C759),
                       iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF0FDF4),
                       textColor: isDark ? const Color(0xFF30D158) : const Color(0xFF34C759),
-                      onTap: () => onSelected(FileSheetAction.retry),
+                      onTap: () => onSelected(ActionFileSheet.retry),
                     ),
-                  if (hasFailed) Divider(height: 0.5, thickness: 0.5, color: dividerColor, indent: 56),
+                  if (hasFailed) Divider(height: 0.5, thickness: 0.5, color: dividerColor),
                   _ActionTile(
                     label: '替换文件',
                     icon: Icons.swap_horiz,
                     iconColor: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF),
                     iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2F7),
                     textColor: isDark ? Colors.white : const Color(0xFF1C1C1E),
-                    onTap: () => onSelected(FileSheetAction.replace),
+                    onTap: () => onSelected(ActionFileSheet.replace),
                   ),
-                  Divider(height: 0.5, thickness: 0.5, color: dividerColor, indent: 56),
+                  Divider(height: 0.5, thickness: 0.5, color: dividerColor),
                   _ActionTile(
                     label: '删除文件',
                     icon: Icons.delete_forever_outlined,
                     iconColor: const Color(0xFFEF4444),
                     iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFFEF2F2),
                     textColor: const Color(0xFFEF4444),
-                    onTap: () => onSelected(FileSheetAction.delete),
+                    onTap: () => onSelected(ActionFileSheet.delete),
                   ),
                 ],
               ),
@@ -124,7 +102,7 @@ class _FileActionSheetBody extends StatelessWidget {
             // 取消按钮
             Container(
               width: double.infinity,
-              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(10)),
               clipBehavior: Clip.antiAlias,
               child: Material(
                 color: Colors.transparent,
@@ -143,7 +121,6 @@ class _FileActionSheetBody extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 4),
           ],
         ),
       ),

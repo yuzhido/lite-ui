@@ -123,8 +123,14 @@ class FileUpload extends StatefulWidget {
   /// 推荐使用 [FileInfo.existing] 构造函数，通过 [url] 设置网络地址。
   final List<FileInfo>? fileList;
 
+  /// 显示文件名称和大小
+  ///
+  /// 默认显示
+  final bool showFileName;
+
   const FileUpload({
     super.key,
+    this.showFileName = true,
     this.pickFile = PickFile.all,
     this.multiple = true,
     this.limit = -1,
@@ -384,11 +390,11 @@ class FileUploadState extends State<FileUpload> {
     final action = await FileActionSheet.show(context: context, fileName: file.name, hasFailed: hasFailed);
     if (action == null) return;
     switch (action) {
-      case FileSheetAction.retry:
+      case ActionFileSheet.retry:
         startUpload(file.id);
-      case FileSheetAction.replace:
+      case ActionFileSheet.replace:
         await _replaceFile(file.id);
-      case FileSheetAction.delete:
+      case ActionFileSheet.delete:
         _removeFile(file);
     }
   }
@@ -460,6 +466,7 @@ class FileUploadState extends State<FileUpload> {
                 ..._files.map(
                   (f) => CardShowFile(
                     key: ValueKey(f.id),
+                    showFileName: widget.showFileName,
                     fileInfo: f,
                     borderRadius: widget.borderRadius,
                     fileRadius: widget.fileRadius,
@@ -467,6 +474,7 @@ class FileUploadState extends State<FileUpload> {
                     showSuccessBadge: !_isAvatar,
                     showDeleteBtn: !_isAvatar,
                     isAvatar: _isAvatar,
+                    showType: widget.showType,
                     onRemove: () => _removeFile(f),
                     onTap: () => _onCardTap(f),
                     onRetry: widget.uploadConfig == null ? null : () => startUpload(f.id),
@@ -506,6 +514,8 @@ class FileUploadState extends State<FileUpload> {
                   child: ListShowFile(
                     key: ValueKey(file.id),
                     fileInfo: file,
+                    showFileName: widget.showFileName,
+                    showType: widget.showType,
                     fileRadius: widget.fileRadius,
                     borderRadius: widget.borderRadius,
                     previewSize: widget.previewSize ?? 40,

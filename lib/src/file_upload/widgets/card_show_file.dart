@@ -13,7 +13,26 @@ import 'show_file.dart';
 /// 图片文件展示缩略图，非图片文件展示文件类型图标。
 /// 根据 [FileInfo.status] 叠加对应的上传状态指示层。
 /// 支持网络图片回显（当 [FileInfo.isNetwork] 为 true 时使用 [Image.network]，加载 [FileInfo.url]）。
-class CardShowFile extends StatelessWidget {
+/// 网络文件且未知大小时，自动通过 HTTP HEAD 请求获取文件大小。
+class CardShowFile extends StatefulWidget {
+  const CardShowFile({
+    super.key,
+    this.backgroundColor = Colors.white,
+    this.borderColor = Colors.grey,
+    required this.borderRadius,
+    required this.fileInfo,
+    this.fileRadius = 5,
+    this.onRemove,
+    this.onTap,
+    this.size = 120,
+    this.showSuccessBadge = true,
+    this.showDeleteBtn = true,
+    this.isAvatar = false,
+    this.onRetry,
+    required this.showType,
+    required this.showFileName,
+  });
+
   /// 文件信息
   final FileInfo fileInfo;
 
@@ -47,49 +66,89 @@ class CardShowFile extends StatelessWidget {
   /// 而非贴底部。
   final bool isAvatar;
 
-  const CardShowFile({
-    super.key,
-    required this.borderRadius,
-    required this.fileInfo,
-    this.fileRadius = 5,
-    this.onRemove,
-    this.onTap,
-    this.size = 120,
-    this.showSuccessBadge = true,
-    this.showDeleteBtn = true,
-    this.isAvatar = false,
-    this.onRetry,
-  });
+  /// 预览文件卡片背景颜色
+  ///
+  /// 默认白色
+  final Color backgroundColor;
 
-  /// 上传中时隐藏删除按钮
-  bool get _isUploading => fileInfo.status == UploadStatus.uploading;
+  /// 预览文件卡片边框颜色
+  ///
+  /// 默认灰色
+  final Color borderColor;
+
+  /// 显示类型
+  final ShowType showType;
+
+  /// 显示文件名称和大小
+  ///
+  /// 默认显示
+  final bool showFileName;
+
+  @override
+  State<CardShowFile> createState() => _CardShowFileState();
+}
+
+class _CardShowFileState extends State<CardShowFile> {
+  bool get _isUploading => widget.fileInfo.status == UploadStatus.uploading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final borderColor = theme.colorScheme.primary.withValues(alpha: 0.25);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
+      borderRadius: BorderRadius.circular(widget.borderRadius),
       child: SizedBox(
-        width: size,
-        height: size,
+        width: widget.size,
+        height: widget.size,
         child: Stack(
           children: [
             // 内容层：图片/文件，接收点击
-            GestureDetector(
-              onTap: onTap,
-              behavior: HitTestBehavior.opaque,
-              child: fileInfo.isImage
-                  ? ShowImage(fileInfo: fileInfo, size: size, borderRadius: fileRadius, borderColor: borderColor)
-                  : ShowFile(fileInfo: fileInfo, size: size, borderRadius: fileRadius, borderColor: borderColor),
+            Container(
+              width: widget.size,
+              height: widget.size,
+              padding: EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: widget.backgroundColor,
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                border: Border.all(color: widget.borderColor, width: 1),
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: widget.onTap,
+                      behavior: HitTestBehavior.opaque,
+                      child: widget.fileInfo.isImage
+                          ? ShowImage(fileInfo: widget.fileInfo, size: widget.size, borderRadius: widget.fileRadius, borderColor: widget.borderColor)
+                          : ShowFile(
+                              fileInfo: widget.fileInfo,
+                              size: widget.size,
+                              borderRadius: widget.fileRadius,
+                              borderColor: widget.borderColor,
+                              showType: widget.showType,
+                              showFileName: widget.showFileName,
+                            ),
+                    ),
+                  ),
+                  if (widget.showType == ShowType.card && widget.fileInfo.isImage && widget.showFileName == true)
+                    Text(
+                      widget.fileInfo.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      strutStyle: StrutStyle(leading: 0, forceStrutHeight: true),
+                      style: TextStyle(fontSize: 12, height: 1, fontWeight: FontWeight.w600, color: Color(0xFF666666)),
+                    ),
+                ],
+              ),
             ),
+
             // 上传中时显示背景渐变动画进度条
             if (_isUploading)
               Align(
                 alignment: Alignment.bottomCenter,
                 child: FractionallySizedBox(
-                  heightFactor: fileInfo.progress,
+                  heightFactor: widget.fileInfo.progress,
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -102,22 +161,28 @@ class CardShowFile extends StatelessWidget {
                 ),
               ),
             // 底部细进度条
-            if (_isUploading && isAvatar != true)
+            if (_isUploading && widget.isAvatar != true)
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
                 child: LinearProgressIndicator(
-                  value: fileInfo.progress,
+                  value: widget.fileInfo.progress,
                   minHeight: 3,
                   backgroundColor: Colors.black26,
                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
             // 状态层：上传状态浮动覆盖
-            FileStatus(status: fileInfo.status, progress: fileInfo.progress, showSuccessBadge: showSuccessBadge, isAvatar: isAvatar, onRetry: onRetry),
+            FileStatus(
+              status: widget.fileInfo.status,
+              progress: widget.fileInfo.progress,
+              showSuccessBadge: widget.showSuccessBadge,
+              isAvatar: widget.isAvatar,
+              onRetry: widget.onRetry,
+            ),
             // 删除按钮
-            if (showDeleteBtn && !_isUploading) CardDeleteBtn(onRemove: onRemove),
+            if (widget.showDeleteBtn && !_isUploading) CardDeleteBtn(onRemove: widget.onRemove),
           ],
         ),
       ),

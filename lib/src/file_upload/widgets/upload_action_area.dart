@@ -225,7 +225,7 @@ class _UploadActionAreaState extends State<UploadActionArea> {
                 border: Border.all(color: defaultBorderColor, width: 1),
               ),
           child: Padding(
-            padding: EdgeInsets.all(10),
+            padding: EdgeInsets.all(7),
             child: Row(
               children: [
                 ClipRRect(

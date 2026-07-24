@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 /// 判断是否为图片文件
@@ -16,62 +18,33 @@ String fileSizeFormat(int bytes) {
   return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
 }
 
-/// 根据文件扩展名返回对应图标
-IconData getFileIcon(String extension) {
-  switch (extension.toLowerCase()) {
-    case 'pdf':
-      return Icons.picture_as_pdf;
-    case 'doc':
-    case 'docx':
-      return Icons.description;
-    case 'xls':
-    case 'xlsx':
-    case 'csv':
-      return Icons.table_chart;
-    case 'zip':
-    case 'rar':
-    case '7z':
-    case 'tar':
-    case 'gz':
-      return Icons.folder_zip;
-    case 'mp3':
-    case 'wav':
-    case 'aac':
-    case 'flac':
-      return Icons.audio_file;
-    case 'mp4':
-    case 'avi':
-    case 'mkv':
-    case 'mov':
-      return Icons.video_file;
-    default:
-      return Icons.upload_file_rounded;
+/// 通过 HTTP HEAD 请求获取远程文件大小（字节）
+///
+/// HEAD 失败时回退到 GET 请求读取 Content-Length。
+/// 返回 null 表示获取失败（网络异常、服务器不支持等）。
+Future<int?> fetchRemoteFileSize(String url) async {
+  HttpClient? client;
+  try {
+    client = HttpClient();
+    // 先尝试 HEAD
+    var request = await client.openUrl('HEAD', Uri.parse(url));
+    var response = await request.close();
+    var contentLength = response.contentLength;
+    if (contentLength > 0) {
+      client.close();
+      return contentLength;
+    }
+    debugPrint('[fetchRemoteFileSize] HEAD 未返回有效大小($contentLength)，回退 GET');
+    // HEAD 失败，回退到 GET
+    request = await client.openUrl('GET', Uri.parse(url));
+    response = await request.close();
+    contentLength = response.contentLength;
+    client.close();
+    if (contentLength > 0) return contentLength;
+    debugPrint('[fetchRemoteFileSize] GET 也未返回有效大小($contentLength)');
+  } catch (e) {
+    debugPrint('[fetchRemoteFileSize] 请求失败: $e');
+    client?.close();
   }
-}
-
-/// 获取文件类型颜色
-Color getFileColor(String extension) {
-  const extMap = {
-    'jpg': Color(0xFFD97706),
-    'jpeg': Color(0xFFD97706),
-    'png': Color(0xFFD97706),
-    'gif': Color(0xFFD97706),
-    'bmp': Color(0xFFD97706),
-    'webp': Color(0xFFD97706),
-    'svg': Color(0xFFD97706),
-    'pdf': Color(0xFFDC2626),
-    'doc': Color(0xFF2563EB),
-    'docx': Color(0xFF2563EB),
-    'xls': Color(0xFF059669),
-    'xlsx': Color(0xFF059669),
-    'ppt': Color(0xFFEA580C),
-    'pptx': Color(0xFFEA580C),
-    'zip': Color(0xFF7C3AED),
-    'rar': Color(0xFF7C3AED),
-    'mp4': Color(0xFFDB2777),
-    'mov': Color(0xFFDB2777),
-    'mp3': Color(0xFF0891B2),
-    'wav': Color(0xFF0891B2),
-  };
-  return extMap[extension.toLowerCase()] ?? const Color(0xFF6B7280);
+  return null;
 }
