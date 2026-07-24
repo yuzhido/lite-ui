@@ -1,17 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../model/enum.dart';
+import '../model/file_info.dart';
 
 /// 文件操作底部弹窗（Apple 风格）
 ///
-/// 点击已上传成功的文件卡片时弹出，提供「替换」「删除」两个操作选项。
+/// 点击已上传成功的文件卡片时弹出，提供「预览图片」「替换」「删除」等操作选项。
 /// 返回用户选择的 [ActionFileSheet]，取消返回 `null`。
 class FileActionSheet {
   /// 显示文件操作弹窗
   ///
   /// [fileName] 当前文件名（展示给用户确认操作对象）
   /// [hasFailed] 文件是否上传失败，为 true 时额外显示「重新上传」选项
-  static Future<ActionFileSheet?> show({required BuildContext context, required String fileName, bool hasFailed = false}) {
+  /// [isImage] 是否为图片文件，为 true 时额外显示「预览图片」选项
+  static Future<ActionFileSheet?> show({required BuildContext context, required String fileName, bool hasFailed = false, bool isImage = false}) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -19,8 +22,29 @@ class FileActionSheet {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) =>
-          _FileActionSheetBody(fileName: fileName, isDark: isDark, hasFailed: hasFailed, onSelected: (action) => Navigator.pop(ctx, action), onCancel: () => Navigator.pop(ctx)),
+      builder: (ctx) => _FileActionSheetBody(
+        fileName: fileName,
+        isDark: isDark,
+        hasFailed: hasFailed,
+        isImage: isImage,
+        onSelected: (action) => Navigator.pop(ctx, action),
+        onCancel: () => Navigator.pop(ctx),
+      ),
+    );
+  }
+
+  /// 显示图片全屏预览
+  ///
+  /// 支持双指缩放和拖动，点击关闭。
+  static Future<void> showImagePreview({required BuildContext context, required FileInfo fileInfo}) {
+    return Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, _, _) => _ImagePreviewPage(fileInfo: fileInfo),
+        transitionsBuilder: (_, animation, _, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 200),
+      ),
     );
   }
 }
@@ -30,10 +54,11 @@ class _FileActionSheetBody extends StatelessWidget {
   final String fileName;
   final bool isDark;
   final bool hasFailed;
+  final bool isImage;
   final ValueChanged<ActionFileSheet> onSelected;
   final VoidCallback onCancel;
 
-  const _FileActionSheetBody({required this.fileName, required this.isDark, required this.hasFailed, required this.onSelected, required this.onCancel});
+  const _FileActionSheetBody({required this.fileName, required this.isDark, required this.hasFailed, required this.isImage, required this.onSelected, required this.onCancel});
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +93,16 @@ class _FileActionSheetBody extends StatelessWidget {
                   ),
 
                   Divider(height: 0.5, thickness: 0.5, color: dividerColor),
+                  if (isImage)
+                    _ActionTile(
+                      label: '预览图片',
+                      icon: Icons.image_outlined,
+                      iconColor: isDark ? const Color(0xFFBF5AF2) : const Color(0xFFAF52DE),
+                      iconBgColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF5F0FF),
+                      textColor: isDark ? const Color(0xFFBF5AF2) : const Color(0xFFAF52DE),
+                      onTap: () => onSelected(ActionFileSheet.preview),
+                    ),
+                  if (isImage) Divider(height: 0.5, thickness: 0.5, color: dividerColor),
                   if (hasFailed)
                     _ActionTile(
                       label: '上传重试',
@@ -171,6 +206,72 @@ class _ActionTile extends StatelessWidget {
               Icon(Icons.chevron_right, size: 20, color: isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93)),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 图片全屏预览页面
+class _ImagePreviewPage extends StatelessWidget {
+  final FileInfo fileInfo;
+
+  const _ImagePreviewPage({required this.fileInfo});
+
+  @override
+  Widget build(BuildContext context) {
+    final isNetwork = fileInfo.isNetwork;
+    final imageProvider = isNetwork ? Image.network(fileInfo.url!, fit: BoxFit.contain).image : Image.file(File(fileInfo.path!), fit: BoxFit.contain).image;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // 图片区域：支持双指缩放和拖动
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 5.0,
+                child: Image(
+                  image: imageProvider,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, error, stack) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 64)),
+                ),
+              ),
+            ),
+            // 顶部关闭按钮
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+            // 底部文件名
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: const BoxDecoration(color: Color(0x80000000)),
+                child: Text(
+                  fileInfo.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

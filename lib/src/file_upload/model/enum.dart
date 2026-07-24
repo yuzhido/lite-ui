@@ -90,6 +90,9 @@ enum PickFile {
 
 /// 文件操作类型
 enum ActionFileSheet {
+  /// 预览图片
+  preview,
+
   /// 重新上传
   retry,
 

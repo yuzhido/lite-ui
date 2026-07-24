@@ -387,9 +387,11 @@ class FileUploadState extends State<FileUpload> {
   /// 点击卡片 → 弹出操作 Sheet
   Future<void> _onCardTap(FileInfo file) async {
     final hasFailed = file.status == UploadStatus.failed;
-    final action = await FileActionSheet.show(context: context, fileName: file.name, hasFailed: hasFailed);
-    if (action == null) return;
+    final action = await FileActionSheet.show(context: context, fileName: file.name, hasFailed: hasFailed, isImage: file.isImage);
+    if (action == null || !mounted) return;
     switch (action) {
+      case ActionFileSheet.preview:
+        await FileActionSheet.showImagePreview(context: context, fileInfo: file);
       case ActionFileSheet.retry:
         startUpload(file.id);
       case ActionFileSheet.replace:
