@@ -1,9 +1,4 @@
-enum FormLayout {
-  // 行布局
-  row,
-  // 列布局
-  column,
-}
+
 
 // 点击后置图标的事件枚举
 enum SuffixIconEvent {
