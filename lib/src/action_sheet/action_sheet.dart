@@ -18,7 +18,7 @@ import 'ui/action_sheet_content.dart';
 ///
 /// 受控模式：传入 [value]，组件自动从 [items]/[sections] 中匹配
 /// 对应的 label 显示在触发器上，配合 [onSelect] 回调 setState 即可。
-class ActionSheet<V, D> extends StatelessWidget {
+class ActionSheet<V, D> extends StatefulWidget {
   /// 自定义触发器 Widget（可选）
   ///
   /// 传入后点击该 child 弹出 Sheet；不传则渲染默认触发器 UI。
@@ -56,9 +56,24 @@ class ActionSheet<V, D> extends StatelessWidget {
   /// 占位提示文字（未选中时显示）
   final String? hintText;
 
+  /// 是否必填
+  ///
+  /// 默认值：false
+  final bool required;
+
+  // 保存函数
+  final Function(String)? onSaved;
+
   /// 选中回调
   final OnSelectChange<V, D>? onSelect;
 
+  // 校验函数
+  final String? Function(String?)? validator;
+
+  /// 自动验证模式
+  ///
+  /// 默认为 [AutovalidateMode.disabled]，仅在调用 Form.validate() 时触发验证
+  final AutovalidateMode autovalidateMode;
   const ActionSheet({
     super.key,
     this.child,
@@ -73,6 +88,10 @@ class ActionSheet<V, D> extends StatelessWidget {
     this.maxHeight,
     this.hintText,
     this.onSelect,
+    this.required = false,
+    this.onSaved,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.disabled,
   });
 
   /// 显示一个从底部向上弹出的 ActionSheet
@@ -123,49 +142,96 @@ class ActionSheet<V, D> extends StatelessWidget {
     );
   }
 
+  @override
+  State<ActionSheet<V, D>> createState() => _ActionSheetState<V, D>();
+}
+
+class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
+  final _formFieldKey = GlobalKey<FormFieldState<String>>();
+
   void _showSheet(BuildContext context) {
     ActionSheet.show<V, D>(
       context: context,
-      title: title,
-      description: description,
-      items: items,
-      sections: sections,
-      cancelLabel: cancelLabel,
-      showDisabledBadge: showDisabledBadge,
-      maxHeight: maxHeight,
-      onSelect: onSelect,
+      title: widget.title,
+      description: widget.description,
+      items: widget.items,
+      sections: widget.sections,
+      cancelLabel: widget.cancelLabel,
+      showDisabledBadge: widget.showDisabledBadge,
+      maxHeight: widget.maxHeight,
+      onSelect: (value, data) {
+        widget.onSelect?.call(value, data);
+        // 同步选中值到 FormField
+        _formFieldKey.currentState?.didChange(value?.toString() ?? '');
+      },
     );
   }
 
   /// 从 items 或 sections 中匹配 value 对应的 label
   String? _matchLabel() {
-    if (value == null) return null;
+    if (widget.value == null) return null;
     // 优先从 sections 匹配
-    if (sections != null) {
-      for (final section in sections!) {
+    if (widget.sections != null) {
+      for (final section in widget.sections!) {
         for (final item in section.items) {
-          if (item.value == value) return item.label;
+          if (item.value == widget.value) return item.label;
         }
       }
     }
     // 从 items 匹配
-    if (items != null) {
-      for (final item in items!) {
-        if (item.value == value) return item.label;
+    if (widget.items != null) {
+      for (final item in widget.items!) {
+        if (item.value == widget.value) return item.label;
       }
+    }
+    return null;
+  }
+
+  // 默认验证规则
+  String? defaultValid(String? value) {
+    if (widget.required != true) return null;
+    // 优先使用自定义 validator
+    if (widget.validator != null) {
+      return widget.validator!(widget.value?.toString());
+    }
+    // 直接检查 widget.value 是否有值（和 InputText 读 controller.text 同理）
+    if (widget.value == null) {
+      if (widget.formLabel != null) return '${widget.formLabel}是必填项不能为空';
+      return '这个字段是必填项';
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showSheet(context),
-      child: child ?? WrapperContainer(
-        formLabel: formLabel,
-        valueText: _matchLabel(),
-        hintText: hintText,
-      ),
+    return FormField<String>(
+      key: _formFieldKey,
+      validator: widget.required ? defaultValid : null,
+      autovalidateMode: widget.autovalidateMode,
+      initialValue: widget.value?.toString() ?? '',
+      onSaved: (value) {
+        widget.onSaved?.call(widget.value?.toString() ?? '');
+      },
+      builder: (FormFieldState<String> state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 2,
+          children: [
+            SizedBox(
+              child: Row(
+                children: [
+                  Text('${widget.formLabel}'),
+                  if (state.hasError) Text('${state.errorText}', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () => _showSheet(context),
+              child: widget.child ?? WrapperContainer(required: widget.required, formLabel: widget.formLabel, valueText: _matchLabel(), hintText: widget.hintText),
+            ),
+          ],
+        );
+      },
     );
   }
 }

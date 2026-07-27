@@ -25,6 +25,7 @@ class InputText extends StatefulWidget {
     this.onSaved,
     this.validator,
     this.onChange,
+    this.autovalidateMode = AutovalidateMode.disabled,
   });
 
   /// 表单标签名称
@@ -75,6 +76,11 @@ class InputText extends StatefulWidget {
 
   // 输入框内容变化时的回调
   final Function(String)? onChange;
+
+  /// 自动验证模式
+  ///
+  /// 默认为 [AutovalidateMode.disabled]，仅在调用 Form.validate() 时触发验证
+  final AutovalidateMode autovalidateMode;
 
   @override
   State<InputText> createState() => _InputTextState();
@@ -130,7 +136,7 @@ class _InputTextState extends State<InputText> {
   Widget build(BuildContext context) {
     return FormField(
       validator: widget.required ? defaultValid : null,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
+      autovalidateMode: widget.autovalidateMode,
       onSaved: (value) {
         widget.onSaved?.call(controller.text);
       },
@@ -139,8 +145,16 @@ class _InputTextState extends State<InputText> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: widget.labelSpacing,
           children: [
-            SizedBox(width: widget.labelWidth ?? 100, child: Text('${widget.formLabel}')),
+            SizedBox(
+              child: Row(
+                children: [
+                  Text('${widget.formLabel}'),
+                  if (state.hasError) Text('${state.errorText}', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
             TextFormField(
+              controller: controller,
               focusNode: _focusNode,
               onTapUpOutside: (event) => _focusNode.unfocus(),
               maxLines: widget.maxLines,

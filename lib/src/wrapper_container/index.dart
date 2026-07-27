@@ -18,13 +18,10 @@ class WrapperContainer extends StatelessWidget {
   /// 占位提示文字（无值时显示）
   final String? hintText;
 
-  const WrapperContainer({
-    super.key,
-    this.onTap,
-    this.formLabel,
-    this.valueText,
-    this.hintText,
-  });
+  /// 是否必填
+  final bool? required;
+
+  const WrapperContainer({super.key, this.onTap, this.formLabel, this.valueText, this.hintText, this.required});
 
   @override
   Widget build(BuildContext context) {
@@ -42,17 +39,11 @@ class WrapperContainer extends StatelessWidget {
         ),
         child: Row(
           children: [
-            PrefixIconLabel(label: formLabel ?? '表单标签'),
+            PrefixIconLabel(required: required ?? false, label: formLabel ?? '表单标签'),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  hasValue ? valueText! : (hintText ?? ''),
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: hasValue ? Colors.black87 : Colors.black54,
-                  ),
-                ),
+                child: Text(hasValue ? valueText! : (hintText ?? ''), style: TextStyle(fontSize: 16, color: hasValue ? Colors.black87 : Colors.black54)),
               ),
             ),
             SuffixIconLabel(),
