@@ -7,7 +7,7 @@ import 'widgets/list_view.dart';
 /// ActionSheetContent 本地固定数据组件
 ///
 /// 包含：标题 + 描述 + 可滚动操作项列表 + 取消按钮
-/// 用于 [ActionSheetType.local] 模式，可直接独立使用或嵌入弹窗。
+/// 用于 ActionSheet 弹窗内容，可直接独立使用或嵌入弹窗。
 ///
 /// 支持两种数据模式：
 /// - [items]：普通列表模式
@@ -72,6 +72,7 @@ class ActionSheetContent<V, D> extends StatelessWidget {
               // 内容卡片
               Flexible(
                 child: Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(color: theme.canvasColor, borderRadius: BorderRadius.circular(14)),
                   clipBehavior: Clip.antiAlias,
                   child: Column(

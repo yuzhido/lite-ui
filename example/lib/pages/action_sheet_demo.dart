@@ -17,7 +17,6 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
   void _showLocalActionSheet() async {
     await ActionSheet.show<String, void>(
       context: context,
-      type: ActionSheetType.local,
       title: '操作菜单',
       description: '选择一个操作',
       items: ActionSheetMockData.defaultItems,
@@ -31,7 +30,6 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
   void _showSectionedExample() async {
     await ActionSheet.show<String, void>(
       context: context,
-      type: ActionSheetType.local,
       title: '文件操作',
       description: '选择一个操作',
       sections: ActionSheetMockData.sectionedItems,
@@ -45,7 +43,6 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
   void _showIconExample() async {
     await ActionSheet.show<String, void>(
       context: context,
-      type: ActionSheetType.local,
       title: '操作菜单',
       description: '每个操作项带有图标',
       items: ActionSheetMockData.iconItems,
@@ -96,7 +93,6 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
 
     await ActionSheet.show<String, void>(
       context: context,
-      type: ActionSheetType.local,
       title: '操作菜单',
       description: '部分操作不可用',
       showDisabledBadge: true,
@@ -111,7 +107,6 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
   void _showCombinedExample() async {
     await ActionSheet.show<String, void>(
       context: context,
-      type: ActionSheetType.local,
       title: '完整功能示例',
       description: '分组 + 图标 + 禁用状态组合',
       showDisabledBadge: true,
