@@ -43,7 +43,7 @@ class WrapperContainer extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(hasValue ? valueText! : (hintText ?? ''), style: TextStyle(fontSize: 16, color: hasValue ? Colors.black87 : Colors.black54)),
+                child: Text(hasValue ? valueText! : (hintText ?? ''), style: TextStyle(fontSize: 16, color: hasValue ? Colors.black87 : ColorScheme.of(context).onSurfaceVariant)),
               ),
             ),
             SuffixIconLabel(),

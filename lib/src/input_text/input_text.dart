@@ -25,7 +25,7 @@ class InputText extends StatefulWidget {
     this.onSaved,
     this.validator,
     this.onChange,
-    this.autovalidateMode = AutovalidateMode.disabled,
+    this.autoValidate = AutovalidateMode.disabled,
   });
 
   /// 表单标签名称
@@ -80,7 +80,7 @@ class InputText extends StatefulWidget {
   /// 自动验证模式
   ///
   /// 默认为 [AutovalidateMode.disabled]，仅在调用 Form.validate() 时触发验证
-  final AutovalidateMode autovalidateMode;
+  final AutovalidateMode autoValidate;
 
   @override
   State<InputText> createState() => _InputTextState();
@@ -136,7 +136,7 @@ class _InputTextState extends State<InputText> {
   Widget build(BuildContext context) {
     return FormField(
       validator: widget.required ? defaultValid : null,
-      autovalidateMode: widget.autovalidateMode,
+      autovalidateMode: widget.autoValidate,
       onSaved: (value) {
         widget.onSaved?.call(controller.text);
       },
@@ -162,6 +162,7 @@ class _InputTextState extends State<InputText> {
               onChanged: onInputChange,
               expands: false,
               decoration: InputDecoration(
+                
                 // 前置图标
                 prefixIcon: PrefixIconLabel(
                   label: '${widget.formLabel}',

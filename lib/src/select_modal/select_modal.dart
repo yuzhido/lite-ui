@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/select_item.dart';
 import '../models/callbacks.dart';
-import '../models/select_modal.dart';
+import 'models/index.dart';
 import 'ui/select_modal_filterable.dart';
 import 'ui/select_modal_remote.dart';
 

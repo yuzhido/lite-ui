@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/empty_data.dart';
+import 'models/index.dart';
 import 'ui/card_style.dart';
 import 'ui/default_style.dart';
 import 'ui/compact_style.dart';

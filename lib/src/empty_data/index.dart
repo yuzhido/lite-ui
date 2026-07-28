@@ -1,2 +1,2 @@
-export '../models/empty_data.dart';
+export 'models/index.dart';
 export 'empty_data_content.dart';

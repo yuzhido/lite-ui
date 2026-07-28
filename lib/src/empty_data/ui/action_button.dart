@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../models/empty_data.dart';
+import '../models/index.dart';
 
 /// EmptyData 操作按钮组件
 ///

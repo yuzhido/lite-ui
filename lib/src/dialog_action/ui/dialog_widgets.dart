@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:lite_ui/src/models/dialog_action.dart';
+import 'package:lite_ui/src/dialog_action/models/index.dart';
 
 /// 弹窗标题区域：可选图标 + 标题 + 可选内容文本，居中布局
 class DialogTitleSection extends StatelessWidget {

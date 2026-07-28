@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../models/empty_data.dart';
+import '../models/index.dart';
 import 'action_button.dart';
 
 /// EmptyData 默认风格：居中圆形图标 + 文字

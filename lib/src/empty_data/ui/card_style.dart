@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../models/empty_data.dart';
+import '../models/index.dart';
 import 'action_button.dart';
 
 /// EmptyData 卡片风格：带顶部渐变色带的装饰卡片
