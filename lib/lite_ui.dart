@@ -7,6 +7,9 @@ export 'src/file_upload/index.dart';
 export 'src/action_button/index.dart';
 export 'src/dropdown_choose/index.dart';
 
+// 主题配置
+export 'src/theme/index.dart';
+
 // 数据类型定义模型以及枚举统一导出
 export 'src/input_number/index.dart';
 export 'src/input_text/index.dart';

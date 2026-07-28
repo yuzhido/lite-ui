@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/src/models/enum.dart';
 import 'package:lite_ui/src/models/select_item.dart';
 import 'package:lite_ui/src/models/callbacks.dart';
 import 'package:lite_ui/src/select_modal/select_modal.dart';
+import 'package:lite_ui/src/theme/index.dart';
 
 import '../wrapper_container/index.dart';
 
@@ -33,6 +35,8 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 自动验证模式
   final AutovalidateMode autovalidateMode;
 
+  /// 表单布局方式
+  final FormLayout formLayout;
   const DropdownChoose({
     super.key,
     required this.formLabel,
@@ -44,6 +48,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.onSaved,
     this.validator,
     this.autovalidateMode = AutovalidateMode.disabled,
+    this.formLayout = FormLayout.row,
   });
 
   @override
@@ -91,15 +96,19 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 2,
           children: [
-            SizedBox(
-              child: Row(
-                children: [
-                  Text(widget.formLabel),
-                  if (state.hasError) Text('${state.errorText}', style: TextStyle(color: Colors.red)),
-                ],
+            if (widget.formLayout == FormLayout.column)
+              SizedBox(
+                child: Row(
+                  spacing: 5,
+                  children: [
+                    Text(widget.formLabel),
+                    if (state.hasError) Text('${state.errorText}', style: TextStyle(color: LiteUITheme.of(context).errorColor)),
+                  ],
+                ),
               ),
-            ),
             WrapperContainer(
+              formLayout: widget.formLayout,
+              errorText: state.errorText,
               required: widget.required,
               formLabel: widget.formLabel,
               valueText: _matchLabel(),

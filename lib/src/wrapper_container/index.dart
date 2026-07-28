@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/src/models/enum.dart';
+import 'package:lite_ui/src/theme/index.dart';
+import 'package:lite_ui/src/widgets/border_builder.dart';
 import 'package:lite_ui/src/widgets/prefix_icon_label.dart';
 import 'package:lite_ui/src/widgets/suffix_icon_label.dart';
 
@@ -18,36 +21,58 @@ class WrapperContainer extends StatelessWidget {
   /// 占位提示文字（无值时显示）
   final String? hintText;
 
+  /// 错误提示文字（有值时显示）
+  final String? errorText;
+
   /// 是否必填
   final bool? required;
 
-  const WrapperContainer({super.key, this.onTap, this.formLabel, this.valueText, this.hintText, this.required});
+  /// 表单布局方式
+  final FormLayout? formLayout;
+
+  const WrapperContainer({super.key, this.onTap, this.formLabel, this.valueText, this.hintText, this.errorText, this.required, this.formLayout});
 
   @override
   Widget build(BuildContext context) {
-    final hasValue = valueText != null && valueText!.isNotEmpty;
+    final hasError = errorText != null && errorText!.isNotEmpty;
+    final errorColor = LiteUITheme.of(context).errorColor;
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: onTap,
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey, width: 1),
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(5),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.all(0),
+          // 有错误时通过 label 显示错误文字，always 固定显示不触发浮动动画
+          label: (formLayout == FormLayout.column)
+              ? null
+              : hasError
+              ? Text(
+                  errorText!,
+                  style: TextStyle(fontSize: 16, color: errorColor, fontWeight: FontWeight.w500),
+                )
+              : null,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          border: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
+          enabledBorder: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
         ),
-        child: Row(
-          children: [
-            PrefixIconLabel(required: required ?? false, label: formLabel ?? '表单标签'),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(hasValue ? valueText! : (hintText ?? ''), style: TextStyle(fontSize: 16, color: hasValue ? Colors.black87 : ColorScheme.of(context).onSurfaceVariant)),
+        child: SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              PrefixIconLabel(required: required ?? false, label: formLabel ?? '表单标签'),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: (valueText != null)
+                      ? Text(valueText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).textColor))
+                      : (errorText != null)
+                      ? Text(errorText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).errorColor))
+                      : Text(hintText ?? '请选择$formLabel', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).hintColor)),
+                ),
               ),
-            ),
-            SuffixIconLabel(),
-          ],
+              SuffixIconLabel(),
+            ],
+          ),
         ),
       ),
     );

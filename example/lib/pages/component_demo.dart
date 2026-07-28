@@ -73,34 +73,61 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
         key: _formKey,
         autovalidateMode: AutovalidateMode.disabled,
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 12),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Column(
             spacing: 10,
             children: [
               InputText(
                 required: true,
+                // formLayout: FormLayout.column,
                 formLabel: '姓名',
                 prefixIcon: Icon(Icons.person, color: Colors.green),
                 onSaved: (v) => _fieldValues['姓名'] = v,
+                // suffixIcon: Icon(Icons.close, color: Colors.red),
+                onSuffixIconTap: (event) {
+                  print(event);
+                },
               ),
               InputText(
                 required: true,
+                // formLayout: FormLayout.column,
                 formLabel: '年龄',
                 prefixIcon: Icon(Icons.lock, color: Colors.red),
                 onSaved: (v) => _fieldValues['年龄'] = v,
+                onSuffixIconTap: (event) {
+                  print(event);
+                },
+                suffixIcon: Container(
+                  // color: Colors.blue,
+                  child: Icon(Icons.document_scanner_sharp, color: const Color.fromARGB(255, 8, 169, 8)),
+                ),
               ),
               InputText(
-                formLabel: '家庭住址',
-                prefixIcon: Icon(Icons.home, color: Colors.blue),
-                prefixIconColor: Colors.blue,
-                onSaved: (v) => _fieldValues['家庭住址'] = v,
+                required: true,
+                // formLayout: FormLayout.column,
+                formLabel: '密码',
+                password: true,
+                prefixIcon: Icon(Icons.lock, color: Colors.red),
+                onSaved: (v) => _fieldValues['密码'] = v,
+                onSuffixIconTap: (event) {
+                  print(event);
+                },
+                validRules: [
+                  (v) => ValidRules.minLength(v, 6, message: '密码至少6位'),
+                  (v) => v!.contains(RegExp(r'[A-Z]')) ? null : '必须包含大写字母',
+                ],
+                suffixIcon: Container(
+                  // color: Colors.blue,
+                  child: Icon(Icons.document_scanner_sharp, color: const Color.fromARGB(255, 8, 169, 8)),
+                ),
               ),
+
               ActionSheet<String, int>(
                 required: true,
+                // formLayout: FormLayout.column,
                 formLabel: '性别',
                 title: '请选择性别',
                 description: '请选择性别',
-                hintText: '请选择',
                 value: _gender,
                 onSaved: (v) => _fieldValues['性别'] = v,
                 onSelect: (value, data) {
@@ -113,8 +140,8 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               ),
               DropdownChoose<String, int>(
                 required: true,
+                // formLayout: FormLayout.column,
                 formLabel: '所在区域',
-                hintText: '请选择区域',
                 value: _region,
                 onSaved: (v) => _fieldValues['所在区域'] = v,
                 onSelect: (value, data) {
@@ -127,7 +154,13 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   SelectItem(label: '深圳', value: 'sz', data: 4),
                 ],
               ),
-
+              InputText(
+                // formLayout: FormLayout.column,
+                formLabel: '家庭住址',
+                prefixIcon: Icon(Icons.home, color: Colors.blue),
+                prefixIconColor: Colors.blue,
+                onSaved: (v) => _fieldValues['家庭住址'] = v,
+              ),
               // 验证结果
               if (_hasValidated) ...[
                 const Divider(),

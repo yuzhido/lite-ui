@@ -88,6 +88,12 @@ class ValidRules {
     return null;
   }
 
+  /// 最小长度校验规则工厂（返回可直接放入 validRules 列表的函数）
+  /// 用法：`validRules: [ValidRules.minLengthRule(6, message: '至少6位')]`
+  static String? Function(String?) minLengthRule(int len, {String? message}) {
+    return (value) => minLength(value, len, message: message);
+  }
+
   /// 最大长度校验
   /// [value] 输入值
   /// [maxLength] 最大长度
@@ -97,6 +103,12 @@ class ValidRules {
       return message ?? '长度不能超过$maxLength个字符';
     }
     return null;
+  }
+
+  /// 最大长度校验规则工厂（返回可直接放入 validRules 列表的函数）
+  /// 用法：`validRules: [ValidRules.maxLengthRule(20, message: '最多20位')]`
+  static String? Function(String?) maxLengthRule(int len, {String? message}) {
+    return (value) => maxLength(value, len, message: message);
   }
 
   /// 数字校验（纯数字）
@@ -109,6 +121,20 @@ class ValidRules {
     final regex = RegExp(r'^\d+$');
     if (!regex.hasMatch(value.trim())) {
       return message ?? '只能输入数字';
+    }
+    return null;
+  }
+
+  /// 整数校验（支持负整数）
+  /// [value] 输入值
+  /// [message] 自定义错误提示
+  static String? integer(String? value, {String? message}) {
+    if (value == null || value.trim().isEmpty) {
+      return message ?? '请输入整数';
+    }
+    final regex = RegExp(r'^-?\d+$');
+    if (!regex.hasMatch(value.trim())) {
+      return message ?? '只能输入整数';
     }
     return null;
   }
