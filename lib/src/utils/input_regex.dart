@@ -29,8 +29,10 @@ class InputRegex {
   /// 手机号：中国大陆 11 位
   static final RegExp phone = RegExp(r'^1[3-9]\d{9}$');
 
-  /// 邮箱
-  static final RegExp email = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+  /// 邮箱（改进版：禁止连续点、域名不以点/连字符开头结尾）
+  static final RegExp email = RegExp(
+    r'^[a-zA-Z0-9][a-zA-Z0-9._%+\-]*[a-zA-Z0-9]@[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$',
+  );
 
   /// URL
   static final RegExp url = RegExp(r'^https?://[^\s/$.?#].[^\s]*$', caseSensitive: false);

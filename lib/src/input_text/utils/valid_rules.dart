@@ -189,15 +189,18 @@ class ValidRules {
   /// [maxLen] 最大长度（可选）
   /// [customRules] 自定义规则列表（type 为 custom 时使用）
   static List<String? Function(String?)> buildRules({required ValidRuleType type, String? formLabel, int? minLen, int? maxLen, List<String? Function(String?)>? customRules}) {
-    if (type == ValidRuleType.custom) return customRules ?? [];
-
     final rules = <String? Function(String?)>[];
-    final requiredMsg = formLabel != null ? '$formLabel是必填项不能为空' : '这个字段是必填项';
 
-    // 所有类型都隐含必填校验
-    if (type != ValidRuleType.custom) {
-      rules.add((v) => required(v, message: requiredMsg));
+    // custom 类型：只使用自定义规则 + 长度限制
+    if (type == ValidRuleType.custom) {
+      if (customRules != null) rules.addAll(customRules);
+      if (minLen != null) rules.add((v) => minLength(v, minLen));
+      if (maxLen != null) rules.add((v) => maxLength(v, maxLen));
+      return rules;
     }
+
+    final requiredMsg = formLabel != null ? '$formLabel是必填项不能为空' : '这个字段是必填项';
+    rules.add((v) => required(v, message: requiredMsg));
 
     switch (type) {
       case ValidRuleType.phone:
@@ -228,7 +231,7 @@ class ValidRules {
         rules.add((v) => minLength(v, 6, message: '密码至少6位'));
         rules.add((v) => v != null && v.contains(InputRegex.passwordUpperCase) ? null : '必须包含大写字母');
         break;
-      default:
+      case ValidRuleType.custom:
         break;
     }
 
