@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/select_item.dart';
 import '../models/callbacks.dart';
 import 'models/index.dart';
-import 'ui/select_modal_filterable.dart';
-import 'ui/select_modal_remote.dart';
+import 'ui/select_modal_content.dart';
 
 /// SelectModal 底部弹窗选择器
 ///
@@ -13,7 +12,7 @@ import 'ui/select_modal_remote.dart';
 /// - [SelectModalType.remote]：远程搜索选择器（异步搜索）
 ///
 /// 该组件只负责弹窗壳子（showModalBottomSheet），
-/// 不同模式内容渲染委托给对应的子组件。
+/// 内容渲染委托给 [SelectModalContent]，通过 [SelectModalDataProvider] 注入数据获取策略。
 ///
 /// 泛型参数：
 /// - [V] 选项 value 的类型
@@ -64,24 +63,44 @@ class SelectModal {
     List<SelectItem<V, D>>? initialItems,
     String emptyText = '暂无数据',
   }) {
+    // 根据模式构建数据提供策略
+    final SelectModalDataProvider<V, D> dataProvider;
+    final bool isRemote;
+    final String? prefixTitle;
+
+    switch (type) {
+      case SelectModalType.filterable:
+        isRemote = false;
+        prefixTitle = '请选择';
+        dataProvider = _buildFilterableProvider(items ?? [], dynamicItems);
+
+      case SelectModalType.remote:
+        if (onSearch == null) {
+          throw ArgumentError('onSearch is required for SelectModalType.remote');
+        }
+        isRemote = true;
+        prefixTitle = null;
+        dataProvider = onSearch;
+    }
+
     return showModalBottomSheet<V>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) {
         final screenHeight = MediaQuery.of(ctx).size.height;
-
-        // 高度限制在 60%~75%
         final constraints = BoxConstraints(minHeight: screenHeight * 0.60, maxHeight: screenHeight * 0.75);
 
         return SafeArea(
           child: ConstrainedBox(
             constraints: constraints,
-            child: _buildContent<V, D>(
-              type: type,
+            child: SelectModalContent<V, D>(
               title: title,
+              prefixTitle: prefixTitle,
               description: description,
-              items: items,
+              dataProvider: dataProvider,
+              isRemote: isRemote,
+              initialItems: initialItems,
               multiple: multiple,
               selectedValues: selectedValues,
               selectedItems: selectedItems,
@@ -90,9 +109,6 @@ class SelectModal {
               searchHint: searchHint,
               cancelLabel: cancelLabel,
               confirmLabel: confirmLabel,
-              dynamicItems: dynamicItems,
-              onSearch: onSearch,
-              initialItems: initialItems,
               emptyText: emptyText,
             ),
           ),
@@ -101,66 +117,28 @@ class SelectModal {
     );
   }
 
-  /// 根据 type 渲染不同的内容组件
-  static Widget _buildContent<V, D>({
-    required SelectModalType type,
-    required String? title,
-    required String? description,
-    required List<SelectItem<V, D>>? items,
-    required bool multiple,
-    required Set<V>? selectedValues,
-    required List<SelectItem<V, D>>? selectedItems,
-    required OnSelectChange<V, D>? onSelect,
-    required OnMultiSelectConfirm<V, D>? onConfirm,
-    required String searchHint,
-    required String cancelLabel,
-    required String confirmLabel,
-    required DynamicItemsCallback<V, D>? dynamicItems,
-    required RemoteSearchCallback<V, D>? onSearch,
-    required List<SelectItem<V, D>>? initialItems,
-    required String emptyText,
-  }) {
-    switch (type) {
-      case SelectModalType.filterable:
-        // filterable 模式：未传数据时使用空列表
-        final filterableItems = items ?? [];
+  /// 构建 filterable 模式的数据提供策略
+  ///
+  /// 本地过滤静态 items，可选合并 dynamicItems 回调返回的动态数据。
+  static SelectModalDataProvider<V, D> _buildFilterableProvider<V, D>(List<SelectItem<V, D>> items, DynamicItemsCallback<V, D>? dynamicItems) {
+    return (String keyword) async {
+      // 1. 本地过滤静态数据
+      final filtered = keyword.isEmpty
+          ? items
+          : items.where((item) {
+              final kw = keyword.toLowerCase();
+              return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
+            }).toList();
 
-        return SelectModalFilterable<V, D>(
-          title: title,
-          description: description,
-          items: filterableItems,
-          dynamicItems: dynamicItems,
-          multiple: multiple,
-          selectedValues: selectedValues,
-          selectedItems: selectedItems,
-          onSelect: onSelect,
-          onConfirm: onConfirm,
-          searchHint: searchHint,
-          cancelLabel: cancelLabel,
-          confirmLabel: confirmLabel,
-        );
+      // 2. 合并动态数据（去重）
+      if (dynamicItems != null) {
+        final dynamic = await dynamicItems(keyword);
+        final staticValues = filtered.map((e) => e.value).toSet();
+        final uniqueDynamic = dynamic.where((item) => !staticValues.contains(item.value)).toList();
+        return [...filtered, ...uniqueDynamic];
+      }
 
-      case SelectModalType.remote:
-        // remote 模式：onSearch 必填
-        if (onSearch == null) {
-          throw ArgumentError('onSearch is required for SelectModalType.remote');
-        }
-
-        return SelectModalRemote<V, D>(
-          title: title,
-          description: description,
-          onSearch: onSearch,
-          initialItems: initialItems,
-          multiple: multiple,
-          selectedValues: selectedValues,
-          selectedItems: selectedItems,
-          onSelect: onSelect,
-          onConfirm: onConfirm,
-          searchHint: searchHint,
-          cancelLabel: cancelLabel,
-          confirmLabel: confirmLabel,
-          emptyText: emptyText,
-        );
-    }
+      return filtered;
+    };
   }
 }

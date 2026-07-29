@@ -1,36 +1,46 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-import '../../models/select_item.dart';
 import '../../models/callbacks.dart';
+import '../../models/select_item.dart';
+import '../../widgets/input_search.dart';
 import '../../widgets/drag_indicator.dart';
 import '../../widgets/top_title_info.dart';
-import '../../widgets/input_search.dart';
-import '../../widgets/empty_state.dart';
 import '../../widgets/bottom_action_bar.dart';
-import 'widgets/check_list_item.dart';
 
-/// SelectModal 远程搜索选择器
+import 'widgets/select_modal_content_list.dart';
+import 'widgets/selected_items_dialog.dart';
+
+/// 数据提供策略：根据搜索关键字异步返回数据列表
 ///
-/// 支持远程异步搜索，支持单选/多选模式。
-/// - 单选模式：点击项即选中并关闭弹窗
-/// - 多选模式：点击项切换选中状态，底部显示已选数量 + 确定按钮
+/// - filterable 模式：本地过滤静态数据 + 可选合并动态数据
+/// - remote 模式：调用远程搜索接口
+typedef SelectModalDataProvider<V, D> = Future<List<SelectItem<V, D>>> Function(String keyword);
+
+/// SelectModal 统一内容组件
+///
+/// 通过 [dataProvider] 注入数据获取策略，统一处理单选/多选、搜索、回显等逻辑。
 ///
 /// 泛型参数：
 /// - [V] 选项 value 的类型
 /// - [D] 选项 data 的类型（可选原始数据）
-class SelectModalRemote<V, D> extends StatefulWidget {
+class SelectModalContent<V, D> extends StatefulWidget {
   /// 主标题
   final String? title;
+
+  /// 标题前缀（如 "请选择"），拼在 title 前面
+  final String? prefixTitle;
 
   /// 副标题/描述
   final String? description;
 
-  /// 远程搜索回调：根据关键字返回数据列表
-  final RemoteSearchCallback<V, D> onSearch;
+  /// 数据提供策略回调
+  final SelectModalDataProvider<V, D> dataProvider;
 
-  /// 初始数据（首次打开时显示，或空搜索时显示）
+  /// 是否为远程模式（影响初始加载和空状态提示）
+  final bool isRemote;
+
+  /// 远程模式初始数据（仅 isRemote=true 时有效）
   final List<SelectItem<V, D>>? initialItems;
 
   /// 是否为多选模式，默认 false（单选）
@@ -40,9 +50,6 @@ class SelectModalRemote<V, D> extends StatefulWidget {
   final Set<V>? selectedValues;
 
   /// 已选中项的完整数据（确保回显时这些项一定出现在列表中，不受搜索过滤影响）
-  ///
-  /// 这些项会始终显示在列表顶部，并与搜索结果去重（以 selectedItems 为准）。
-  /// remote 模式编辑场景下必传，确保之前选中的项始终可见。
   final List<SelectItem<V, D>>? selectedItems;
 
   /// 单选回调（单选模式下点击项时触发，返回 value 和 data）
@@ -60,14 +67,16 @@ class SelectModalRemote<V, D> extends StatefulWidget {
   /// 确定按钮文字
   final String confirmLabel;
 
-  /// 空状态提示文字
+  /// 空状态提示文字（仅 isRemote=true 时有效）
   final String emptyText;
 
-  const SelectModalRemote({
+  const SelectModalContent({
     super.key,
     this.title,
+    this.prefixTitle,
     this.description,
-    required this.onSearch,
+    required this.dataProvider,
+    this.isRemote = false,
     this.initialItems,
     this.multiple = false,
     this.selectedValues,
@@ -81,13 +90,16 @@ class SelectModalRemote<V, D> extends StatefulWidget {
   });
 
   @override
-  State<SelectModalRemote<V, D>> createState() => _SelectModalRemoteState<V, D>();
+  State<SelectModalContent<V, D>> createState() => _SelectModalContentState<V, D>();
 }
 
-class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
+class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   final TextEditingController _searchController = TextEditingController();
 
-  /// 当前搜索结果
+  /// 当前搜索关键字
+  String _keyword = '';
+
+  /// 当前显示的数据列表
   List<SelectItem<V, D>> _results = [];
 
   /// 当前选中项的 value 集合
@@ -96,7 +108,7 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
   /// 是否正在加载
   bool _isLoading = false;
 
-  /// 搜索是否执行过（控制空状态提示）
+  /// 搜索是否执行过（仅 remote 模式，控制空状态提示）
   bool _hasSearched = false;
 
   /// 防抖定时器
@@ -108,32 +120,34 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
     if (widget.selectedValues != null) {
       _selectedValues = Set.from(widget.selectedValues!);
     }
-    // 将 selectedItems 的 value 也加入选中集合
     if (widget.selectedItems != null) {
       for (final item in widget.selectedItems!) {
         _selectedValues.add(item.value);
       }
     }
-    // 首次加载初始数据
-    _loadInitial();
+    // remote 模式：首次加载初始数据
+    if (widget.isRemote) {
+      _loadInitial();
+    } else {
+      // filterable 模式：初始加载空关键字数据（即全部数据）
+      _performSearch('');
+    }
   }
 
-  /// 首次加载：优先使用 initialItems，否则执行空关键字搜索
+  /// 远程模式首次加载
   Future<void> _loadInitial() async {
     if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
-      setState(() {
-        _results = widget.initialItems!;
-      });
+      setState(() => _results = widget.initialItems!);
     } else {
       await _performSearch('');
     }
   }
 
-  /// 执行远程搜索
+  /// 执行数据加载（调用 dataProvider）
   Future<void> _performSearch(String keyword) async {
     setState(() => _isLoading = true);
     try {
-      final results = await widget.onSearch(keyword);
+      final results = await widget.dataProvider(keyword);
       if (mounted) {
         setState(() {
           _results = results;
@@ -152,8 +166,34 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
     }
   }
 
+  /// 获取合并后的显示列表（selectedItems 前置 + 去重）
+  List<SelectItem<V, D>> get _displayItems {
+    if (widget.selectedItems == null || widget.selectedItems!.isEmpty) {
+      return _results;
+    }
+    final selectedValueSet = widget.selectedItems!.map((e) => e.value).toSet();
+    final uniqueResults = _results.where((e) => !selectedValueSet.contains(e.value)).toList();
+    return [...widget.selectedItems!, ...uniqueResults];
+  }
+
+  /// 获取已选项数据（value + label）
+  List<SelectedItemLabel> get _selectedItemsData {
+    return _displayItems.where((item) => _selectedValues.contains(item.value)).map((e) => SelectedItemLabel(value: e.value.toString(), label: e.label)).toList();
+  }
+
+  /// 移除某项选中
+  void _handleRemove(String value) {
+    setState(() => _selectedValues.remove(value));
+  }
+
+  /// 查看已选项弹窗
+  void _handleViewSelected() {
+    SelectedItemsDialog.show(context: context, items: _selectedItemsData, onRemove: _handleRemove);
+  }
+
   /// 搜索框内容变化处理
   void _onSearchChanged(String value) {
+    setState(() => _keyword = value);
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       _performSearch(value);
@@ -179,7 +219,6 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
         }
       });
     } else {
-      // 单选：直接回调并关闭
       widget.onSelect?.call(item.value, item.data);
       Navigator.of(context).pop(item.value);
     }
@@ -187,7 +226,7 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
 
   /// 处理多选确认
   void _handleConfirm() {
-    final selectedItems = _results.where((item) => _selectedValues.contains(item.value)).toList();
+    final selectedItems = _displayItems.where((item) => _selectedValues.contains(item.value)).toList();
     final values = selectedItems.map((e) => e.value).toList();
     final datas = selectedItems.map((e) => e.data).toList();
     widget.onConfirm?.call(values, datas);
@@ -203,32 +242,43 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final displayItems = _displayItems;
+    final titleText = widget.prefixTitle != null ? '${widget.prefixTitle}${widget.title ?? ''}' : (widget.title ?? '');
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.canvasColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 拖拽手柄
           const DragIndicator(),
-
-          // 头部：标题 + 描述 + 计数 + 关闭按钮
-          TopTitleInfo(title: widget.title ?? '', subTitle: widget.description, itemCount: _results.length, onClose: () => Navigator.of(context).pop()),
-
-          // 搜索输入框
-          InputSearch(searchHint: widget.searchHint, searchController: _searchController, applyFilter: _onSearchChanged, onClear: _onClearSearch, keyword: _searchController.text),
-
-          // 可滚动列表区域
-          Expanded(child: _buildContent(theme)),
-
-          // 多选模式底部栏
+          TopTitleInfo(title: titleText, subTitle: widget.description, itemCount: displayItems.length),
+          InputSearch(
+            //
+            searchHint: widget.searchHint,
+            searchController: _searchController,
+            applyFilter: _onSearchChanged,
+            onClear: _onClearSearch,
+            keyword: _keyword,
+          ),
+          Expanded(
+            child: SelectModalContentList<V, D>(
+              isLoading: _isLoading,
+              displayItems: displayItems,
+              isRemote: widget.isRemote,
+              hasSearched: _hasSearched,
+              emptyText: widget.emptyText,
+              selectedValues: _selectedValues,
+              multiple: widget.multiple,
+              onItemTap: _handleItemTap,
+            ),
+          ),
           if (widget.multiple)
             BottomActionBar(
               selectedCount: _selectedValues.length,
+              onViewSelected: _handleViewSelected,
               cancelLabel: widget.cancelLabel,
               confirmLabel: widget.confirmLabel,
               onCancel: () => Navigator.of(context).pop(),
@@ -236,49 +286,6 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
             ),
         ],
       ),
-    );
-  }
-
-  /// 获取合并后的显示列表（selectedItems 前置 + 去重）
-  List<SelectItem<V, D>> get _mergedResults {
-    if (widget.selectedItems == null || widget.selectedItems!.isEmpty) {
-      return _results;
-    }
-    final selectedValueSet = widget.selectedItems!.map((e) => e.value).toSet();
-    final uniqueResults = _results.where((e) => !selectedValueSet.contains(e.value)).toList();
-    return [...widget.selectedItems!, ...uniqueResults];
-  }
-
-  /// 构建内容区域（Loading / 空状态 / 数据列表）
-  Widget _buildContent(ThemeData theme) {
-    // Loading 状态
-    if (_isLoading) {
-      return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
-    }
-
-    final displayItems = _mergedResults;
-
-    // 空状态
-    if (displayItems.isEmpty) {
-      return EmptyState(message: _hasSearched ? widget.emptyText : '请输入关键字搜索', icon: _hasSearched ? Icons.search_off : Icons.search);
-    }
-
-    // 数据列表
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: displayItems.length,
-      itemBuilder: (context, index) {
-        final item = displayItems[index];
-        final isSelected = _selectedValues.contains(item.value);
-        return SelectModalCheckListItem(
-          label: item.label,
-          subtitle: item.subtitle,
-          isChecked: isSelected,
-          isDisabled: item.disabled,
-          multiple: widget.multiple,
-          onTap: () => _handleItemTap(item),
-        );
-      },
     );
   }
 }

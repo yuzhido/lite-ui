@@ -61,7 +61,13 @@ class DropdownChoose<V, D> extends StatefulWidget {
   final DisplayMode displayMode;
 
   /// compact 模式下最多显示的 tag 数，默认 3
-  final int maxVisibleTags;
+  final int maxShowTags;
+
+  /// 自定义值显示 Widget 构建器
+  ///
+  /// 传入后优先使用此构建器，忽略 [displayMode] 的默认逻辑。
+  /// [labels] 为当前所有选中值的 label 列表。
+  final Widget Function(List<String> labels)? valueBuilder;
 
   const DropdownChoose({
     super.key,
@@ -74,7 +80,8 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.required = false,
     this.multiple = false,
     this.displayMode = DisplayMode.text,
-    this.maxVisibleTags = 3,
+    this.maxShowTags = 3,
+    this.valueBuilder,
     this.onSelect,
     this.onConfirm,
     this.onSaved,
@@ -112,63 +119,6 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
       }
       return [];
     }
-  }
-
-  /// 获取显示文本（text 模式）
-  String? get _displayText {
-    final labels = _getAllLabels();
-    return labels.isEmpty ? null : labels.join('、');
-  }
-
-  /// 构建值显示 Widget
-  Widget? _buildValueWidget() {
-    final labels = _getAllLabels();
-    if (labels.isEmpty) return null;
-
-    final mode = widget.displayMode;
-
-    // text 模式：不返回 widget，使用 valueText
-    if (mode == DisplayMode.text) return null;
-
-    final tagColor = const Color(0xFF3B82F6);
-    final tagTextColor = Colors.white;
-
-    // tags 模式：全部显示
-    if (mode == DisplayMode.tags) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(children: labels.map((label) => _buildTag(label, tagColor, tagTextColor)).toList()),
-      );
-    }
-
-    // compact 模式：前 N 个 + "+M"
-    if (mode == DisplayMode.compact) {
-      final maxTags = widget.maxVisibleTags;
-      if (labels.length <= maxTags) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(children: labels.map((label) => _buildTag(label, tagColor, tagTextColor)).toList()),
-        );
-      }
-      final visibleLabels = labels.sublist(0, maxTags);
-      final remaining = labels.length - maxTags;
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(children: [...visibleLabels.map((label) => _buildTag(label, tagColor, tagTextColor)), _buildTag('+$remaining', tagColor.withValues(alpha: 0.6), tagTextColor)]),
-      );
-    }
-
-    return null;
-  }
-
-  /// 构建单个 tag
-  Widget _buildTag(String label, Color bgColor, Color textColor) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
-      child: Text(label, style: TextStyle(fontSize: 13, color: textColor)),
-    );
   }
 
   // 默认验证规则
@@ -226,12 +176,15 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               errorText: state.errorText,
               required: widget.required,
               formLabel: widget.formLabel,
-              valueText: _displayText,
-              valueWidget: _buildValueWidget(),
+              valueLabels: _getAllLabels(),
+              displayMode: widget.displayMode,
+              maxShowTags: widget.maxShowTags,
+              valueBuilder: widget.valueBuilder,
               hintText: widget.hintText,
               onTap: () {
                 SelectModal.show<V, D>(
                   context: context,
+                  title: widget.formLabel,
                   items: widget.items,
                   multiple: widget.multiple,
                   selectedValues: widget.multiple ? widget.values : (widget.value != null ? {widget.value as V} : null),

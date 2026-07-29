@@ -106,8 +106,8 @@ class SelectModalCheckListItem extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // 右侧勾选标记（单选时显示）
-                  if (!multiple && isChecked) Icon(Icons.check_circle, color: primary, size: 24),
+                  // 右侧勾选标记
+                  if (isChecked) Icon(Icons.check_circle, color: primary, size: 24),
                 ],
               ),
             ),

@@ -52,34 +52,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
             children: [
               const Text(' 基础校验', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const Divider(height: 1),
-              // 0. 测试不传递 items
-              DropdownChoose<String, int>(
-                required: true,
-                formLabel: '城市',
-                multiple: true,
-                values: _cities,
-                onSaved: (v) => debugPrint('城市: $v'),
-                selectedItems: const [
-                  // SelectItem(label: '北京', value: 'bj', data: 1),
-                  // SelectItem(label: '上海', value: 'sh', data: 2),
-                ],
-                onConfirm: (values, datas) {
-                  setState(() => _cities = values.toSet());
-                },
-                items: const [
-                  // SelectItem(label: '北京', value: 'bj', data: 1),
-                  // SelectItem(label: '上海', value: 'sh', data: 2),
-                  // SelectItem(label: '广州', value: 'gz', data: 3),
-                  // SelectItem(label: '深圳', value: 'sz', data: 4),
-                  // SelectItem(label: '杭州', value: 'hz', data: 5),
-                  // SelectItem(label: '广西', value: 'gx', data: 6),
-                  // SelectItem(label: '成都', value: 'cd', data: 7),
-                  // SelectItem(label: '西藏', value: 'xz', data: 8),
-                  // SelectItem(label: '云南', value: 'yn', data: 9),
-                  // SelectItem(label: '福建', value: 'fj', data: 10),
-                  // SelectItem(label: '贵州', value: 'gz2', data: 11),
-                ],
-              ),
+
               // 1. 仅必填
               InputText(
                 required: true,

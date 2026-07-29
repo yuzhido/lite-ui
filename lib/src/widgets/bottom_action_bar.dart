@@ -7,6 +7,9 @@ class BottomActionBar extends StatelessWidget {
   /// 已选中数量
   final int selectedCount;
 
+  /// 查看已选项回调（点击"已选 N 项"时触发）
+  final VoidCallback? onViewSelected;
+
   /// 取消按钮文字
   final String cancelLabel;
 
@@ -26,6 +29,7 @@ class BottomActionBar extends StatelessWidget {
     required this.selectedCount,
     required this.cancelLabel,
     required this.confirmLabel,
+    this.onViewSelected,
     this.onCancel,
     this.onConfirm,
     this.disableWhenEmpty = true,
@@ -38,25 +42,62 @@ class BottomActionBar extends StatelessWidget {
     final canConfirm = !disableWhenEmpty || selectedCount > 0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: theme.canvasColor,
-        boxShadow: [BoxShadow(color: Colors.black.withAlpha(13), blurRadius: 10, offset: const Offset(0, -2))],
+        border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5))),
       ),
       child: SafeArea(
         top: false,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            TextButton(
-              onPressed: onCancel,
-              child: Text(cancelLabel, style: TextStyle(color: theme.hintColor)),
+            // 左侧：已选数量提示（点击可查看已选项）
+            SizedBox(
+              height: 40,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
+                onPressed: selectedCount > 0 ? onViewSelected : null,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: theme.colorScheme.outlineVariant),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  foregroundColor: selectedCount > 0 ? theme.textTheme.bodyMedium?.color : theme.hintColor,
+                ),
+                label: Text('已选 $selectedCount 项', style: const TextStyle(fontSize: 14)),
+              ),
             ),
-            const SizedBox(width: 16),
-            ElevatedButton(
-              onPressed: canConfirm ? onConfirm : null,
-              style: ElevatedButton.styleFrom(disabledBackgroundColor: theme.colorScheme.outlineVariant),
-              child: Text(confirmLabel),
+            // 右侧：按钮组
+            Row(
+              children: [
+                SizedBox(
+                  height: 40,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: theme.colorScheme.outlineVariant),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      foregroundColor: theme.textTheme.bodyMedium?.color,
+                    ),
+                    label: Text(cancelLabel, style: const TextStyle(fontSize: 14)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 40,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.check, size: 18),
+                    onPressed: canConfirm ? onConfirm : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: canConfirm ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+                      foregroundColor: canConfirm ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    label: Text(confirmLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

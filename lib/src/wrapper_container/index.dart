@@ -5,6 +5,8 @@ import 'package:lite_ui/src/widgets/border_builder.dart';
 import 'package:lite_ui/src/widgets/prefix_icon_label.dart';
 import 'package:lite_ui/src/widgets/suffix_icon_label.dart';
 
+import 'show_content.dart';
+
 /// 包装容器
 ///
 /// 用于包装其他组件，提供表单标签 + 值显示 + 后缀图标的统一布局
@@ -18,8 +20,19 @@ class WrapperContainer extends StatelessWidget {
   /// 选中的值文本（中间显示，有值时高亮色）
   final String? valueText;
 
-  /// 自定义值显示 Widget（优先级高于 valueText）
-  final Widget? valueWidget;
+  /// 选中值的 label 列表（用于 displayMode 渲染）
+  final List<String>? valueLabels;
+
+  /// 值显示模式，默认 [DisplayMode.text]
+  final DisplayMode displayMode;
+
+  /// compact 模式下最多显示的 tag 数，默认 3
+  final int maxShowTags;
+
+  /// 自定义值显示 Widget 构建器（优先级最高）
+  ///
+  /// 传入后忽略 [displayMode] 的默认逻辑，[labels] 为当前所有选中值的 label 列表。
+  final Widget Function(List<String> labels)? valueBuilder;
 
   /// 占位提示文字（无值时显示）
   final String? hintText;
@@ -33,7 +46,20 @@ class WrapperContainer extends StatelessWidget {
   /// 表单布局方式
   final FormLayout? formLayout;
 
-  const WrapperContainer({super.key, this.onTap, this.formLabel, this.valueText, this.valueWidget, this.hintText, this.errorText, this.required, this.formLayout});
+  const WrapperContainer({
+    super.key,
+    this.onTap,
+    this.formLabel,
+    this.valueText,
+    this.valueLabels,
+    this.displayMode = DisplayMode.text,
+    this.maxShowTags = 3,
+    this.valueBuilder,
+    this.hintText,
+    this.errorText,
+    this.required,
+    this.formLayout,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -66,21 +92,16 @@ class WrapperContainer extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: (valueWidget != null)
-                      ? valueWidget!
-                      : (valueText != null)
-                      ? SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Text(
-                            valueText ?? '',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).textColor),
-                          ),
-                        )
-                      : (errorText != null)
-                      ? Text(errorText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).errorColor))
-                      : Text(hintText ?? '请选择$formLabel', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).hintColor)),
+                  child: ShowContent(
+                    errorText: errorText,
+                    valueLabels: valueLabels,
+                    valueText: valueText,
+                    hintText: hintText,
+                    formLabel: formLabel,
+                    displayMode: displayMode,
+                    maxShowTags: maxShowTags,
+                    valueBuilder: valueBuilder,
+                  ),
                 ),
               ),
               SuffixIconLabel(),
