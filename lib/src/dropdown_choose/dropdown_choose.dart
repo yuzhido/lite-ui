@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lite_ui/src/models/enum.dart';
 import 'package:lite_ui/src/models/select_item.dart';
 import 'package:lite_ui/src/models/callbacks.dart';
-import 'package:lite_ui/src/select_modal/select_modal.dart';
+import 'package:lite_ui/src/dropdown_choose/models/index.dart';
+import 'package:lite_ui/src/dropdown_choose/ui/select_modal_content.dart';
 import 'package:lite_ui/src/theme/index.dart';
 
 import '../wrapper_container/index.dart';
@@ -68,6 +69,75 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 传入后优先使用此构建器，忽略 [displayMode] 的默认逻辑。
   /// [labels] 为当前所有选中值的 label 列表。
   final Widget Function(List<String> labels)? valueBuilder;
+
+  /// 显示一个从底部向上弹出的选择器弹窗
+  ///
+  /// [title] 主标题
+  /// [description] 副标题/描述
+  /// [items] 选项列表数据（直接传递给 SelectModalContent）
+  /// [multiple] 是否多选模式，默认 false（单选）
+  /// [selectedValues] 初始选中项的 value 集合
+  /// [selectedItems] 已选中项的完整数据（确保回显时这些项一定出现在列表中）
+  /// [onSelect] 单选回调（返回 value 和 data）
+  /// [onConfirm] 多选确认回调（返回 values 和 datas）
+  /// [searchHint] 搜索框提示文字
+  /// [cancelLabel] 取消按钮文字
+  /// [confirmLabel] 确定按钮文字
+  ///
+  /// --- remote 专属参数 ---
+  /// [onSearch] 远程搜索回调（传入后启用远程搜索模式）
+  /// [emptyText] 空状态提示文字
+  static Future<V?> show<V, D>({
+    required BuildContext context,
+    SelectModalType type = SelectModalType.filterable,
+    String? title,
+    String? description,
+    List<SelectItem<V, D>>? items,
+    bool multiple = false,
+    Set<V>? selectedValues,
+    List<SelectItem<V, D>>? selectedItems,
+    OnSelectChange<V, D>? onSelect,
+    OnMultiSelectConfirm<V, D>? onConfirm,
+    String searchHint = '搜索',
+    String cancelLabel = '取消',
+    String confirmLabel = '确定',
+
+    // remote 专属
+    RemoteSearchCallback<V, D>? onSearch,
+    String emptyText = '暂无数据',
+  }) {
+    return showModalBottomSheet<V>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final screenHeight = MediaQuery.of(ctx).size.height;
+        final constraints = BoxConstraints(minHeight: screenHeight * 0.60, maxHeight: screenHeight * 0.75);
+
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: constraints,
+            child: SelectModalContent<V, D>(
+              title: title,
+              description: description,
+              type: type,
+              items: items ?? [],
+              onSearch: onSearch,
+              multiple: multiple,
+              selectedValues: selectedValues,
+              selectedItems: selectedItems,
+              onSelect: onSelect,
+              onConfirm: onConfirm,
+              searchHint: searchHint,
+              cancelLabel: cancelLabel,
+              confirmLabel: confirmLabel,
+              emptyText: emptyText,
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   const DropdownChoose({
     super.key,
@@ -182,7 +252,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               valueBuilder: widget.valueBuilder,
               hintText: widget.hintText,
               onTap: () {
-                SelectModal.show<V, D>(
+                DropdownChoose.show<V, D>(
                   context: context,
                   title: '请选择${widget.formLabel}',
                   items: widget.items,
