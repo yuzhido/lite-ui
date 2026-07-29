@@ -206,7 +206,8 @@ class _TreeSelectState<T extends Object> extends State<TreeSelect<T>> with Singl
             TopTitleInfo(title: widget.config.title),
 
             // 搜索框
-            if (widget.config.showSearch) InputSearch(searchHint: widget.config.searchHint, applyFilter: _applyFilter, searchController: _searchController),
+            if (widget.config.showSearch)
+              InputSearch(searchHint: widget.config.searchHint, onSearch: _applyFilter, searchController: _searchController, keyword: _searchController.text),
 
             // 树形列表
             Expanded(

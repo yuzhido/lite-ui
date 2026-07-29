@@ -36,6 +36,15 @@ class SelectModalContentList<V, D> extends StatelessWidget {
   /// 列表项点击回调
   final void Function(SelectItem<V, D> item) onItemTap;
 
+  /// 是否显示新增按钮
+  final bool showAdd;
+
+  /// 新增按钮文字
+  final String addLabel;
+
+  /// 新增按钮点击回调
+  final VoidCallback? onAdd;
+
   const SelectModalContentList({
     required this.isLoading,
     required this.displayItems,
@@ -45,20 +54,29 @@ class SelectModalContentList<V, D> extends StatelessWidget {
     this.hasSearched = false,
     this.emptyText = '暂无数据',
     this.multiple = false,
+    this.showAdd = false,
+    this.addLabel = '新增',
+    this.onAdd,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading && displayItems.isEmpty) {
+    if (isLoading) {
       return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
 
     if (displayItems.isEmpty) {
       if (isRemote) {
-        return EmptyState(message: hasSearched ? emptyText : '请输入关键字搜索', icon: hasSearched ? Icons.search_off : Icons.search);
+        return EmptyState(
+          message: hasSearched ? emptyText : '请输入关键字搜索',
+          icon: hasSearched ? Icons.search_off : Icons.search,
+          showAdd: hasSearched && showAdd,
+          addLabel: addLabel,
+          onAdd: onAdd,
+        );
       }
-      return const EmptyState(message: '无匹配数据');
+      return EmptyState(message: '无匹配数据', showAdd: showAdd, addLabel: addLabel, onAdd: onAdd);
     }
 
     return ListView.builder(

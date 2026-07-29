@@ -19,8 +19,8 @@ class AreaInfo {
   }
 }
 
-/// 模拟后端返回的 JSON 字符串
-const List<Map<String, dynamic>> mockAreaJson = [
+/// 模拟后端返回的 JSON 字符串（可变列表，支持运行时新增）
+final List<Map<String, dynamic>> mockAreaJson = [
   {"id": 1918475623301, "name": "北京市", "code": "110000", "description": "直辖市"},
   {"id": 1918475623302, "name": "天津市", "code": "120000", "description": "直辖市"},
   {"id": 1918475623303, "name": "上海市", "code": "310000", "description": "直辖市"},
@@ -48,8 +48,14 @@ Future<List<SelectItem<int, AreaInfo>>> getAsyncData({String? keyword}) async {
   if (keyword != null) {
     data.retainWhere((item) => item.name.contains(keyword));
   }
-  await Future.delayed(Duration(seconds: 3));
+  await Future.delayed(Duration(seconds: 1));
   return data.map((json) => SelectItem(label: json.name, value: json.id, data: json)).toList();
+}
+
+/// 模拟新增城市到数据源
+void addMockArea({required String name, String? code}) {
+  final newId = (mockAreaJson.map((e) => e['id'] as int).reduce((a, b) => a > b ? a : b)) + 1;
+  mockAreaJson.add({'id': newId, 'name': name, 'code': code ?? '000000', 'description': '新增城市'});
 }
 
 // 同步获取数据

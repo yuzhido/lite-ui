@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../models/callbacks.dart';
@@ -63,6 +62,15 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 空状态提示文字
   final String emptyText;
 
+  /// 是否显示新增按钮，默认 false
+  final bool showAdd;
+
+  /// 新增按钮文字，默认 '新增'
+  final String addLabel;
+
+  /// 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
+  final Future<void> Function(String keyword)? onAdd;
+
   const SelectModalContent({
     super.key,
     this.title,
@@ -79,6 +87,9 @@ class SelectModalContent<V, D> extends StatefulWidget {
     this.cancelLabel = '取消',
     this.confirmLabel = '确定',
     this.emptyText = '暂无数据',
+    this.showAdd = false,
+    this.addLabel = '新增',
+    this.onAdd,
   });
 
   @override
@@ -102,9 +113,6 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
 
   /// 搜索是否执行过（仅远程搜索模式，控制空状态提示）
   bool _hasSearched = false;
-
-  /// 防抖定时器
-  Timer? _debounceTimer;
 
   /// 是否为远程搜索模式
   bool get _isRemote => widget.type == SelectModalType.remote;
@@ -178,11 +186,11 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
 
   /// 获取已选项数据（value + label）
   List<SelectedItemLabel> get _selectedItemsData {
-    return _displayItems.where((item) => _selectedValues.contains(item.value)).map((e) => SelectedItemLabel(value: e.value.toString(), label: e.label)).toList();
+    return _displayItems.where((item) => _selectedValues.contains(item.value)).map((e) => SelectedItemLabel(value: e.value, label: e.label)).toList();
   }
 
   /// 移除某项选中
-  void _handleRemove(String value) {
+  void _handleRemove(dynamic value) {
     setState(() => _selectedValues.remove(value));
   }
 
@@ -191,19 +199,25 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
     SelectedItemsDialog.show(context: context, items: _selectedItemsData, onRemove: _handleRemove);
   }
 
-  /// 搜索框内容变化处理
-  void _onSearchChanged(String value) {
-    setState(() => _keyword = value);
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      _performSearch(value);
-    });
+  /// 搜索按钮点击处理
+  void _onSearch(String keyword) {
+    setState(() => _keyword = keyword);
+    _performSearch(keyword);
   }
 
   /// 清除搜索
   void _onClearSearch() {
-    _searchController.clear();
-    _onSearchChanged('');
+    setState(() => _keyword = '');
+    _performSearch('');
+  }
+
+  /// 处理新增按钮点击，传入当前关键字，完成后自动刷新列表
+  Future<void> _handleAdd() async {
+    if (widget.onAdd == null) return;
+    await widget.onAdd!(_keyword);
+    if (mounted) {
+      _performSearch(_keyword);
+    }
   }
 
   /// 处理列表项点击
@@ -236,7 +250,6 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   @override
   void dispose() {
     _searchController.dispose();
-    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -252,14 +265,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
         children: [
           const DragIndicator(),
           TopTitleInfo(title: '${widget.title}', subTitle: widget.description, itemCount: _displayItems.length),
-          InputSearch(
-            //
-            searchHint: widget.searchHint,
-            searchController: _searchController,
-            applyFilter: _onSearchChanged,
-            onClear: _onClearSearch,
-            keyword: _keyword,
-          ),
+          InputSearch(searchHint: widget.searchHint, searchController: _searchController, onSearch: _onSearch, onClear: _onClearSearch, keyword: _keyword, isLoading: _isLoading),
           Expanded(
             child: SelectModalContentList<V, D>(
               isLoading: _isLoading,
@@ -270,6 +276,9 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
               selectedValues: _selectedValues,
               multiple: widget.multiple,
               onItemTap: _handleItemTap,
+              showAdd: widget.showAdd,
+              addLabel: widget.addLabel,
+              onAdd: widget.onAdd != null ? _handleAdd : null,
             ),
           ),
           if (widget.multiple)

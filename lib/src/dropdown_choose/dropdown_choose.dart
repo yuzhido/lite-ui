@@ -36,6 +36,15 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 是否为多选模式，默认 false（单选）
   final bool multiple;
 
+  /// 选择器模式，默认 [SelectModalType.filterable]（本地过滤）
+  ///
+  /// - [SelectModalType.filterable]：本地过滤选择器（直接传 items，组件内部过滤）
+  /// - [SelectModalType.remote]：远程搜索选择器（传 onSearch 异步搜索）
+  final SelectModalType type;
+
+  /// 远程搜索回调（remote 模式下必填），搜索时调用远程接口而非本地过滤
+  final RemoteSearchCallback<V, D>? onSearch;
+
   /// 单选回调（单选模式下使用）
   final OnSelectChange<V, D>? onSelect;
 
@@ -70,6 +79,15 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// [labels] 为当前所有选中值的 label 列表。
   final Widget Function(List<String> labels)? valueBuilder;
 
+  /// 是否显示新增按钮（搜索无结果时），默认 false
+  final bool showAdd;
+
+  /// 新增按钮文字，默认 '新增'
+  final String addLabel;
+
+  /// 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
+  final Future<void> Function(String keyword)? onAdd;
+
   /// 显示一个从底部向上弹出的选择器弹窗
   ///
   /// [title] 主标题
@@ -87,6 +105,11 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// --- remote 专属参数 ---
   /// [onSearch] 远程搜索回调（传入后启用远程搜索模式）
   /// [emptyText] 空状态提示文字
+  ///
+  /// --- 新增功能参数 ---
+  /// [showAdd] 是否显示新增按钮（搜索无结果时），默认 false
+  /// [addLabel] 新增按钮文字，默认 '新增'
+  /// [onAdd] 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
   static Future<V?> show<V, D>({
     required BuildContext context,
     SelectModalType type = SelectModalType.filterable,
@@ -105,6 +128,11 @@ class DropdownChoose<V, D> extends StatefulWidget {
     // remote 专属
     RemoteSearchCallback<V, D>? onSearch,
     String emptyText = '暂无数据',
+
+    // 新增功能
+    bool showAdd = false,
+    String addLabel = '新增',
+    Future<void> Function(String keyword)? onAdd,
   }) {
     return showModalBottomSheet<V>(
       context: context,
@@ -132,6 +160,9 @@ class DropdownChoose<V, D> extends StatefulWidget {
               cancelLabel: cancelLabel,
               confirmLabel: confirmLabel,
               emptyText: emptyText,
+              showAdd: showAdd,
+              addLabel: addLabel,
+              onAdd: onAdd,
             ),
           ),
         );
@@ -149,9 +180,14 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.hintText,
     this.required = false,
     this.multiple = false,
+    this.type = SelectModalType.filterable,
+    this.onSearch,
     this.displayMode = DisplayMode.text,
     this.maxShowTags = 3,
     this.valueBuilder,
+    this.showAdd = false,
+    this.addLabel = '新增',
+    this.onAdd,
     this.onSelect,
     this.onConfirm,
     this.onSaved,
@@ -254,11 +290,16 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               onTap: () {
                 DropdownChoose.show<V, D>(
                   context: context,
+                  type: widget.type,
+                  onSearch: widget.onSearch,
                   title: '请选择${widget.formLabel}',
                   items: widget.items,
                   multiple: widget.multiple,
                   selectedValues: widget.multiple ? widget.values : (widget.value != null ? {widget.value as V} : null),
                   selectedItems: widget.selectedItems,
+                  showAdd: widget.showAdd,
+                  addLabel: widget.addLabel,
+                  onAdd: widget.onAdd,
                   onSelect: (value, data) {
                     widget.onSelect?.call(value, data);
                     _formFieldKey.currentState?.didChange(value?.toString() ?? '');
