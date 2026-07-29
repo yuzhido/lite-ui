@@ -11,8 +11,14 @@ class InputRegex {
   /// 小数：有效小数格式（用于校验，允许 123、12.34、0.5、.5、5.，不允许 1.2.3）
   static final RegExp decimalValid = RegExp(r'^\d*\.?\d*$');
 
-  /// 中文：仅中文字符
-  static final RegExp chinese = RegExp(r'[\u4e00-\u9fa5]');
+  /// 中文：中文字符（包含基本汉字、扩展A区、兼容汉字等）
+  static final RegExp chinese = RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]');
+
+  /// 非中文：除中文外的所有字符（包含英文、数字、特殊字符@>等）
+  static final RegExp nonChinese = RegExp(r'[^\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]');
+
+  /// 标识符：只能以英文字母或下划线开头，后续可包含字母、数字、下划线（不允许中文和特殊字符）
+  static final RegExp identifier = RegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$');
 
   /// 英文：仅英文字母
   static final RegExp english = RegExp(r'[a-zA-Z]');

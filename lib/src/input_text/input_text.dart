@@ -198,22 +198,16 @@ class _InputTextState extends State<InputText> {
   String? defaultValid(String? value) {
     final text = controller.text;
     final rules = <String? Function(String?)>[];
-    
+
     // required: true 时添加必填校验
     if (widget.required) {
       rules.add((v) => ValidRules.required(v, message: widget.formLabel != null ? '${widget.formLabel}是必填项不能为空' : '这个字段是必填项'));
     }
-    
+
     // 根据 validRuleType 添加格式校验（custom 类型只使用 validRules）
-    final typeRules = ValidRules.buildRules(
-      type: widget.validRuleType,
-      formLabel: widget.formLabel,
-      minLen: widget.minLen,
-      maxLen: widget.maxLen,
-      customRules: widget.validRules,
-    );
+    final typeRules = ValidRules.buildRules(type: widget.validRuleType, formLabel: widget.formLabel, minLen: widget.minLen, maxLen: widget.maxLen, customRules: widget.validRules);
     rules.addAll(typeRules);
-    
+
     // 自定义 validator 最后执行
     if (widget.validator != null) {
       rules.add(widget.validator!);
@@ -273,10 +267,7 @@ class _InputTextState extends State<InputText> {
               onChanged: onInputChange,
               expands: false,
               keyboardType: widget.keyboardType,
-              inputFormatters: [
-                ...InputFormat.getFormatters(widget.inputType),
-                if (widget.inputFormatters != null) ...widget.inputFormatters!,
-              ],
+              inputFormatters: [...InputFormat.getFormatters(widget.inputType), if (widget.inputFormatters != null) ...widget.inputFormatters!],
               decoration: InputDecoration(
                 label: (widget.formLayout == FormLayout.column)
                     ? null
@@ -303,7 +294,6 @@ class _InputTextState extends State<InputText> {
                       color: state.hasError ? (widget.errorColor ?? LiteUITheme.of(context).errorColor) : widget.hintTextColor ?? Colors.grey,
                       fontSize: widget.hintFontSize,
                     ),
-
                 // 前置图标
                 prefixIcon: PrefixIconLabel(
                   label: '${widget.formLabel}',
