@@ -184,7 +184,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               onTap: () {
                 SelectModal.show<V, D>(
                   context: context,
-                  title: widget.formLabel,
+                  title: '请选择${widget.formLabel}',
                   items: widget.items,
                   multiple: widget.multiple,
                   selectedValues: widget.multiple ? widget.values : (widget.value != null ? {widget.value as V} : null),

@@ -7,19 +7,15 @@ import '../../widgets/input_search.dart';
 import '../../widgets/drag_indicator.dart';
 import '../../widgets/top_title_info.dart';
 import '../../widgets/bottom_action_bar.dart';
+import '../models/index.dart';
 
 import 'widgets/select_modal_content_list.dart';
 import 'widgets/selected_items_dialog.dart';
 
-/// 数据提供策略：根据搜索关键字异步返回数据列表
-///
-/// - filterable 模式：本地过滤静态数据 + 可选合并动态数据
-/// - remote 模式：调用远程搜索接口
-typedef SelectModalDataProvider<V, D> = Future<List<SelectItem<V, D>>> Function(String keyword);
-
 /// SelectModal 统一内容组件
 ///
-/// 通过 [dataProvider] 注入数据获取策略，统一处理单选/多选、搜索、回显等逻辑。
+/// 直接接收 [items] 数据列表，内部处理本地过滤和状态管理。
+/// 支持可选的 [onSearch] 远程搜索回调。
 ///
 /// 泛型参数：
 /// - [V] 选项 value 的类型
@@ -28,20 +24,17 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 主标题
   final String? title;
 
-  /// 标题前缀（如 "请选择"），拼在 title 前面
-  final String? prefixTitle;
-
   /// 副标题/描述
   final String? description;
 
-  /// 数据提供策略回调
-  final SelectModalDataProvider<V, D> dataProvider;
+  /// 组件模式（filterable 本地过滤 / remote 远程搜索）
+  final SelectModalType type;
 
-  /// 是否为远程模式（影响初始加载和空状态提示）
-  final bool isRemote;
+  /// 选项列表数据（直接传递，组件内部根据搜索关键字本地过滤）
+  final List<SelectItem<V, D>> items;
 
-  /// 远程模式初始数据（仅 isRemote=true 时有效）
-  final List<SelectItem<V, D>>? initialItems;
+  /// 远程搜索回调（remote 模式下必填），搜索时调用远程接口而非本地过滤
+  final Future<List<SelectItem<V, D>>> Function(String keyword)? onSearch;
 
   /// 是否为多选模式，默认 false（单选）
   final bool multiple;
@@ -67,17 +60,16 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 确定按钮文字
   final String confirmLabel;
 
-  /// 空状态提示文字（仅 isRemote=true 时有效）
+  /// 空状态提示文字
   final String emptyText;
 
   const SelectModalContent({
     super.key,
     this.title,
-    this.prefixTitle,
     this.description,
-    required this.dataProvider,
-    this.isRemote = false,
-    this.initialItems,
+    this.type = SelectModalType.filterable,
+    required this.items,
+    this.onSearch,
     this.multiple = false,
     this.selectedValues,
     this.selectedItems,
@@ -108,11 +100,14 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   /// 是否正在加载
   bool _isLoading = false;
 
-  /// 搜索是否执行过（仅 remote 模式，控制空状态提示）
+  /// 搜索是否执行过（仅远程搜索模式，控制空状态提示）
   bool _hasSearched = false;
 
   /// 防抖定时器
   Timer? _debounceTimer;
+
+  /// 是否为远程搜索模式
+  bool get _isRemote => widget.type == SelectModalType.remote;
 
   @override
   void initState() {
@@ -125,44 +120,49 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
         _selectedValues.add(item.value);
       }
     }
-    // remote 模式：首次加载初始数据
-    if (widget.isRemote) {
-      _loadInitial();
-    } else {
-      // filterable 模式：初始加载空关键字数据（即全部数据）
+    // 首次加载：有 items 直接显示，否则远程模式调 onSearch
+    if (widget.items.isNotEmpty) {
+      _results = widget.items;
+    } else if (_isRemote) {
       _performSearch('');
     }
   }
 
-  /// 远程模式首次加载
-  Future<void> _loadInitial() async {
-    if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
-      setState(() => _results = widget.initialItems!);
-    } else {
-      await _performSearch('');
-    }
-  }
-
-  /// 执行数据加载（调用 dataProvider）
+  /// 执行数据加载
+  ///
+  /// 远程模式：调用 onSearch 回调
+  /// 本地模式：直接对 widget.items 做关键字过滤
   Future<void> _performSearch(String keyword) async {
-    setState(() => _isLoading = true);
-    try {
-      final results = await widget.dataProvider(keyword);
-      if (mounted) {
-        setState(() {
-          _results = results;
-          _isLoading = false;
-          _hasSearched = true;
-        });
+    if (_isRemote) {
+      setState(() => _isLoading = true);
+      try {
+        final results = await widget.onSearch!(keyword);
+        if (mounted) {
+          setState(() {
+            _results = results;
+            _isLoading = false;
+            _hasSearched = true;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _results = [];
+            _isLoading = false;
+            _hasSearched = true;
+          });
+        }
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _results = [];
-          _isLoading = false;
-          _hasSearched = true;
-        });
-      }
+    } else {
+      // 本地过滤
+      final kw = keyword.toLowerCase();
+      setState(() {
+        _results = kw.isEmpty
+            ? widget.items
+            : widget.items.where((item) {
+                return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
+              }).toList();
+      });
     }
   }
 
@@ -242,9 +242,6 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
 
   @override
   Widget build(BuildContext context) {
-    final displayItems = _displayItems;
-    final titleText = widget.prefixTitle != null ? '${widget.prefixTitle}${widget.title ?? ''}' : (widget.title ?? '');
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -254,7 +251,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const DragIndicator(),
-          TopTitleInfo(title: titleText, subTitle: widget.description, itemCount: displayItems.length),
+          TopTitleInfo(title: '${widget.title}', subTitle: widget.description, itemCount: _displayItems.length),
           InputSearch(
             //
             searchHint: widget.searchHint,
@@ -266,8 +263,8 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
           Expanded(
             child: SelectModalContentList<V, D>(
               isLoading: _isLoading,
-              displayItems: displayItems,
-              isRemote: widget.isRemote,
+              displayItems: _displayItems,
+              isRemote: _isRemote,
               hasSearched: _hasSearched,
               emptyText: widget.emptyText,
               selectedValues: _selectedValues,

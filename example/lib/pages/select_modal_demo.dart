@@ -130,32 +130,6 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
     );
   }
 
-  /// 带动态数据的 Filterable 示例
-  void _showFilterableWithDynamic() async {
-    await SelectModal.show<String, void>(
-      context: context,
-      type: SelectModalType.filterable,
-      title: '选择城市（含动态数据）',
-      description: '输入关键字时会动态合并额外数据',
-      items: SelectModalMockData.cityItems.sublist(0, 8),
-      searchHint: '输入关键字搜索',
-      dynamicItems: (keyword) async {
-        await Future.delayed(const Duration(milliseconds: 300));
-        if (keyword.isEmpty) return [];
-        return [
-          SelectItem<String, void>(
-            label: '动态: $keyword',
-            subtitle: '这是动态生成的选项',
-            value: 'dynamic_$keyword',
-          ),
-        ];
-      },
-      onSelect: (value, data) {
-        setState(() => _selectedResult = '动态数据结果：$value');
-      },
-    );
-  }
-
   /// 远程搜索单选示例
   void _showRemoteSingle() async {
     await SelectModal.show<String, void>(
@@ -212,7 +186,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       title: '远程搜索城市（带初始数据）',
       description: '打开时显示初始数据，搜索时远程获取',
       searchHint: '输入关键字远程搜索',
-      initialItems: SelectModalMockData.cityItems.sublist(0, 5),
+      items: SelectModalMockData.cityItems.sublist(0, 5),
       onSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
         if (keyword.isEmpty) return SelectModalMockData.cityItems;
@@ -238,7 +212,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       searchHint: '输入关键字远程搜索',
       multiple: true,
       selectedValues: const {'beijing', 'shanghai'},
-      initialItems: SelectModalMockData.cityItems,
+      items: SelectModalMockData.cityItems,
       onSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
         if (keyword.isEmpty) return SelectModalMockData.cityItems;
@@ -329,8 +303,6 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
             _buildButton('带图标选项', Icons.image, _showFilterableWithIcon),
             const SizedBox(height: 8),
             _buildButton('带禁用状态', Icons.block, _showFilterableWithDisabled),
-            const SizedBox(height: 8),
-            _buildButton('带动态数据', Icons.add_circle_outline, _showFilterableWithDynamic),
             const SizedBox(height: 24),
 
             // Filterable 多选

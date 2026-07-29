@@ -8,6 +8,3 @@ typedef OnMultiSelectConfirm<V, D> = void Function(List<V> values, List<D?> data
 
 /// 远程搜索回调：根据关键字异步返回数据列表
 typedef RemoteSearchCallback<V, D> = Future<List<SelectItem<V, D>>> Function(String keyword);
-
-/// 动态数据生成回调：根据当前过滤关键字返回额外数据（与静态 items 合并显示）
-typedef DynamicItemsCallback<V, D> = Future<List<SelectItem<V, D>>> Function(String keyword);
