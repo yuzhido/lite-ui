@@ -7,7 +7,8 @@ import '../widgets/border_builder.dart';
 import '../widgets/prefix_icon_label.dart';
 import 'models/enum.dart';
 import 'ui/clear_icon.dart';
-import 'valid_rules.dart';
+import 'utils/input_format.dart';
+import 'utils/valid_rules.dart';
 
 /// 输入框
 /// 输入框组件
@@ -44,6 +45,10 @@ class InputText extends StatefulWidget {
     this.borderColor,
     this.focusBorderColor,
     this.label,
+    this.inputType = InputType.text,
+    this.validRuleType = ValidRuleType.custom,
+    this.minLen,
+    this.maxLen,
     this.validRules,
     this.keyboardType,
     this.inputFormatters,
@@ -97,12 +102,32 @@ class InputText extends StatefulWidget {
   final Widget? suffixIcon;
   final IconData? suffixIconData;
 
-  /// 输入内容是否必填
+  /// 输入内容是否必填（控制红色星号 * 显示）
   ///
   /// 默认值为 false
   final bool required;
 
-  /// 输入框控制器
+  /// 输入类型
+  ///
+  /// 控制用户只能输入指定类型的内容，底层通过 [TextInputFormatter] 实时拦截非法字符。
+  /// 默认值为 [InputType.text]
+  final InputType inputType;
+
+  /// 校验规则类型
+  ///
+  /// 默认值为 [ValidRuleType.none]，一个枚举值搞定常见校验
+  final ValidRuleType validRuleType;
+
+  /// 最小长度（配合 validRuleType 使用）
+  final int? minLen;
+
+  /// 最大长度（配合 validRuleType 使用）
+  final int? maxLen;
+
+  /// 自定义校验规则列表
+  ///
+  /// 仅当 [validRuleType] 为 [ValidRuleType.custom] 时生效
+  final List<String? Function(String?)>? validRules;
   final TextEditingController? controller;
 
   /// 是否是输入密码
@@ -131,12 +156,6 @@ class InputText extends StatefulWidget {
   ///
   /// 默认值为 [FormLayout.row]
   final FormLayout formLayout;
-
-  /// 校验规则列表
-  ///
-  /// 传入 [ValidRules] 中的静态方法，内部自动组合校验
-  /// 示例：`validRules: [ValidRules.required, ValidRules.numeric]`
-  final List<String? Function(String?)>? validRules;
 
   /// 键盘类型
   final TextInputType? keyboardType;
@@ -174,19 +193,27 @@ class _InputTextState extends State<InputText> {
     super.dispose();
   }
 
-  // 组合校验：required + validRules + 自定义 validator
+  // 组合校验：根据 validRuleType 枚举自动构建规则列表
   // 注意：必须读 controller.text（真实数据源），FormField 的 value 参数不会自动同步
   String? defaultValid(String? value) {
     final text = controller.text;
     final rules = <String? Function(String?)>[];
-    // 必填校验
+    
+    // required: true 时添加必填校验
     if (widget.required) {
       rules.add((v) => ValidRules.required(v, message: widget.formLabel != null ? '${widget.formLabel}是必填项不能为空' : '这个字段是必填项'));
     }
-    // 规则列表校验
-    if (widget.validRules != null) {
-      rules.addAll(widget.validRules!);
-    }
+    
+    // 根据 validRuleType 添加格式校验（custom 类型只使用 validRules）
+    final typeRules = ValidRules.buildRules(
+      type: widget.validRuleType,
+      formLabel: widget.formLabel,
+      minLen: widget.minLen,
+      maxLen: widget.maxLen,
+      customRules: widget.validRules,
+    );
+    rules.addAll(typeRules);
+    
     // 自定义 validator 最后执行
     if (widget.validator != null) {
       rules.add(widget.validator!);
@@ -213,8 +240,10 @@ class _InputTextState extends State<InputText> {
 
   @override
   Widget build(BuildContext context) {
+    // required 或 validRuleType 非 custom 时都启用校验
+    final hasValidation = widget.required || widget.validRuleType != ValidRuleType.custom;
     return FormField(
-      validator: widget.required ? defaultValid : null,
+      validator: hasValidation ? defaultValid : null,
       autovalidateMode: widget.autoValidate,
       onSaved: (value) {
         widget.onSaved?.call(controller.text);
@@ -239,12 +268,15 @@ class _InputTextState extends State<InputText> {
               obscureText: widget.password ? isShowPassword : false,
               focusNode: _focusNode,
               onTapUpOutside: (event) => _focusNode.unfocus(),
-              maxLines: widget.password ? 1 : widget.maxLines,
+              maxLines: widget.maxLines ?? 1,
               minLines: widget.minLines,
               onChanged: onInputChange,
               expands: false,
               keyboardType: widget.keyboardType,
-              inputFormatters: widget.inputFormatters,
+              inputFormatters: [
+                ...InputFormat.getFormatters(widget.inputType),
+                if (widget.inputFormatters != null) ...widget.inputFormatters!,
+              ],
               decoration: InputDecoration(
                 label: (widget.formLayout == FormLayout.column)
                     ? null

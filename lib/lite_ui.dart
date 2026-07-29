@@ -14,3 +14,6 @@ export 'src/theme/index.dart';
 export 'src/input_number/index.dart';
 export 'src/input_text/index.dart';
 export 'src/models/index.dart';
+
+// 工具类
+export 'src/utils/input_regex.dart';

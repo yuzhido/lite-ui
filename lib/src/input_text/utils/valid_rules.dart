@@ -1,3 +1,6 @@
+import '../../utils/input_regex.dart';
+import '../models/enum.dart';
+
 class ValidRules {
   /// 必填校验
   /// [value] 输入值
@@ -16,8 +19,7 @@ class ValidRules {
     if (value == null || value.trim().isEmpty) {
       return message ?? '手机号是必填项不能为空';
     }
-    final regex = RegExp(r'^1[3-9]\d{9}$');
-    if (!regex.hasMatch(value.trim())) {
+    if (!InputRegex.phone.hasMatch(value.trim())) {
       return message ?? '请输入正确的手机号';
     }
     return null;
@@ -31,8 +33,7 @@ class ValidRules {
       return message ?? '请输入身份证号';
     }
     final trimmed = value.trim();
-    final regex = RegExp(r'^\d{17}[\dXx]$');
-    if (!regex.hasMatch(trimmed)) {
+    if (!InputRegex.idCard.hasMatch(trimmed)) {
       return message ?? '请输入正确的身份证号';
     }
     // 校验码验证（加权因子）
@@ -56,8 +57,7 @@ class ValidRules {
     if (value == null || value.trim().isEmpty) {
       return message ?? '请输入邮箱';
     }
-    final regex = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
-    if (!regex.hasMatch(value.trim())) {
+    if (!InputRegex.email.hasMatch(value.trim())) {
       return message ?? '请输入正确的邮箱地址';
     }
     return null;
@@ -70,8 +70,7 @@ class ValidRules {
     if (value == null || value.trim().isEmpty) {
       return message ?? '请输入URL';
     }
-    final regex = RegExp(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$', caseSensitive: false);
-    if (!regex.hasMatch(value.trim())) {
+    if (!InputRegex.url.hasMatch(value.trim())) {
       return message ?? '请输入正确的URL';
     }
     return null;
@@ -118,8 +117,7 @@ class ValidRules {
     if (value == null || value.trim().isEmpty) {
       return message ?? '请输入数字';
     }
-    final regex = RegExp(r'^\d+$');
-    if (!regex.hasMatch(value.trim())) {
+    if (!InputRegex.integer.hasMatch(value.trim())) {
       return message ?? '只能输入数字';
     }
     return null;
@@ -135,6 +133,25 @@ class ValidRules {
     final regex = RegExp(r'^-?\d+$');
     if (!regex.hasMatch(value.trim())) {
       return message ?? '只能输入整数';
+    }
+    return null;
+  }
+
+  /// 小数校验（支持整数、小数，不允许非法格式如 1.2.3、. 、空小数点）
+  /// [value] 输入值
+  /// [message] 自定义错误提示
+  static String? decimal(String? value, {String? message}) {
+    if (value == null || value.trim().isEmpty) {
+      return message ?? '请输入有效数字';
+    }
+    final trimmed = value.trim();
+    // 允许：123、12.34、0.5、.5、5. ，不允许：1.2.3、abc、空字符串
+    if (!InputRegex.decimalValid.hasMatch(trimmed)) {
+      return message ?? '只能输入数字和小数点';
+    }
+    // 排除纯小数点或空的情况
+    if (trimmed == '.' || trimmed.isEmpty) {
+      return message ?? '请输入有效数字';
     }
     return null;
   }
@@ -162,5 +179,63 @@ class ValidRules {
       if (error != null) return error;
     }
     return null;
+  }
+
+  /// 根据 [ValidRuleType] 枚举 + 可选长度参数，自动构建校验规则列表
+  ///
+  /// [type] 校验规则类型
+  /// [formLabel] 表单标签名（用于必填提示）
+  /// [minLen] 最小长度（可选）
+  /// [maxLen] 最大长度（可选）
+  /// [customRules] 自定义规则列表（type 为 custom 时使用）
+  static List<String? Function(String?)> buildRules({required ValidRuleType type, String? formLabel, int? minLen, int? maxLen, List<String? Function(String?)>? customRules}) {
+    if (type == ValidRuleType.custom) return customRules ?? [];
+
+    final rules = <String? Function(String?)>[];
+    final requiredMsg = formLabel != null ? '$formLabel是必填项不能为空' : '这个字段是必填项';
+
+    // 所有类型都隐含必填校验
+    if (type != ValidRuleType.custom) {
+      rules.add((v) => required(v, message: requiredMsg));
+    }
+
+    switch (type) {
+      case ValidRuleType.phone:
+        rules.add(phone);
+        break;
+      case ValidRuleType.email:
+        rules.add(email);
+        break;
+      case ValidRuleType.idCard:
+        rules.add(idCard);
+        break;
+      case ValidRuleType.url:
+        rules.add(url);
+        break;
+      case ValidRuleType.numeric:
+        rules.add(numeric);
+        break;
+      case ValidRuleType.decimal:
+        rules.add(decimal);
+        break;
+      case ValidRuleType.integer:
+        rules.add(integer);
+        break;
+      case ValidRuleType.chineseName:
+        rules.add(chineseName);
+        break;
+      case ValidRuleType.password:
+        rules.add((v) => minLength(v, 6, message: '密码至少6位'));
+        rules.add((v) => v != null && v.contains(InputRegex.passwordUpperCase) ? null : '必须包含大写字母');
+        break;
+      default:
+        break;
+    }
+
+    // 长度限制（可与任意类型组合）
+    if (minLen != null) rules.add((v) => minLength(v, minLen));
+    if (maxLen != null) rules.add((v) => maxLength(v, maxLen));
+
+    return rules;
   }
 }
