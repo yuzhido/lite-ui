@@ -27,6 +27,7 @@ class SelectModal {
   /// [items] 选项列表（filterable 模式）
   /// [multiple] 是否多选模式，默认 false（单选）
   /// [selectedValues] 初始选中项的 value 集合
+  /// [selectedItems] 已选中项的完整数据（确保回显时这些项一定出现在列表中）
   /// [onSelect] 单选回调（返回 value 和 data）
   /// [onConfirm] 多选确认回调（返回 values 和 datas）
   /// [searchHint] 搜索框提示文字
@@ -48,6 +49,7 @@ class SelectModal {
     List<SelectItem<V, D>>? items,
     bool multiple = false,
     Set<V>? selectedValues,
+    List<SelectItem<V, D>>? selectedItems,
     OnSelectChange<V, D>? onSelect,
     OnMultiSelectConfirm<V, D>? onConfirm,
     String searchHint = '搜索',
@@ -82,6 +84,7 @@ class SelectModal {
               items: items,
               multiple: multiple,
               selectedValues: selectedValues,
+              selectedItems: selectedItems,
               onSelect: onSelect,
               onConfirm: onConfirm,
               searchHint: searchHint,
@@ -106,6 +109,7 @@ class SelectModal {
     required List<SelectItem<V, D>>? items,
     required bool multiple,
     required Set<V>? selectedValues,
+    required List<SelectItem<V, D>>? selectedItems,
     required OnSelectChange<V, D>? onSelect,
     required OnMultiSelectConfirm<V, D>? onConfirm,
     required String searchHint,
@@ -128,6 +132,7 @@ class SelectModal {
           dynamicItems: dynamicItems,
           multiple: multiple,
           selectedValues: selectedValues,
+          selectedItems: selectedItems,
           onSelect: onSelect,
           onConfirm: onConfirm,
           searchHint: searchHint,
@@ -148,6 +153,7 @@ class SelectModal {
           initialItems: initialItems,
           multiple: multiple,
           selectedValues: selectedValues,
+          selectedItems: selectedItems,
           onSelect: onSelect,
           onConfirm: onConfirm,
           searchHint: searchHint,

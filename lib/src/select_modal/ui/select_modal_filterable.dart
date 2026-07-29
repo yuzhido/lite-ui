@@ -39,6 +39,13 @@ class SelectModalFilterable<V, D> extends StatefulWidget {
   /// 初始选中项的 value 集合
   final Set<V>? selectedValues;
 
+  /// 已选中项的完整数据（确保回显时这些项一定出现在列表中，不受搜索过滤影响）
+  ///
+  /// 这些项会始终显示在列表顶部，并与现有数据去重（以 selectedItems 为准）。
+  /// filterable 模式一般不需要传（items 已包含所有选项），
+  /// 适用于编辑场景下需要保证已选项可见的情况。
+  final List<SelectItem<V, D>>? selectedItems;
+
   /// 单选回调（单选模式下点击项时触发，返回 value 和 data）
   final OnSelectChange<V, D>? onSelect;
 
@@ -62,6 +69,7 @@ class SelectModalFilterable<V, D> extends StatefulWidget {
     this.dynamicItems,
     this.multiple = false,
     this.selectedValues,
+    this.selectedItems,
     this.onSelect,
     this.onConfirm,
     this.searchHint = '搜索',
@@ -97,6 +105,12 @@ class _SelectModalFilterableState<V, D> extends State<SelectModalFilterable<V, D
     if (widget.selectedValues != null) {
       _selectedValues = Set.from(widget.selectedValues!);
     }
+    // 将 selectedItems 的 value 也加入选中集合
+    if (widget.selectedItems != null) {
+      for (final item in widget.selectedItems!) {
+        _selectedValues.add(item.value);
+      }
+    }
   }
 
   @override
@@ -106,7 +120,7 @@ class _SelectModalFilterableState<V, D> extends State<SelectModalFilterable<V, D
     super.dispose();
   }
 
-  /// 获取过滤后的显示列表
+  /// 获取过滤后的显示列表（selectedItems 前置 + 去重）
   List<SelectItem<V, D>> get _filteredItems {
     // 1. 静态数据本地过滤
     final filteredStatic = _keyword.isEmpty
@@ -117,11 +131,22 @@ class _SelectModalFilterableState<V, D> extends State<SelectModalFilterable<V, D
           }).toList();
 
     // 2. 合并动态数据（去重，基于 value）
-    if (_dynamicResults.isEmpty) return filteredStatic;
-    final staticValues = filteredStatic.map((e) => e.value).toSet();
-    final uniqueDynamic = _dynamicResults.where((item) => !staticValues.contains(item.value)).toList();
+    List<SelectItem<V, D>> merged;
+    if (_dynamicResults.isEmpty) {
+      merged = filteredStatic;
+    } else {
+      final staticValues = filteredStatic.map((e) => e.value).toSet();
+      final uniqueDynamic = _dynamicResults.where((item) => !staticValues.contains(item.value)).toList();
+      merged = [...filteredStatic, ...uniqueDynamic];
+    }
 
-    return [...filteredStatic, ...uniqueDynamic];
+    // 3. 前置 selectedItems（去重，以 selectedItems 为准）
+    if (widget.selectedItems == null || widget.selectedItems!.isEmpty) {
+      return merged;
+    }
+    final selectedValueSet = widget.selectedItems!.map((e) => e.value).toSet();
+    final uniqueMerged = merged.where((e) => !selectedValueSet.contains(e.value)).toList();
+    return [...widget.selectedItems!, ...uniqueMerged];
   }
 
   /// 搜索框内容变化处理

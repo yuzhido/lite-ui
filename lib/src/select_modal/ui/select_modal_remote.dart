@@ -39,6 +39,12 @@ class SelectModalRemote<V, D> extends StatefulWidget {
   /// 初始选中项的 value 集合
   final Set<V>? selectedValues;
 
+  /// 已选中项的完整数据（确保回显时这些项一定出现在列表中，不受搜索过滤影响）
+  ///
+  /// 这些项会始终显示在列表顶部，并与搜索结果去重（以 selectedItems 为准）。
+  /// remote 模式编辑场景下必传，确保之前选中的项始终可见。
+  final List<SelectItem<V, D>>? selectedItems;
+
   /// 单选回调（单选模式下点击项时触发，返回 value 和 data）
   final OnSelectChange<V, D>? onSelect;
 
@@ -65,6 +71,7 @@ class SelectModalRemote<V, D> extends StatefulWidget {
     this.initialItems,
     this.multiple = false,
     this.selectedValues,
+    this.selectedItems,
     this.onSelect,
     this.onConfirm,
     this.searchHint = '搜索',
@@ -100,6 +107,12 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
     super.initState();
     if (widget.selectedValues != null) {
       _selectedValues = Set.from(widget.selectedValues!);
+    }
+    // 将 selectedItems 的 value 也加入选中集合
+    if (widget.selectedItems != null) {
+      for (final item in widget.selectedItems!) {
+        _selectedValues.add(item.value);
+      }
     }
     // 首次加载初始数据
     _loadInitial();
@@ -226,6 +239,16 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
     );
   }
 
+  /// 获取合并后的显示列表（selectedItems 前置 + 去重）
+  List<SelectItem<V, D>> get _mergedResults {
+    if (widget.selectedItems == null || widget.selectedItems!.isEmpty) {
+      return _results;
+    }
+    final selectedValueSet = widget.selectedItems!.map((e) => e.value).toSet();
+    final uniqueResults = _results.where((e) => !selectedValueSet.contains(e.value)).toList();
+    return [...widget.selectedItems!, ...uniqueResults];
+  }
+
   /// 构建内容区域（Loading / 空状态 / 数据列表）
   Widget _buildContent(ThemeData theme) {
     // Loading 状态
@@ -233,17 +256,19 @@ class _SelectModalRemoteState<V, D> extends State<SelectModalRemote<V, D>> {
       return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
 
+    final displayItems = _mergedResults;
+
     // 空状态
-    if (_results.isEmpty) {
+    if (displayItems.isEmpty) {
       return EmptyState(message: _hasSearched ? widget.emptyText : '请输入关键字搜索', icon: _hasSearched ? Icons.search_off : Icons.search);
     }
 
     // 数据列表
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _results.length,
+      itemCount: displayItems.length,
       itemBuilder: (context, index) {
-        final item = _results[index];
+        final item = displayItems[index];
         final isSelected = _selectedValues.contains(item.value);
         return SelectModalCheckListItem(
           label: item.label,

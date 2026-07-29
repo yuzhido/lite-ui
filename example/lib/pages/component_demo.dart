@@ -15,13 +15,14 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
   // 选择型组件状态
   String? _gender;
   String? _region;
+  Set<String> _cities = {};
+  Set<String> _citiesTags = {};
+  Set<String> _citiesCompact = {};
 
   void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('表单验证通过')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('表单验证通过')));
     }
   }
 
@@ -30,6 +31,9 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
     setState(() {
       _gender = null;
       _region = null;
+      _cities = {};
+      _citiesTags = {};
+      _citiesCompact = {};
     });
   }
 
@@ -169,12 +173,17 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 ],
               ),
 
-              // 11. DropdownChoose
+              // 11. DropdownChoose 单选
               DropdownChoose<String, int>(
                 required: true,
                 formLabel: '所在区域',
                 value: _region,
                 onSaved: (v) => debugPrint('区域: $v'),
+                selectedItems: const [
+                  SelectItem(label: '北京', value: 'bj', data: 1),
+                  SelectItem(label: '上海', value: 'sh', data: 2),
+                  SelectItem(label: '广州', value: 'gz', data: 3),
+                ],
                 onSelect: (value, data) {
                   setState(() => _region = value);
                 },
@@ -183,6 +192,79 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   SelectItem(label: '上海', value: 'sh', data: 2),
                   SelectItem(label: '广州', value: 'gz', data: 3),
                   SelectItem(label: '深圳', value: 'sz', data: 4),
+                ],
+              ),
+
+              // 12. DropdownChoose 多选（text 模式）
+              DropdownChoose<String, int>(
+                required: true,
+                formLabel: '选择城市',
+                multiple: true,
+                values: _cities,
+                onSaved: (v) => debugPrint('城市: $v'),
+                selectedItems: const [
+                  SelectItem(label: '北京', value: 'bj', data: 1),
+                  SelectItem(label: '上海', value: 'sh', data: 2),
+                ],
+                onConfirm: (values, datas) {
+                  setState(() => _cities = values.toSet());
+                },
+                items: const [
+                  SelectItem(label: '北京', value: 'bj', data: 1),
+                  SelectItem(label: '上海', value: 'sh', data: 2),
+                  SelectItem(label: '广州', value: 'gz', data: 3),
+                  SelectItem(label: '深圳', value: 'sz', data: 4),
+                  SelectItem(label: '杭州', value: 'hz', data: 5),
+                  SelectItem(label: '广西', value: 'gx', data: 6),
+                  SelectItem(label: '成都', value: 'cd', data: 7),
+                  SelectItem(label: '西藏', value: 'xz', data: 8),
+                  SelectItem(label: '云南', value: 'yn', data: 9),
+                  SelectItem(label: '福建', value: 'fj', data: 10),
+                  SelectItem(label: '贵州', value: 'gz2', data: 11),
+                ],
+              ),
+
+              // 13. DropdownChoose 多选（tags 模式）
+              DropdownChoose<String, int>(
+                required: true,
+                formLabel: '选择城市',
+                multiple: true,
+                displayMode: DisplayMode.tags,
+                values: _citiesTags,
+                onSaved: (v) => debugPrint('城市tags: $v'),
+                onConfirm: (values, datas) {
+                  setState(() => _citiesTags = values.toSet());
+                },
+                items: const [
+                  SelectItem(label: '北京', value: 'bj', data: 1),
+                  SelectItem(label: '上海', value: 'sh', data: 2),
+                  SelectItem(label: '广州', value: 'gz', data: 3),
+                  SelectItem(label: '深圳', value: 'sz', data: 4),
+                  SelectItem(label: '杭州', value: 'hz', data: 5),
+                ],
+              ),
+
+              // 14. DropdownChoose 多选（compact 模式）
+              DropdownChoose<String, int>(
+                required: true,
+                formLabel: '选择城市',
+                multiple: true,
+                displayMode: DisplayMode.compact,
+                maxVisibleTags: 3,
+                values: _citiesCompact,
+                onSaved: (v) => debugPrint('城市compact: $v'),
+                onConfirm: (values, datas) {
+                  setState(() => _citiesCompact = values.toSet());
+                },
+                items: const [
+                  SelectItem(label: '北京', value: 'bj', data: 1),
+                  SelectItem(label: '上海', value: 'sh', data: 2),
+                  SelectItem(label: '广州', value: 'gz', data: 3),
+                  SelectItem(label: '深圳', value: 'sz', data: 4),
+                  SelectItem(label: '杭州', value: 'hz', data: 5),
+                  SelectItem(label: '广西', value: 'gx', data: 6),
+                  SelectItem(label: '成都', value: 'cd', data: 7),
+                  SelectItem(label: '西藏', value: 'xz', data: 8),
                 ],
               ),
             ],
@@ -195,16 +277,10 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
           spacing: 16,
           children: [
             Expanded(
-              child: OutlinedButton(
-                onPressed: _onReset,
-                child: const Text('重置'),
-              ),
+              child: OutlinedButton(onPressed: _onReset, child: const Text('重置')),
             ),
             Expanded(
-              child: ElevatedButton(
-                onPressed: _onSubmit,
-                child: const Text('提交'),
-              ),
+              child: ElevatedButton(onPressed: _onSubmit, child: const Text('提交')),
             ),
           ],
         ),

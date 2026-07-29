@@ -18,6 +18,9 @@ class WrapperContainer extends StatelessWidget {
   /// 选中的值文本（中间显示，有值时高亮色）
   final String? valueText;
 
+  /// 自定义值显示 Widget（优先级高于 valueText）
+  final Widget? valueWidget;
+
   /// 占位提示文字（无值时显示）
   final String? hintText;
 
@@ -30,7 +33,7 @@ class WrapperContainer extends StatelessWidget {
   /// 表单布局方式
   final FormLayout? formLayout;
 
-  const WrapperContainer({super.key, this.onTap, this.formLabel, this.valueText, this.hintText, this.errorText, this.required, this.formLayout});
+  const WrapperContainer({super.key, this.onTap, this.formLabel, this.valueText, this.valueWidget, this.hintText, this.errorText, this.required, this.formLayout});
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +66,18 @@ class WrapperContainer extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: (valueText != null)
-                      ? Text(valueText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).textColor))
+                  child: (valueWidget != null)
+                      ? valueWidget!
+                      : (valueText != null)
+                      ? SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(
+                            valueText ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).textColor),
+                          ),
+                        )
                       : (errorText != null)
                       ? Text(errorText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).errorColor))
                       : Text(hintText ?? '请选择$formLabel', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).hintColor)),
