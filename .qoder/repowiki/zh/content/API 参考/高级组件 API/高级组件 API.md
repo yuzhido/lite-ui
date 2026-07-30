@@ -7,6 +7,8 @@
 - [upload_config.dart](file://lib/src/file_upload/model/upload_config.dart)
 - [index.dart（file_upload）](file://lib/src/file_upload/index.dart)
 - [dropdown_choose.dart](file://lib/src/dropdown_choose/dropdown_choose.dart)
+- [wrapper_container/index.dart](file://lib/src/wrapper_container/index.dart)
+- [suffix_icon_label.dart](file://lib/src/widgets/suffix_icon_label.dart)
 - [select_item.dart](file://lib/src/models/select_item.dart)
 - [callbacks.dart](file://lib/src/models/callbacks.dart)
 - [enum.dart（models）](file://lib/src/models/enum.dart)
@@ -14,6 +16,13 @@
 - [model.dart（tree_select）](file://lib/src/tree_select/model.dart)
 - [index.dart（tree_select）](file://lib/src/tree_select/index.dart)
 </cite>
+
+## 更新摘要
+**已进行的更改**   
+- 更新了 DropdownChoose 组件的 onClear 回调功能说明
+- 新增了弹窗状态管理和动态后缀图标切换功能的详细说明
+- 完善了清除后弹窗选中状态同步机制的技术细节
+- 增强了 WrapperContainer 和 SuffixIconLabel 的状态驱动图标切换逻辑
 
 ## 目录
 1. [简介](#简介)
@@ -30,7 +39,7 @@
 ## 简介
 本文件为 Lite UI 高级组件的权威 API 文档，聚焦以下复杂组件：
 - 文件上传 FileUpload：支持多模式选择、自动/手动/自定义上传、进度回调、头像模式等。
-- 下拉选择 DropdownChoose：本地过滤与远程搜索双模式、多选确认、标签展示、新增扩展点。
+- 下拉选择 DropdownChoose：本地过滤与远程搜索双模式、多选确认、标签展示、新增扩展点、清除回调、动态后缀图标。
 - 树形选择 TreeSelect：懒加载子节点、搜索高亮、父子联动、单选/多选交互。
 
 文档涵盖接口规范、参数说明、事件回调、状态管理、性能优化、内存管理与第三方集成方式，并提供可视化架构图与流程图，帮助开发者快速上手并高效使用。
@@ -60,7 +69,7 @@ A --> G["src/utils/input_regex.dart"]
 ## 核心组件
 本节概览三大高级组件的职责与能力边界：
 - FileUpload：文件选择、预览、删除、替换、上传控制（自动/手动/自定义）、进度与状态回调、头像模式。
-- DropdownChoose：表单字段封装、本地过滤与远程搜索、多选确认、值展示模式（文本/标签/紧凑）、新增扩展。
+- DropdownChoose：表单字段封装、本地过滤与远程搜索、多选确认、值展示模式（文本/标签/紧凑）、新增扩展、清除回调、动态后缀图标。
 - TreeSelect：树形数据弹窗、搜索过滤与高亮、懒加载、父子联动、单选/多选确认。
 
 章节来源
@@ -88,7 +97,7 @@ class UploadConfig {
 class DropdownChoose~V,D~ {
 +属性 : formLabel, value/selectedValues, items, type, displayMode...
 +静态 : show(context,...)
-+回调 : onSelect(value,data), onConfirm(values,datas,items)
++回调 : onSelect(value,data), onConfirm(values,datas,items), onClear()
 }
 class TreeSelect~T~ {
 +属性 : treeData, config(TreeSelectConfig)
@@ -100,8 +109,22 @@ class TreeNode~T~ {
 class SelectItem~V,D~ {
 +label, value, data, subtitle, disabled, icon/iconData...
 }
+class WrapperContainer {
++isExpanded : bool?
++selectedValue : String?
++selectedValues : List<String>?
++onClear : VoidCallback?
+}
+class SuffixIconLabel {
++selectedValue : String?
++selectedValues : List<String>?
++isExpanded : bool
++onClear : VoidCallback?
+}
 FileUpload --> UploadConfig : "使用"
 DropdownChoose --> SelectItem : "使用"
+DropdownChoose --> WrapperContainer : "使用"
+WrapperContainer --> SuffixIconLabel : "使用"
 TreeSelect --> TreeNode : "使用"
 ```
 
@@ -109,6 +132,8 @@ TreeSelect --> TreeNode : "使用"
 - [file_upload.dart:15-165](file://lib/src/file_upload/file_upload.dart#L15-L165)
 - [upload_config.dart:38-99](file://lib/src/file_upload/model/upload_config.dart#L38-L99)
 - [dropdown_choose.dart:11-248](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L248)
+- [wrapper_container/index.dart:10-82](file://lib/src/wrapper_container/index.dart#L10-L82)
+- [suffix_icon_label.dart:3-11](file://lib/src/widgets/suffix_icon_label.dart#L3-L11)
 - [tree_select.dart（UI）:17-28](file://lib/src/tree_select/ui/tree_select.dart#L17-L28)
 - [model.dart（tree_select）:11-44](file://lib/src/tree_select/model.dart#L11-L44)
 - [select_item.dart:9-77](file://lib/src/models/select_item.dart#L9-L77)
@@ -186,6 +211,8 @@ FU-->>U : onFileChanged(success/failed)
   - 值展示：text/tags/compact，支持自定义 valueBuilder。
   - 新增扩展：showAdd/onAdd 支持无结果时新增条目。
   - 已选回显：selectedItems 与 selectedValues 协同，确保 label 正确显示。
+  - **清除功能**：onClear 回调支持清空选中值，动态后缀图标根据状态切换。
+  - **状态管理**：内部 _cleared 状态确保清除后弹窗选中状态同步。
 
 - 关键参数与行为
   - type：filterable/remote，约束 items 与 onRemoteSearch 的使用。
@@ -194,11 +221,64 @@ FU-->>U : onFileChanged(success/failed)
   - onSelect/onConfirm：选中与确认回调，返回 value/data 或 values/datas/items。
   - onLabelsResolved：远程模式下解析已选值的 label 映射。
   - onDataLoaded：首次加载成功缓存，避免重复请求。
+  - **onClear**：清除回调，点击后缀 close 图标时触发，用于清空选中值。
 
 - 静态方法 show
   - 底部弹窗选择器，支持 title/subTitle/searchHint/cancelLabel/confirmLabel 等。
   - 支持 remote 专属 emptyText、onRemoteSearch。
   - 支持新增 showAdd/addLabel/onAdd。
+
+- **新增功能详解**
+
+#### 清除回调与状态管理
+```mermaid
+flowchart TD
+Start(["用户点击清除图标"]) --> SetCleared["_cleared = true<br/>_resolvedItems = []"]
+SetCleared --> UpdateUI["立即刷新UI显示为空"]
+UpdateUI --> CallOnClear["调用 widget.onClear()"]
+CallOnClear --> ExternalState["外部组件执行setState清空value/selectedValues"]
+ExternalState --> ResetCleared{"外部value/selectedValues变化?"}
+ResetCleared --> |是| ResetState["_cleared = false<br/>重置清除状态"]
+ResetCleared --> |否| End(["等待用户操作"])
+```
+
+**图表来源**   
+- [dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-L416)
+- [dropdown_choose.dart:291-297](file://lib/src/dropdown_choose/dropdown_choose.dart#L291-L297)
+
+#### 动态后缀图标切换
+```mermaid
+stateDiagram-v2
+[*] --> 收起状态
+收起状态 --> 展开状态 : 点击输入框
+展开状态 --> 收起状态 : 弹窗关闭
+state 收起状态 {
+[*] --> 无值状态 : selectedValues为空
+[*] --> 有值状态 : selectedValues非空
+无值状态 --> 收起箭头 : Icons.keyboard_arrow_right_rounded
+有值状态 --> 清除图标 : Icons.close (红色)
+}
+state 展开状态 {
+[*] --> 展开箭头 : Icons.keyboard_arrow_down_rounded (蓝色)
+}
+```
+
+**图表来源**   
+- [suffix_icon_label.dart:16-37](file://lib/src/widgets/suffix_icon_label.dart#L16-L37)
+- [wrapper_container/index.dart:125-126](file://lib/src/wrapper_container/index.dart#L125-L126)
+
+#### 弹窗选中状态同步机制
+修复了清除后弹窗仍显示已选中项的问题：
+- 新增 `_modalSelectedValues()` 方法感知 `_cleared` 状态
+- 弹窗打开时使用 `_modalSelectedValues()` 而非 `_effectiveSelectedValues()`
+- 确保清除后弹窗不显示旧选中项
+
+**Section sources**   
+- [dropdown_choose.dart:117-121](file://lib/src/dropdown_choose/dropdown_choose.dart#L117-L121)
+- [dropdown_choose.dart:310-314](file://lib/src/dropdown_choose/dropdown_choose.dart#L310-L314)
+- [dropdown_choose.dart:428](file://lib/src/dropdown_choose/dropdown_choose.dart#L428)
+- [wrapper_container/index.dart:52-62](file://lib/src/wrapper_container/index.dart#L52-L62)
+- [suffix_icon_label.dart:3-11](file://lib/src/widgets/suffix_icon_label.dart#L3-L11)
 
 - 典型流程（远程搜索）
 ```mermaid
@@ -219,21 +299,28 @@ DC-->>U : 渲染列表
 end
 U->>DC : 选择/确认
 DC-->>U : onSelect/onConfirm 回调
+U->>DC : 点击清除图标
+DC->>DC : _cleared = true
+DC-->>U : onClear 回调
 ```
 
 图表来源 
 - [dropdown_choose.dart:133-208](file://lib/src/dropdown_choose/dropdown_choose.dart#L133-L208)
 - [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-L410)
+- [dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-L416)
 - [callbacks.dart:1-13](file://lib/src/models/callbacks.dart#L1-L13)
 
 - 性能与内存要点
   - 首次加载成功后缓存 items，避免重复网络请求。
   - 本地过滤在内存中进行，适合中小规模数据；大数据集建议使用 remote 模式分页加载。
   - 使用 Set 维护 selectedValues，提升查找效率。
+  - 清除状态管理避免不必要的重新计算。
 
 章节来源
 - [dropdown_choose.dart:11-248](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L248)
 - [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-L410)
+- [wrapper_container/index.dart:10-82](file://lib/src/wrapper_container/index.dart#L10-L82)
+- [suffix_icon_label.dart:1-39](file://lib/src/widgets/suffix_icon_label.dart#L1-L39)
 - [select_item.dart:9-77](file://lib/src/models/select_item.dart#L9-L77)
 - [callbacks.dart:1-13](file://lib/src/models/callbacks.dart#L1-L13)
 
@@ -288,6 +375,7 @@ SelectSingle --> End
 - 组件间耦合度低，各自通过独立的 index.dart 导出，便于按需引入。
 - 共享模型：SelectItem、回调类型、显示模式等在 models 中统一定义，保证一致性。
 - 主题与工具：theme 与 input_regex 提供通用能力，不侵入业务逻辑。
+- **新增依赖**：DropdownChoose 现在依赖 WrapperContainer 和 SuffixIconLabel 实现动态图标切换。
 
 ```mermaid
 graph LR
@@ -296,6 +384,8 @@ Models --> CB["callbacks.dart"]
 Models --> EN["enum.dart"]
 FU["file_upload/index.dart"] --> FC["file_upload.dart"]
 DC["dropdown_choose/index.dart"] --> DD["dropdown_choose.dart"]
+DD --> WC["wrapper_container/index.dart"]
+WC --> SIL["suffix_icon_label.dart"]
 TS["tree_select/index.dart"] --> TU["ui/tree_select.dart"]
 ```
 
@@ -320,6 +410,7 @@ TS["tree_select/index.dart"] --> TU["ui/tree_select.dart"]
   - 本地过滤：适用于中小数据集；大数据集建议使用 remote 模式分页加载。
   - 缓存策略：首次加载成功后缓存 items，减少重复请求。
   - 标签展示：tags/compact 模式注意横向滚动性能，必要时虚拟化列表。
+  - **状态管理优化**：清除状态管理避免不必要的重新计算，提升响应性能。
 - TreeSelect
   - 懒加载：仅在展开时加载子节点，避免一次性渲染整棵树。
   - 搜索优化：关键字匹配尽量在前端轻量完成；超大数据集建议后端过滤。
@@ -336,6 +427,9 @@ TS["tree_select/index.dart"] --> TU["ui/tree_select.dart"]
   - 远程模式报错：确保 onRemoteSearch 非空；检查返回的 SelectItem 列表格式。
   - 已选 label 未显示：传入 selectedItems 或使用 onLabelsResolved 解析 label。
   - 多选确认未触发：确认 multiple=true 且 onConfirm 已设置。
+  - **清除功能异常**：确认 onClear 回调已设置；检查外部组件是否正确执行 setState 清空值。
+  - **弹窗状态不同步**：确认 _cleared 状态管理正常；检查 _modalSelectedValues() 是否正确返回 null。
+  - **后缀图标不切换**：确认 isExpanded、selectedValue、selectedValues 参数传递正确。
 - TreeSelect
   - 懒加载无响应：检查 onLoadChildren 是否返回有效 children；确认 isLoading 状态重置。
   - 父子联动异常：确认 parentSelectable 配置是否符合预期；检查 selectedIds 同步逻辑。
@@ -343,10 +437,12 @@ TS["tree_select/index.dart"] --> TU["ui/tree_select.dart"]
 章节来源
 - [file_upload.dart:341-375](file://lib/src/file_upload/file_upload.dart#L341-L375)
 - [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-L410)
+- [dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-L416)
+- [suffix_icon_label.dart:16-37](file://lib/src/widgets/suffix_icon_label.dart#L16-L37)
 - [tree_select.dart（UI）:146-170](file://lib/src/tree_select/ui/tree_select.dart#L146-L170)
 
 ## 结论
-Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化。FileUpload 提供灵活的上传策略与状态管理；DropdownChoose 支持本地与远程双模式，兼顾易用性与扩展性；TreeSelect 通过懒加载与搜索高亮提升大数据集体验。遵循本文档的配置与最佳实践，可在复杂业务场景中稳定高效地使用这些组件。
+Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化。FileUpload 提供灵活的上传策略与状态管理；DropdownChoose 支持本地与远程双模式，兼顾易用性与扩展性，新增的清除回调和动态后缀图标功能进一步提升了用户体验；TreeSelect 通过懒加载与搜索高亮提升大数据集体验。遵循本文档的配置与最佳实践，可在复杂业务场景中稳定高效地使用这些组件。
 
 [本节为总结，无需特定文件引用]
 
@@ -362,6 +458,8 @@ Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化
   - 展示：displayMode（text/tags/compact）、maxShowTags
   - 选择：multiple、maxCount、onSelect、onConfirm
   - 扩展：showAdd、addLabel、onAdd、onLabelsResolved、onDataLoaded
+  - **新增**：onClear（清除回调）
+  - **状态管理**：内部 _cleared 状态、_modalSelectedValues() 方法
 - TreeSelect
   - 数据：treeData（TreeNode 列表）
   - 配置：TreeSelectConfig（title/searchHint/emptyText/showSearch/multiple/selectedIds/onSelect/onConfirm/onLoadChildren/parentSelectable/highlightStyle）
@@ -370,4 +468,6 @@ Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化
 - [file_upload.dart:15-165](file://lib/src/file_upload/file_upload.dart#L15-L165)
 - [upload_config.dart:38-99](file://lib/src/file_upload/model/upload_config.dart#L38-L99)
 - [dropdown_choose.dart:11-248](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L248)
+- [wrapper_container/index.dart:52-62](file://lib/src/wrapper_container/index.dart#L52-L62)
+- [suffix_icon_label.dart:3-11](file://lib/src/widgets/suffix_icon_label.dart#L3-L11)
 - [model.dart（tree_select）:59-122](file://lib/src/tree_select/model.dart#L59-L122)

@@ -3,41 +3,13 @@ schema_version: 1
 locale: zh-CN
 branch: develop
 nodes_managed: true
-exported_at: "2026-07-30T07:48:35Z"
+exported_at: "2026-07-30T08:50:37Z"
 modules:
     "":
-        dir_name: LiteUI Flutter 组件库与示例应用
-        title: LiteUI Flutter 组件库与示例应用
-        scope:
-            - README.md
-            - analysis_options.yaml
-            - pubspec.yaml
-            - .gitignore
-            - CHANGELOG.md
-            - LICENSE
+        dir_name: Lite UI 轻量级 Flutter 组件库
+        title: Lite UI 轻量级 Flutter 组件库
+        scope: []
         source_files: []
-        children:
-            - example_app
-            - lite_ui_library
+        children: []
         depends_on: []
         related_to: []
-    example_app:
-        dir_name: Lite UI 组件库示例应用
-        title: Lite UI 组件库示例应用
-        scope:
-            - example/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to:
-            - path: lite_ui_library
-    lite_ui_library:
-        dir_name: LiteUI 轻量级 Flutter UI 组件库
-        title: LiteUI 轻量级 Flutter UI 组件库
-        scope:
-            - lib/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to:
-            - path: example_app

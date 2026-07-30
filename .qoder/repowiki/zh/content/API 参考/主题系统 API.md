@@ -8,8 +8,17 @@
 - [lib/src/file_upload/widgets/file_action_sheet.dart](file://lib/src/file_upload/widgets/file_action_sheet.dart)
 - [lib/src/file_upload/widgets/picker_sheet.dart](file://lib/src/file_upload/widgets/picker_sheet.dart)
 - [lib/src/models/enum.dart](file://lib/src/models/enum.dart)
+- [lib/src/wrapper_container/show_content.dart](file://lib/src/wrapper_container/show_content.dart)
+- [lib/src/wrapper_container/content_tag.dart](file://lib/src/wrapper_container/content_tag.dart)
 - [README.md](file://README.md)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增 LiteUIThemeData 的 tagColor 属性说明
+- 更新主题变量配置章节，包含标签颜色控制
+- 添加标签显示模式的主题化支持说明
+- 更新示例和最佳实践，展示 tagColor 的使用场景
 
 ## 目录
 1. [简介](#简介)
@@ -26,6 +35,8 @@
 ## 简介
 本文件为 Lite UI 主题系统的完整 API 参考文档，聚焦于 LiteUITheme 的配置选项、颜色与样式变量、字体与文本策略、主题继承与动态切换机制，以及响应式设计与暗色模式支持。同时给出多语言与品牌定制的实现建议，并说明与 Material Design 的兼容性与自定义样式的最佳实践。
 
+**最新更新**：LiteUIThemeData 新增了 `tagColor` 属性，用于统一控制标签背景颜色，支持在 tags 和 compact 显示模式下进行主题化定制。
+
 ## 项目结构
 Lite UI 的主题能力通过库入口统一导出，并在 src/theme 中实现主题数据与 InheritedWidget 提供能力。示例应用展示了如何结合 Flutter 的 ThemeData 使用主题。
 
@@ -34,35 +45,38 @@ graph TB
 A["lib/lite_ui.dart<br/>统一导出"] --> B["lib/src/theme/index.dart<br/>LiteUIThemeData + LiteUITheme"]
 C["example/lib/main.dart<br/>MaterialApp + ThemeData"] --> D["应用级主题Material"]
 E["lib/src/file_upload/widgets/*.dart<br/>暗色模式检测"] --> F["Theme.of(context).brightness"]
+G["lib/src/wrapper_container/show_content.dart<br/>标签显示组件"] --> H["ContentTag<br/>标签渲染"]
 ```
 
 图表来源
 - [lib/lite_ui.dart:1-19](file://lib/lite_ui.dart#L1-L19)
-- [lib/src/theme/index.dart:1-73](file://lib/src/theme/index.dart#L1-L73)
+- [lib/src/theme/index.dart:1-77](file://lib/src/theme/index.dart#L1-L77)
 - [example/lib/main.dart:1-80](file://example/lib/main.dart#L1-L80)
 - [lib/src/file_upload/widgets/file_action_sheet.dart:18](file://lib/src/file_upload/widgets/file_action_sheet.dart#L18)
 - [lib/src/file_upload/widgets/picker_sheet.dart:10](file://lib/src/file_upload/widgets/picker_sheet.dart#L10)
+- [lib/src/wrapper_container/show_content.dart:1-135](file://lib/src/wrapper_container/show_content.dart#L1-L135)
 
 章节来源
 - [lib/lite_ui.dart:1-19](file://lib/lite_ui.dart#L1-L19)
-- [lib/src/theme/index.dart:1-73](file://lib/src/theme/index.dart#L1-L73)
+- [lib/src/theme/index.dart:1-77](file://lib/src/theme/index.dart#L1-L77)
 - [example/lib/main.dart:1-80](file://example/lib/main.dart#L1-L80)
 
 ## 核心组件
-- LiteUIThemeData：库级主题数据载体，包含边框颜色、错误颜色、聚焦边框颜色、圆角半径、提示文字颜色、默认文字颜色等。
-- LiteUITheme：InheritedWidget，用于在 Widget 树中向下传递主题数据，并提供静态方法获取当前主题。
+- **LiteUIThemeData**：库级主题数据载体，包含边框颜色、错误颜色、聚焦边框颜色、圆角半径、提示文字颜色、默认文字颜色和**标签背景颜色**等。
+- **LiteUITheme**：InheritedWidget，用于在 Widget 树中向下传递主题数据，并提供静态方法获取当前主题。
 
 关键要点
 - 所有属性均为不可变常量构造，便于热重载与变更通知优化。
 - 未显式设置 focusBorderColor 时回退到系统主题色，保证与平台一致性。
 - 提供 defaults 静态实例作为兜底值。
+- **新增 tagColor 属性**：默认值为 `const Color(0xFF64748B)`，用于统一控制标签背景颜色。
 
 章节来源
-- [lib/src/theme/index.dart:6-38](file://lib/src/theme/index.dart#L6-L38)
-- [lib/src/theme/index.dart:40-73](file://lib/src/theme/index.dart#L40-L73)
+- [lib/src/theme/index.dart:6-42](file://lib/src/theme/index.dart#L6-L42)
+- [lib/src/theme/index.dart:44-77](file://lib/src/theme/index.dart#L44-L77)
 
 ## 架构总览
-LiteUI 主题采用“轻量数据 + Inherited 传播”的模式，与应用层 Material 主题解耦但可协同工作。组件内部可通过 Theme.of(context) 读取亮度进行暗色适配，或通过 LiteUITheme.of(context) 读取库级主题变量。
+LiteUI 主题采用"轻量数据 + Inherited 传播"的模式，与应用层 Material 主题解耦但可协同工作。组件内部可通过 Theme.of(context) 读取亮度进行暗色适配，或通过 LiteUITheme.of(context) 读取库级主题变量。
 
 ```mermaid
 classDiagram
@@ -73,6 +87,7 @@ class LiteUIThemeData {
 +double borderRadius
 +Color hintColor
 +Color textColor
++Color tagColor
 +defaults
 }
 class LiteUITheme {
@@ -80,31 +95,49 @@ class LiteUITheme {
 +of(context) LiteUIThemeData
 +updateShouldNotify(oldWidget) bool
 }
+class ShowContent {
++DisplayMode displayMode
++String[] valueLabels
++build(context) Widget
+}
+class ContentTag {
++String label
++Color bgColor
++Color textColor
++build(context) Widget
+}
 LiteUITheme --> LiteUIThemeData : "持有"
+ShowContent --> LiteUITheme : "读取主题"
+ShowContent --> ContentTag : "创建标签"
+ContentTag --> Color : "使用背景色"
 ```
 
 图表来源
-- [lib/src/theme/index.dart:6-73](file://lib/src/theme/index.dart#L6-L73)
+- [lib/src/theme/index.dart:6-77](file://lib/src/theme/index.dart#L6-L77)
+- [lib/src/wrapper_container/show_content.dart:1-135](file://lib/src/wrapper_container/show_content.dart#L1-L135)
+- [lib/src/wrapper_container/content_tag.dart:1-19](file://lib/src/wrapper_container/content_tag.dart#L1-L19)
 
 章节来源
-- [lib/src/theme/index.dart:1-73](file://lib/src/theme/index.dart#L1-L73)
+- [lib/src/theme/index.dart:1-77](file://lib/src/theme/index.dart#L1-L77)
 
 ## 详细组件分析
 
 ### LiteUIThemeData 配置项说明
-- 边框颜色（borderColor）：组件默认边框色。
-- 错误状态边框颜色（errorColor）：校验失败或异常态边框色。
-- 聚焦边框颜色（focusBorderColor）：聚焦态边框色；为空时使用系统主题色。
-- 圆角半径（borderRadius）：默认圆角大小。
-- 提示文字颜色（hintColor）：占位符或提示文案颜色。
-- 文字颜色（textColor）：默认正文文字颜色。
+- **边框颜色（borderColor）**：组件默认边框色。
+- **错误状态边框颜色（errorColor）**：校验失败或异常态边框色。
+- **聚焦边框颜色（focusBorderColor）**：聚焦态边框色；为空时使用系统主题色。
+- **圆角半径（borderRadius）**：默认圆角大小。
+- **提示文字颜色（hintColor）**：占位符或提示文案颜色。
+- **文字颜色（textColor）**：默认正文文字颜色。
+- **标签背景颜色（tagColor）**：**新增** 标签背景颜色，用于 tags / compact 显示模式，默认值为 `const Color(0xFF64748B)`。
 
 使用建议
 - 将品牌主色映射到 errorColor 或 borderColor，保持视觉一致性。
 - 若需强调交互反馈，优先设置 focusBorderColor，避免覆盖系统行为。
+- **标签颜色定制**：通过 tagColor 统一控制所有标签的背景色，确保品牌一致性。
 
 章节来源
-- [lib/src/theme/index.dart:6-38](file://lib/src/theme/index.dart#L6-L38)
+- [lib/src/theme/index.dart:6-42](file://lib/src/theme/index.dart#L6-L42)
 
 ### LiteUITheme 主题注入与获取
 - 通过 LiteUITheme(data:, child:) 包裹应用根节点，使子树共享同一套库级主题。
@@ -112,7 +145,7 @@ LiteUITheme --> LiteUIThemeData : "持有"
 - updateShouldNotify 基于 data 引用比较决定是否重建，提升性能。
 
 章节来源
-- [lib/src/theme/index.dart:40-73](file://lib/src/theme/index.dart#L40-L73)
+- [lib/src/theme/index.dart:44-77](file://lib/src/theme/index.dart#L44-L77)
 
 ### 与 Material 主题的协作与暗色模式
 - 示例应用通过 MaterialApp.theme 设置 ColorScheme 与 useMaterial3，启用 Material 3 风格。
@@ -135,12 +168,12 @@ LiteUITheme --> LiteUIThemeData : "持有"
 - [lib/src/tree_select/tree_select_helper.dart:91](file://lib/src/tree_select/tree_select_helper.dart#L91)
 
 ### 主题变量的定义规范
-- 命名约定：语义化命名（如 borderColor、errorColor），避免硬编码颜色值。
+- 命名约定：语义化命名（如 borderColor、errorColor、tagColor），避免硬编码颜色值。
 - 默认值：提供合理的 defaults，确保无主题包裹时的可用性。
 - 类型约束：颜色使用 Color，尺寸使用 double，布尔与枚举明确边界。
 
 章节来源
-- [lib/src/theme/index.dart:6-38](file://lib/src/theme/index.dart#L6-L38)
+- [lib/src/theme/index.dart:6-42](file://lib/src/theme/index.dart#L6-L42)
 - [lib/src/models/enum.dart:1-29](file://lib/src/models/enum.dart#L1-L29)
 
 ### 样式覆盖策略
@@ -149,7 +182,7 @@ LiteUITheme --> LiteUIThemeData : "持有"
 - 应用级覆盖：结合 Material 主题与 ColorScheme，全局控制色彩与文本样式。
 
 章节来源
-- [lib/src/theme/index.dart:40-73](file://lib/src/theme/index.dart#L40-L73)
+- [lib/src/theme/index.dart:44-77](file://lib/src/theme/index.dart#L44-L77)
 - [example/lib/main.dart:20-26](file://example/lib/main.dart#L20-L26)
 
 ### 与 Material Design 规范的兼容性
@@ -192,11 +225,44 @@ Component-->>User : 界面按新主题渲染
 ### 品牌定制方案
 - 将品牌主色映射到 borderColor 或 errorColor，形成统一的视觉基调。
 - 通过 borderRadius 控制整体圆角风格，体现品牌调性。
+- **标签颜色定制**：通过 tagColor 统一控制标签背景色，确保品牌一致性。
 - 在应用层结合 Material 的 ColorScheme 与 Typography，统一字体与层级。
 
 章节来源
-- [lib/src/theme/index.dart:6-38](file://lib/src/theme/index.dart#L6-L38)
+- [lib/src/theme/index.dart:6-42](file://lib/src/theme/index.dart#L6-L42)
 - [example/lib/main.dart:20-26](file://example/lib/main.dart#L20-L26)
+
+### 标签显示模式的主题化支持
+**新增功能**：LiteUIThemeData 的 tagColor 属性为标签显示模式提供了完整的主题化支持。
+
+#### 支持的显示模式
+- **DisplayMode.text**：单行文本，顿号分隔
+- **DisplayMode.tags**：每个值显示为 tag，横向滚动
+- **DisplayMode.compact**：显示前 N 个 tag，剩余以 "+M" 显示
+
+#### 标签渲染机制
+- ShowContent 组件从 LiteUITheme 读取 tagColor 属性
+- ContentTag 组件使用 tagColor 作为背景色，白色文字作为前景色
+- 在 compact 模式下，"+M" 标签使用半透明效果（alpha: 0.6）
+
+#### 使用示例
+```dart
+// 自定义标签颜色
+LiteUITheme(
+  data: LiteUIThemeData(
+    tagColor: Colors.blue, // 蓝色标签
+    textColor: Colors.white,
+  ),
+  child: DropdownChoose(
+    displayMode: DisplayMode.tags,
+    // 其他配置...
+  ),
+)
+```
+
+章节来源
+- [lib/src/wrapper_container/show_content.dart:82-115](file://lib/src/wrapper_container/show_content.dart#L82-L115)
+- [lib/src/wrapper_container/content_tag.dart:1-19](file://lib/src/wrapper_container/content_tag.dart#L1-L19)
 
 ## 依赖关系分析
 LiteUI 主题模块依赖 Flutter 的 Material 框架，并通过 InheritedWidget 向子树传播主题数据。示例应用通过 MaterialApp 提供 Material 主题，组件内部再根据亮度进行暗色适配。
@@ -206,18 +272,22 @@ graph TB
 LiteUI["lite_ui.dart"] --> ThemeIndex["src/theme/index.dart"]
 ExampleMain["example/lib/main.dart"] --> MaterialTheme["MaterialApp.theme"]
 FileUploadWidgets["file_upload/widgets/*.dart"] --> MaterialBrightness["Theme.of(context).brightness"]
+ShowContent["wrapper_container/show_content.dart"] --> ThemeIndex
+ContentTag["wrapper_container/content_tag.dart"] --> ShowContent
 ```
 
 图表来源
 - [lib/lite_ui.dart:1-19](file://lib/lite_ui.dart#L1-L19)
-- [lib/src/theme/index.dart:1-73](file://lib/src/theme/index.dart#L1-L73)
+- [lib/src/theme/index.dart:1-77](file://lib/src/theme/index.dart#L1-L77)
 - [example/lib/main.dart:1-80](file://example/lib/main.dart#L1-L80)
 - [lib/src/file_upload/widgets/file_action_sheet.dart:18](file://lib/src/file_upload/widgets/file_action_sheet.dart#L18)
 - [lib/src/file_upload/widgets/picker_sheet.dart:10](file://lib/src/file_upload/widgets/picker_sheet.dart#L10)
+- [lib/src/wrapper_container/show_content.dart:1-135](file://lib/src/wrapper_container/show_content.dart#L1-L135)
+- [lib/src/wrapper_container/content_tag.dart:1-19](file://lib/src/wrapper_container/content_tag.dart#L1-L19)
 
 章节来源
 - [lib/lite_ui.dart:1-19](file://lib/lite_ui.dart#L1-L19)
-- [lib/src/theme/index.dart:1-73](file://lib/src/theme/index.dart#L1-L73)
+- [lib/src/theme/index.dart:1-77](file://lib/src/theme/index.dart#L1-L77)
 - [example/lib/main.dart:1-80](file://example/lib/main.dart#L1-L80)
 
 ## 性能考虑
@@ -225,24 +295,27 @@ FileUploadWidgets["file_upload/widgets/*.dart"] --> MaterialBrightness["Theme.of
 - 仅在 data 引用变化时触发通知（updateShouldNotify），避免频繁刷新。
 - 合理拆分主题作用域，避免大范围重建；必要时使用 ValueListenableBuilder 或 Provider 管理主题状态。
 - 在暗色模式下避免重复计算亮度判断，可在上层缓存结果。
+- **标签颜色优化**：tagColor 作为常量传递，避免重复计算。
 
 章节来源
-- [lib/src/theme/index.dart:40-73](file://lib/src/theme/index.dart#L40-L73)
+- [lib/src/theme/index.dart:44-77](file://lib/src/theme/index.dart#L44-L77)
 
 ## 故障排查指南
 - 主题未生效：确认 LiteUITheme 是否包裹了需要使用的组件树。
 - 聚焦边框颜色未显示：检查 focusBorderColor 是否为空，为空时将回退到系统主题色。
 - 暗色模式无效：确认应用层 ThemeData.brightness 是否正确设置，组件内部依赖该值进行适配。
 - 响应式布局异常：检查 MediaQuery 的使用位置与作用域，确保在正确的 BuildContext 中获取尺寸。
+- **标签颜色未生效**：确认 LiteUITheme 是否包裹了使用标签显示的组件，检查 tagColor 是否正确设置。
 
 章节来源
-- [lib/src/theme/index.dart:40-73](file://lib/src/theme/index.dart#L40-L73)
+- [lib/src/theme/index.dart:44-77](file://lib/src/theme/index.dart#L44-L77)
 - [example/lib/main.dart:20-26](file://example/lib/main.dart#L20-L26)
 - [lib/src/file_upload/widgets/file_action_sheet.dart:18](file://lib/src/file_upload/widgets/file_action_sheet.dart#L18)
 - [lib/src/file_upload/widgets/picker_sheet.dart:10](file://lib/src/file_upload/widgets/picker_sheet.dart#L10)
+- [lib/src/wrapper_container/show_content.dart:82-115](file://lib/src/wrapper_container/show_content.dart#L82-L115)
 
 ## 结论
-LiteUI 主题系统以简洁的数据结构与 Inherited 传播为核心，既满足库级样式统一，又与应用层 Material 主题良好协作。通过合理的变量定义、覆盖策略与性能优化，可实现暗色模式、响应式设计与品牌定制的一体化方案。
+LiteUI 主题系统以简洁的数据结构与 Inherited 传播为核心，既满足库级样式统一，又与应用层 Material 主题良好协作。通过合理的变量定义、覆盖策略与性能优化，可实现暗色模式、响应式设计与品牌定制的一体化方案。**新增的 tagColor 属性进一步完善了主题系统，为标签显示模式提供了完整的主题化支持**。
 
 ## 附录
 - 安装与依赖：参见 README 中的依赖表与安装方式。
