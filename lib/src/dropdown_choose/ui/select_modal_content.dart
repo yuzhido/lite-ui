@@ -84,6 +84,15 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
   final Future<void> Function(String keyword)? onAdd;
 
+  /// 远程搜索模式下，当已选值的 label 被解析出来时触发
+  ///
+  /// 适用于只传 selectedValues（无 selectedItems）的场景：
+  /// 弹窗打开后通过远程搜索获取数据，匹配到已选值的 label 后通过此回调通知父组件，
+  /// 父组件可据此更新 selectedItems 使表单字段显示正确的 label 而非 ID。
+  ///
+  /// 参数为 value → label 的映射，仅包含本次新解析到的项。
+  final void Function(Map<V, String> resolvedLabels)? onLabelsResolved;
+
   const SelectModalContent({
     super.key,
     this.title,
@@ -104,7 +113,12 @@ class SelectModalContent<V, D> extends StatefulWidget {
     this.showAdd = false,
     this.addLabel = '新增',
     this.onAdd,
-  }) : assert((items != null) ^ (onRemoteSearch != null), 'items 和 onRemoteSearch 必须且只能传递一个：传 items 为本地数据模式，传 onRemoteSearch 为远程搜索模式'),
+    this.onLabelsResolved,
+  }) : assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
+       assert(
+         type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null,
+         '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch',
+       ),
        assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
        assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
        assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
@@ -173,12 +187,16 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
       try {
         final results = await widget.onRemoteSearch!(keyword);
         if (mounted) {
+          final resolvedLabels = <V, String>{};
           setState(() {
             _results = results;
             _isLoading = false;
             _hasSearched = true;
-            _syncSelectedItemMap();
+            _syncSelectedItemMap(resolvedLabels);
           });
+          if (resolvedLabels.isNotEmpty) {
+            widget.onLabelsResolved?.call(resolvedLabels);
+          }
         }
       } catch (_) {
         if (mounted) {
@@ -193,32 +211,44 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
       // 本地过滤
       final source = widget.items ?? <SelectItem<V, D>>[];
       final kw = keyword.toLowerCase();
+      final resolvedLabels = <V, String>{};
       setState(() {
         _results = kw.isEmpty
             ? source
             : source.where((item) {
                 return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
               }).toList();
-        _syncSelectedItemMap();
+        _syncSelectedItemMap(resolvedLabels);
       });
+      if (resolvedLabels.isNotEmpty) {
+        widget.onLabelsResolved?.call(resolvedLabels);
+      }
     }
   }
 
   /// 将搜索结果中匹配已选项的完整数据补充到 [_selectedItemMap]
-  void _syncSelectedItemMap() {
+  ///
+  /// [newlyResolved] 用于收集本次新解析到的 value → label 映射，供回调使用。
+  void _syncSelectedItemMap([Map<V, String>? newlyResolved]) {
     for (final item in _results) {
       if (_selectedValues.contains(item.value) && !_selectedItemMap.containsKey(item.value)) {
         _selectedItemMap[item.value] = item;
+        newlyResolved?[item.value] = item.label;
       }
     }
   }
 
   /// 根据 value 获取已选项的完整数据
   ///
-  /// 优先从 [_selectedItemMap] 获取，找不到则降级构造一个 label 为 value.toString() 的 SelectItem
+  /// 优先从 [_selectedItemMap] 获取，其次从当前 [_results] 中查找，
+  /// 都找不到则降级构造一个 label 为 value.toString() 的 SelectItem（data 为 null）。
   SelectItem<V, D> _getSelectedItem(V value) {
     final cached = _selectedItemMap[value];
     if (cached != null) return cached;
+    // 从当前搜索结果中查找，确保 data 不为 null
+    for (final item in _results) {
+      if (item.value == value) return item;
+    }
     return SelectItem<V, D>(value: value, label: value.toString());
   }
 
@@ -294,7 +324,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
     final selectedItems = _selectedValues.map(_getSelectedItem).toList();
     final values = selectedItems.map((e) => e.value).toList();
     final datas = selectedItems.map((e) => e.data).toList();
-    widget.onConfirm?.call(values, datas);
+    widget.onConfirm?.call(values, datas, selectedItems);
 
     Navigator.of(context).pop();
   }
@@ -322,7 +352,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
             child: SelectModalContentList<V, D>(
               isLoading: _isLoading,
               displayItems: _results,
-              isRemote: _isRemote,
+              remote: _isRemote,
               hasSearched: _hasSearched,
               emptyText: widget.emptyText,
               selectedValues: _selectedValues,

@@ -38,7 +38,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       items: SelectModalMockData.cityItems,
       multiple: true,
       searchHint: '输入城市名搜索',
-      onConfirm: (values, datas) {
+      onConfirm: (values, datas, _) {
         final names = values.join('、');
         setState(() => _selectedResult = '多选结果：$names');
       },
@@ -56,7 +56,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       multiple: true,
       selectedValues: const {'beijing', 'shanghai'},
       searchHint: '输入城市名搜索',
-      onConfirm: (values, datas) {
+      onConfirm: (values, datas, _) {
         final names = values.join('、');
         setState(() => _selectedResult = '带初始选中结果：$names');
       },
@@ -169,7 +169,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
           return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
-      onConfirm: (values, datas) {
+      onConfirm: (values, datas, _) {
         final names = values.join('、');
         setState(() => _selectedResult = '远程多选结果：$names');
       },
@@ -218,7 +218,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
           return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
-      onConfirm: (values, datas) {
+      onConfirm: (values, datas, _) {
         final names = values.join('、');
         setState(() => _selectedResult = '带初始选中结果：$names');
       },

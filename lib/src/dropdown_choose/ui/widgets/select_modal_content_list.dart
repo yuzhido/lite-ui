@@ -19,12 +19,12 @@ class SelectModalContentList<V, D> extends StatelessWidget {
   final List<SelectItem<V, D>> displayItems;
 
   /// 是否为远程模式（影响空状态提示）
-  final bool isRemote;
+  final bool remote;
 
   /// 搜索是否执行过（仅 remote 模式，控制空状态提示）
   final bool hasSearched;
 
-  /// 空状态提示文字（仅 isRemote=true 时有效）
+  /// 空状态提示文字（仅 remote=true 时有效）
   final String emptyText;
 
   /// 当前选中项的 value 集合
@@ -50,7 +50,7 @@ class SelectModalContentList<V, D> extends StatelessWidget {
     required this.displayItems,
     required this.selectedValues,
     required this.onItemTap,
-    this.isRemote = false,
+    this.remote = false,
     this.hasSearched = false,
     this.emptyText = '暂无数据',
     this.multiple = false,
@@ -67,7 +67,7 @@ class SelectModalContentList<V, D> extends StatelessWidget {
     }
 
     if (displayItems.isEmpty) {
-      if (isRemote) {
+      if (remote) {
         return EmptyState(
           message: hasSearched ? emptyText : '请输入关键字搜索',
           icon: hasSearched ? Icons.search_off : Icons.search,

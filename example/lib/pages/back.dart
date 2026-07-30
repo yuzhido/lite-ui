@@ -206,7 +206,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   SelectItem(label: '北京', value: 'bj', data: 1),
                   SelectItem(label: '上海', value: 'sh', data: 2),
                 ],
-                onConfirm: (values, datas) {
+                onConfirm: (values, datas, _) {
                   setState(() => _cities = values.toSet());
                 },
                 items: const [
@@ -232,7 +232,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 displayMode: DisplayMode.tags,
                 selectedValues: _citiesTags,
                 onSaved: (v) => debugPrint('城市tags: $v'),
-                onConfirm: (values, datas) {
+                onConfirm: (values, datas, _) {
                   setState(() => _citiesTags = values.toSet());
                 },
                 items: const [
@@ -253,7 +253,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 maxShowTags: 2,
                 selectedValues: _citiesCompact,
                 onSaved: (v) => debugPrint('城市compact: $v'),
-                onConfirm: (values, datas) {
+                onConfirm: (values, datas, _) {
                   setState(() => _citiesCompact = values.toSet());
                 },
                 items: const [

@@ -19,7 +19,23 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
   int? _singleCity;
   SelectItem<int, AreaInfo>? _singleCityItem;
   Set<int> _remoteCities = {1918475623301, 1918475623303, 1918475623307, 1918475623312, 1918475623320};
-  List<SelectItem<int, AreaInfo>> _remoteCitiesItems = [];
+  List<SelectItem<int, AreaInfo>> _remoteCitiesItems = [
+    SelectItem(
+      label: '太原市',
+      value: 1918475623307,
+      data: AreaInfo(id: 1918475623307, name: '太原市', code: '140100', description: '山西省省会'),
+    ),
+    SelectItem(
+      label: '大同市',
+      value: 1918475623308,
+      data: AreaInfo(id: 1918475623308, name: '大同市', code: '140200', description: '山西省'),
+    ),
+    SelectItem(
+      label: '呼和浩特市',
+      value: 1918475623309,
+      data: AreaInfo(id: 1918475623309, name: '呼和浩特市', code: '150100', description: '内蒙古自治区首府'),
+    ),
+  ];
   Set<String> _cities = {};
   Set<String> _citiesTags = {};
   Set<String> _citiesCompact = {};
@@ -122,9 +138,15 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 selectedValues: _remoteCities,
                 // selectedItems: _remoteCitiesItems,
                 type: SelectModalType.remote,
+                displayMode: DisplayMode.tags,
                 showAdd: true,
                 maxCount: 5,
+                maxShowTags: 1,
                 addLabel: '新增城市',
+                onRemoteSearch: (keyword) async {
+                  return getAsyncData(keyword: keyword);
+                },
+                // items: [],
                 onAdd: (keyword) async {
                   final controller = TextEditingController(text: keyword);
                   final result = await showDialog<String>(
@@ -151,18 +173,15 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   }
                 },
                 onSaved: (v) => debugPrint('城市: $v'),
-                onConfirm: (List<int> values, List<AreaInfo?> datas) {
+                onConfirm: (List<int> values, List<AreaInfo?> datas, List<SelectItem<int, AreaInfo>> items) {
                   print('多选最后结果开始33333333333333');
                   print(values);
                   print(datas);
                   print('多选最后结果结束33333333333333');
                   setState(() {
                     _remoteCities = values.toSet();
-                    _remoteCitiesItems = List.generate(values.length, (i) => SelectItem(label: datas[i]?.name ?? '', value: values[i], data: datas[i]));
+                    _remoteCitiesItems = items;
                   });
-                },
-                onRemoteSearch: (keyword) async {
-                  return getAsyncData(keyword: keyword);
                 },
               ),
               // 1. 仅必填
@@ -318,7 +337,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   SelectItem(label: '北京', value: 'bj', data: 1),
                   SelectItem(label: '上海', value: 'sh', data: 2),
                 ],
-                onConfirm: (values, datas) {
+                onConfirm: (values, datas, _) {
                   setState(() => _cities = values.toSet());
                 },
                 items: const [
@@ -344,7 +363,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 displayMode: DisplayMode.tags,
                 selectedValues: _citiesTags,
                 onSaved: (v) => debugPrint('城市tags: $v'),
-                onConfirm: (values, datas) {
+                onConfirm: (values, datas, _) {
                   setState(() => _citiesTags = values.toSet());
                 },
                 items: const [
@@ -365,7 +384,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 maxShowTags: 2,
                 selectedValues: _citiesCompact,
                 onSaved: (v) => debugPrint('城市compact: $v'),
-                onConfirm: (values, datas) {
+                onConfirm: (values, datas, _) {
                   setState(() => _citiesCompact = values.toSet());
                 },
                 items: const [

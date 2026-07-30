@@ -99,6 +99,15 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
   final Future<void> Function(String keyword)? onAdd;
 
+  /// 远程搜索模式下，当已选值的 label 被解析出来时触发
+  ///
+  /// 适用于只传 selectedValues（无 selectedItems）的场景：
+  /// 弹窗打开后通过远程搜索获取数据，匹配到已选值的 label 后通过此回调通知父组件，
+  /// 父组件可据此更新 selectedItems 使表单字段显示正确的 label 而非 ID。
+  ///
+  /// 参数为 value → label 的映射，仅包含本次新解析到的项。
+  final void Function(Map<V, String> resolvedLabels)? onLabelsResolved;
+
   /// 显示一个从底部向上弹出的选择器弹窗
   ///
   /// [title] 主标题
@@ -145,8 +154,12 @@ class DropdownChoose<V, D> extends StatefulWidget {
     bool showAdd = false,
     String addLabel = '新增',
     Future<void> Function(String keyword)? onAdd,
+
+    // label 解析回调
+    void Function(Map<V, String> resolvedLabels)? onLabelsResolved,
   }) {
-    assert((items != null) ^ (onRemoteSearch != null), 'items 和 onRemoteSearch 必须且只能传递一个：传 items 为本地数据模式，传 onRemoteSearch 为远程搜索模式');
+    assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items');
+    assert(type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null, '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch');
     assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
     assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效');
     assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
@@ -180,6 +193,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
               showAdd: showAdd,
               addLabel: addLabel,
               onAdd: onAdd,
+              onLabelsResolved: onLabelsResolved,
             ),
           ),
         );
@@ -205,6 +219,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.showAdd = false,
     this.addLabel = '新增',
     this.onAdd,
+    this.onLabelsResolved,
     this.onSelect,
     this.onConfirm,
     this.maxCount,
@@ -213,7 +228,11 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.autovalidateMode = AutovalidateMode.disabled,
     this.formLayout = FormLayout.row,
     this.prefixIcon,
-  }) : assert((items != null) ^ (onRemoteSearch != null), 'items 和 onRemoteSearch 必须且只能传递一个：传 items 为本地数据模式，传 onRemoteSearch 为远程搜索模式'),
+  }) : assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
+       assert(
+         type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null,
+         '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch',
+       ),
        assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
        assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
        assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
@@ -225,19 +244,39 @@ class DropdownChoose<V, D> extends StatefulWidget {
 class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   final _formFieldKey = GlobalKey<FormFieldState<String>>();
 
-  /// 获取所有选中值的 labels
+  /// 内部缓存的已选项完整数据（由 onConfirm 回调自动填充）
+  ///
+  /// 当用户未传递 selectedItems 时，通过 onConfirm 返回的 datas 自动构建，
+  /// 使表单字段能正确显示 label 而非 ID。
+  List<SelectItem<V, D>> _resolvedItems = [];
+
+  /// 获取有效的选中值集合（优先 selectedValues，其次从 selectedItems 提取）
+  Set<V>? _effectiveSelectedValues() {
+    if (widget.selectedValues != null && widget.selectedValues!.isNotEmpty) {
+      return widget.selectedValues;
+    }
+    if (widget.selectedItems != null && widget.selectedItems!.isNotEmpty) {
+      return widget.selectedItems!.map((e) => e.value).toSet();
+    }
+    return null;
+  }
+
   List<String> _getAllLabels() {
-    final allItems = <SelectItem<V, D>>[...?widget.items, ...?widget.selectedItems];
+    final allItems = <SelectItem<V, D>>[...?widget.items, ...?widget.selectedItems, ..._resolvedItems];
+    final effectiveValues = _effectiveSelectedValues();
     if (widget.multiple) {
-      if (widget.selectedValues == null || widget.selectedValues!.isEmpty) return [];
+      if (effectiveValues == null || effectiveValues.isEmpty) return [];
       final labels = <String>[];
-      for (final v in widget.selectedValues!) {
+      for (final v in effectiveValues) {
+        String? matched;
         for (final item in allItems) {
           if (item.value == v) {
-            labels.add(item.label);
+            matched = item.label;
             break;
           }
         }
+        // 未匹配到完整数据时，降级用 value.toString() 作为 label
+        labels.add(matched ?? v.toString());
       }
       return labels;
     } else {
@@ -245,21 +284,23 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
       for (final item in allItems) {
         if (item.value == widget.value) return [item.label];
       }
-      return [];
+      // 未匹配到完整数据时，降级用 value.toString() 作为 label
+      return [widget.value!.toString()];
     }
   }
 
   // 默认验证规则
   String? defaultValid(String? value) {
     if (widget.required != true) return null;
+    final effectiveValues = _effectiveSelectedValues();
     if (widget.validator != null) {
       if (widget.multiple) {
-        return widget.validator!((widget.selectedValues?.isEmpty ?? true) ? null : widget.selectedValues!.join(','));
+        return widget.validator!((effectiveValues?.isEmpty ?? true) ? null : effectiveValues!.join(','));
       }
       return widget.validator!(widget.value?.toString());
     }
     if (widget.multiple) {
-      if (widget.selectedValues == null || widget.selectedValues!.isEmpty) {
+      if (effectiveValues == null || effectiveValues.isEmpty) {
         return '${widget.formLabel}是必填项不能为空';
       }
     } else {
@@ -276,10 +317,10 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
       key: _formFieldKey,
       validator: widget.required ? defaultValid : null,
       autovalidateMode: widget.autovalidateMode,
-      initialValue: widget.multiple ? (widget.selectedValues?.join(',') ?? '') : (widget.value?.toString() ?? ''),
+      initialValue: widget.multiple ? (_effectiveSelectedValues()?.join(',') ?? '') : (widget.value?.toString() ?? ''),
       onSaved: (value) {
         if (widget.multiple) {
-          widget.onSaved?.call(widget.selectedValues?.join(',') ?? '');
+          widget.onSaved?.call(_effectiveSelectedValues()?.join(',') ?? '');
         } else {
           widget.onSaved?.call(widget.value?.toString() ?? '');
         }
@@ -318,18 +359,23 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   title: '请选择${widget.formLabel}',
                   items: widget.items,
                   multiple: widget.multiple,
-                  selectedValues: widget.multiple ? widget.selectedValues : (widget.value != null ? {widget.value as V} : null),
+                  selectedValues: widget.multiple ? _effectiveSelectedValues() : (widget.value != null ? {widget.value as V} : null),
                   selectedItems: widget.selectedItems,
                   showAdd: widget.showAdd,
                   addLabel: widget.addLabel,
                   onAdd: widget.onAdd,
+                  onLabelsResolved: widget.onLabelsResolved,
                   onSelect: (value, data) {
                     widget.onSelect?.call(value, data);
                     _formFieldKey.currentState?.didChange(value?.toString() ?? '');
                   },
                   onConfirm: widget.multiple
-                      ? (values, datas) {
-                          widget.onConfirm?.call(values, datas);
+                      ? (values, datas, items) {
+                          widget.onConfirm?.call(values, datas, items);
+                          // 自动缓存已选项完整数据（含 label），使表单字段能正确显示
+                          setState(() {
+                            _resolvedItems = items;
+                          });
                           _formFieldKey.currentState?.didChange(values.join(','));
                         }
                       : null,
