@@ -49,6 +49,15 @@ class WrapperContainer extends StatelessWidget {
   /// 前置图标
   final Widget? prefixIcon;
 
+  /// 是否展开（弹窗打开状态），用于切换后缀图标
+  final bool? isExpanded;
+
+  /// 单选模式下的选中值（有值时后缀显示 close 图标）
+  final String? selectedValue;
+
+  /// 多选模式下的选中值集合（非空时后缀显示 close 图标）
+  final List<String>? selectedValues;
+
   const WrapperContainer({
     super.key,
     this.onTap,
@@ -63,6 +72,9 @@ class WrapperContainer extends StatelessWidget {
     this.required,
     this.formLayout,
     this.prefixIcon,
+    this.isExpanded,
+    this.selectedValue,
+    this.selectedValues,
   });
 
   @override
@@ -108,7 +120,11 @@ class WrapperContainer extends StatelessWidget {
                   ),
                 ),
               ),
-              SuffixIconLabel(),
+              SuffixIconLabel(
+                isExpanded: isExpanded ?? false,
+                selectedValue: selectedValue,
+                selectedValues: selectedValues,
+              ),
             ],
           ),
         ),

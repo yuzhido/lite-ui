@@ -272,6 +272,9 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   /// 若首次加载失败或返回空数据，则不缓存，每次打开仍重新请求。
   List<SelectItem<V, D>>? _cachedRemoteItems;
 
+  /// 弹窗是否展开
+  bool _isExpanded = false;
+
   /// 获取有效的选中值集合（优先 selectedValues，其次从 selectedItems 提取）
   Set<V>? _effectiveSelectedValues() {
     if (widget.selectedValues != null && widget.selectedValues!.isNotEmpty) {
@@ -373,7 +376,11 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               maxShowTags: widget.maxShowTags,
               valueBuilder: widget.valueBuilder,
               hintText: widget.hintText,
+              isExpanded: _isExpanded,
+              selectedValue: !widget.multiple ? (_getAllLabels().isNotEmpty ? _getAllLabels().first : null) : null,
+              selectedValues: widget.multiple ? (_getAllLabels().isNotEmpty ? _getAllLabels() : null) : null,
               onTap: () {
+                setState(() => _isExpanded = true);
                 DropdownChoose.show<V, D>(
                   context: context,
                   type: widget.type,
@@ -411,7 +418,9 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                         }
                       : null,
                   maxCount: widget.maxCount,
-                );
+                ).then((_) {
+                  if (mounted) setState(() => _isExpanded = false);
+                });
               },
             ),
           ],
