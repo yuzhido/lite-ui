@@ -5,6 +5,7 @@
 - [lib/src/dropdown_choose/dropdown_choose.dart](file://lib/src/dropdown_choose/dropdown_choose.dart)
 - [lib/src/dropdown_choose/ui/select_modal_content.dart](file://lib/src/dropdown_choose/ui/select_modal_content.dart)
 - [lib/src/dropdown_choose/ui/widgets/select_modal_content_list.dart](file://lib/src/dropdown_choose/ui/widgets/select_modal_content_list.dart)
+- [lib/src/dropdown_choose/ui/widgets/selected_items_dialog.dart](file://lib/src/dropdown_choose/ui/widgets/selected_items_dialog.dart)
 - [lib/src/models/select_item.dart](file://lib/src/models/select_item.dart)
 - [lib/src/models/enum.dart](file://lib/src/models/enum.dart)
 - [lib/src/models/callbacks.dart](file://lib/src/models/callbacks.dart)
@@ -17,9 +18,9 @@
 
 ## 更新摘要
 **所做更改**
-- 新增 onClear 回调属性，支持点击关闭图标时处理清除动作
-- 修复了清除后弹窗选中状态不同步的问题，通过 _modalSelectedValues() 方法确保弹窗正确感知内部清除状态
-- 完善了清除功能的用户体验，提供更直观的交互反馈
+- 修复了清除后弹窗选中状态不同步的问题，通过新增 `_modalSelectedValues()` 方法确保弹窗正确感知内部清除状态
+- 增强了已选项弹窗的样式和交互体验，提供更直观的移除操作反馈
+- 完善了清除功能的用户体验，支持点击后缀图标的关闭按钮进行快速清除
 
 ## 目录
 1. [简介](#简介)
@@ -36,12 +37,13 @@
 ## 简介
 DropdownChoose 是一个支持单选与多选的 Flutter 下拉选择器，提供本地过滤与远程搜索两种模式，内置表单校验、值显示模式（文本/标签/紧凑）、禁用项、占位提示、新增按钮、查看已选弹窗等能力。通过统一的 show 静态方法可快速弹出底部选择面板，适用于表单字段与独立弹窗场景。
 
-**最新更新**：组件现已支持 onClear 回调功能和智能清除状态管理，当用户点击后缀图标的关闭按钮时，可以触发清除逻辑并同步弹窗选中状态，提供更好的用户体验。
+**最新更新**：组件现已支持 onClear 回调功能和智能清除状态管理，当用户点击后缀图标的关闭按钮时，可以触发清除逻辑并同步弹窗选中状态，提供更好的用户体验。同时修复了清除后弹窗仍显示已选中项的状态同步问题。
 
 ## 项目结构
 - 组件入口与状态管理：lib/src/dropdown_choose/dropdown_choose.dart
 - 弹窗内容实现：lib/src/dropdown_choose/ui/select_modal_content.dart
 - 列表渲染与空态处理：lib/src/dropdown_choose/ui/widgets/select_modal_content_list.dart
+- 已选项查看弹窗：lib/src/dropdown_choose/ui/widgets/selected_items_dialog.dart
 - 数据模型与回调类型：lib/src/models/select_item.dart、lib/src/models/callbacks.dart
 - 枚举定义（布局、显示模式等）：lib/src/models/enum.dart
 - 搜索输入框：lib/src/widgets/input_search.dart
@@ -53,9 +55,10 @@ graph TB
 A["DropdownChoose<br/>lib/src/dropdown_choose/dropdown_choose.dart"] --> B["SelectModalContent<br/>lib/src/dropdown_choose/ui/select_modal_content.dart"]
 B --> C["SelectModalContentList<br/>lib/src/dropdown_choose/ui/widgets/select_modal_content_list.dart"]
 B --> D["InputSearch<br/>lib/src/widgets/input_search.dart"]
-A --> E["SelectItem / Callbacks / Enums<br/>lib/src/models/*"]
-A --> F["WrapperContainer(表单包装)<br/>lib/src/wrapper_container/index.dart"]
-F --> G["SuffixIconLabel(动态后缀图标)<br/>lib/src/widgets/suffix_icon_label.dart"]
+B --> E["SelectedItemsDialog<br/>lib/src/dropdown_choose/ui/widgets/selected_items_dialog.dart"]
+A --> F["SelectItem / Callbacks / Enums<br/>lib/src/models/*"]
+A --> G["WrapperContainer(表单包装)<br/>lib/src/wrapper_container/index.dart"]
+G --> H["SuffixIconLabel(动态后缀图标)<br/>lib/src/widgets/suffix_icon_label.dart"]
 ```
 
 **图表来源**
@@ -68,6 +71,7 @@ F --> G["SuffixIconLabel(动态后缀图标)<br/>lib/src/widgets/suffix_icon_lab
 - 组件类：DropdownChoose<V, D>
 - 弹窗内容：SelectModalContent<V, D>
 - 列表渲染：SelectModalContentList<V, D>
+- 已选项弹窗：SelectedItemsDialog<V>
 - 数据项：SelectItem<V, D>
 - 回调类型：OnSelectChange、OnMultiSelectConfirm、RemoteSearchCallback
 - 枚举：SelectModalType、DisplayMode、FormLayout
@@ -127,8 +131,8 @@ W->>I : 恢复默认图标状态
 - [lib/src/dropdown_choose/dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-L416)
 - [lib/src/dropdown_choose/dropdown_choose.dart:417-462](file://lib/src/dropdown_choose/dropdown_choose.dart#L417-L462)
 - [lib/src/dropdown_choose/ui/select_modal_content.dart:166-237](file://lib/src/dropdown_choose/ui/select_modal_content.dart#L166-L237)
-- [lib/src/wrapper_container/index.dart:123-127](file://lib/src/wrapper_container/index.dart#L123-L127)
-- [lib/src/widgets/suffix_icon_label.dart:32-36](file://lib/src/widgets/suffix_icon_label.dart#L32-L36)
+- [lib/src/wrapper_container/index.dart:123-127](file://lib/src/wrapper_container/index.dart#L123-127)
+- [lib/src/widgets/suffix_icon_label.dart:32-36](file://lib/src/widgets/suffix_icon_label.dart#L32-36)
 
 ## 详细组件分析
 
@@ -168,6 +172,17 @@ W->>I : 恢复默认图标状态
 - [lib/src/dropdown_choose/ui/select_modal_content.dart:239-282](file://lib/src/dropdown_choose/ui/select_modal_content.dart#L239-L282)
 - [lib/src/dropdown_choose/ui/select_modal_content.dart:284-340](file://lib/src/dropdown_choose/ui/select_modal_content.dart#L284-L340)
 - [lib/src/dropdown_choose/ui/select_modal_content.dart:349-390](file://lib/src/dropdown_choose/ui/select_modal_content.dart#L349-L390)
+
+### SelectedItemsDialog 已选项查看弹窗
+- 动画效果：使用 AnimatedList 实现平滑的添加/删除动画
+- 交互体验：支持逐项移除，全部移除后自动关闭弹窗
+- 视觉设计：现代化的卡片式布局，带有阴影和圆角效果
+- 状态管理：内部维护已选项列表状态，实时更新计数和显示
+
+**更新**：增强了已选项弹窗的样式和交互体验，提供更直观的移除操作反馈。
+
+**章节来源**
+- [lib/src/dropdown_choose/ui/widgets/selected_items_dialog.dart:1-228](file://lib/src/dropdown_choose/ui/widgets/selected_items_dialog.dart#L1-L228)
 
 ### WrapperContainer 包装容器
 - 表单布局：统一包装表单标签、值显示区域和后缀图标
@@ -286,7 +301,7 @@ W->>I : 恢复默认图标状态
 - 查看已选：弹窗内展示已选 label 列表，支持移除操作
 
 **章节来源**
-- [lib/src/dropdown_choose/ui/select_modal_content.dart:274-303](file://lib/src/dropdown_choose/ui/select_modal_content.dart#L274-303)
+- [lib/src/dropdown_choose/ui/select_modal_content.dart:274-303](file://lib/src/dropdown_choose/ui/select_modal_content.dart#L274-L303)
 - [lib/src/dropdown_choose/ui/widgets/select_modal_content_list.dart:69-80](file://lib/src/dropdown_choose/ui/widgets/select_modal_content_list.dart#L69-L80)
 
 ### 清除功能详解

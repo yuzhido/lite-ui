@@ -1,8 +1,13 @@
 import 'package:example/mock/area_list.dart';
+import 'package:example/mock/brand_list.dart';
+import 'package:example/mock/category_list.dart';
+import 'package:example/mock/product_list.dart';
+import 'package:example/mock/spec_list.dart';
+import 'package:example/mock/unit_list.dart';
+import 'package:example/mock/user_list.dart';
 import 'package:flutter/material.dart';
 import 'package:lite_ui/lite_ui.dart';
 
-/// InputText 校验规则与输入类型使用示例
 class ComponentDemoPage extends StatefulWidget {
   const ComponentDemoPage({super.key});
 
@@ -13,32 +18,59 @@ class ComponentDemoPage extends StatefulWidget {
 class _ComponentDemoPageState extends State<ComponentDemoPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // 选择型组件状态
-  String? _gender;
-  String? _region;
-  int? _singleCity;
-  SelectItem<int, AreaInfo>? _singleCityItem;
-  Set<int> _remoteCities = {1918475623301, 1918475623303, 1918475623307, 1918475623312, 1918475623320};
-  List<SelectItem<int, AreaInfo>> _remoteCitiesItems = [
-    SelectItem(
-      label: '太原市',
-      value: 1918475623307,
-      data: AreaInfo(id: 1918475623307, name: '太原市', code: '140100', description: '山西省省会'),
-    ),
-    SelectItem(
-      label: '大同市',
-      value: 1918475623308,
-      data: AreaInfo(id: 1918475623308, name: '大同市', code: '140200', description: '山西省'),
-    ),
-    SelectItem(
-      label: '呼和浩特市',
-      value: 1918475623309,
-      data: AreaInfo(id: 1918475623309, name: '呼和浩特市', code: '150100', description: '内蒙古自治区首府'),
-    ),
-  ];
-  Set<String> _cities = {};
-  Set<String> _citiesTags = {};
-  Set<String> _citiesCompact = {};
+  // 远程搜索单选 — 城市
+  int? _citySingle;
+  SelectItem<int, AreaInfo>? _citySingleItem;
+
+  // 远程搜索多选 — 城市
+  Set<int> _citiesMulti = {};
+
+  // 同步单选 — 商品分类
+  int? _category;
+  SelectItem<int, CategoryInfo>? _categoryItem;
+
+  // 远程搜索单选 — 品牌
+  int? _brand;
+  SelectItem<int, BrandInfo>? _brandItem;
+
+  // 同步多选 — 规格
+  Set<int> _specs = {};
+
+  // 同步单选 — 计量单位
+  int? _unit;
+  SelectItem<int, UnitInfo>? _unitItem;
+
+  // 远程搜索单选 — 用户
+  int? _user;
+  SelectItem<int, UserInfo>? _userItem;
+
+  // 远程搜索多选 — 商品
+  Set<int> _products = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _citiesMulti = {1918475623301, 1918475623303};
+  }
+
+  void _onReset() {
+    _formKey.currentState?.reset();
+    setState(() {
+      _citySingle = null;
+      _citySingleItem = null;
+      _citiesMulti = {};
+      _category = null;
+      _categoryItem = null;
+      _brand = null;
+      _brandItem = null;
+      _specs = {};
+      _unit = null;
+      _unitItem = null;
+      _user = null;
+      _userItem = null;
+      _products = {};
+    });
+  }
 
   void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
@@ -47,32 +79,31 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-
-    _remoteCities.addAll([1918475623301, 1918475623303, 1918475623307, 1918475623312, 1918475623320]);
-  }
-
-  void _onReset() {
-    _formKey.currentState?.reset();
-    setState(() {
-      _gender = null;
-      _region = null;
-      _singleCity = null;
-      _singleCityItem = null;
-      _remoteCities = {};
-      _remoteCitiesItems = [];
-      _cities = {};
-      _citiesTags = {};
-      _citiesCompact = {};
-    });
+  /// 通用新增弹窗
+  Future<String?> _showAddDialog(String label, String keyword) async {
+    final controller = TextEditingController(text: keyword);
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('新增$label'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(hintText: '请输入$label名称'),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('取消')),
+            TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('确定')),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('InputText 校验规则示例')),
+      appBar: AppBar(title: const Text('DropdownChoose 使用示例')),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.disabled,
@@ -82,325 +113,168 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
             spacing: 12,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(' 基础校验', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              // ── 远程搜索 ──
+              const Text(' 远程搜索模式', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const Divider(height: 1),
-              // 0-1. 测试远程搜索 + 单选 + 新增功能
+
+              const Text('远程搜索 + 单选 + 新增', style: TextStyle(fontSize: 13, color: Colors.grey)),
               DropdownChoose<int, AreaInfo>(
                 required: true,
-                formLabel: '城市单选',
-                value: _singleCity,
-                selectedItems: _singleCityItem != null ? [_singleCityItem!] : null,
+                formLabel: '城市',
+                value: _citySingle,
+                selectedItems: _citySingleItem != null ? [_citySingleItem!] : null,
                 type: SelectModalType.remote,
                 prefixIcon: const Icon(Icons.location_on),
                 showAdd: true,
                 addLabel: '新增城市',
-                onClear: () {
-                  print(255555);
-                },
-                forceRefresh: true,
+                onClear: () => debugPrint('城市已清除'),
                 onAdd: (keyword) async {
-                  final controller = TextEditingController(text: keyword);
-                  final result = await showDialog<String>(
-                    context: context,
-                    builder: (ctx) {
-                      return AlertDialog(
-                        title: const Text('新增城市'),
-                        content: TextField(
-                          controller: controller,
-                          decoration: const InputDecoration(hintText: '请输入城市名称'),
-                        ),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('取消')),
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('确定')),
-                        ],
-                      );
-                    },
-                  );
+                  final result = await _showAddDialog('城市', keyword);
                   if (result != null && result.isNotEmpty) {
                     addMockArea(name: result);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已新增城市: $result，列表已自动刷新')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已新增城市: $result')));
                     }
                   }
                 },
-                onSaved: (v) => debugPrint('城市(单选): $v'),
+                onSaved: (v) => debugPrint('城市: $v'),
                 onSelect: (value, data) {
                   setState(() {
-                    _singleCity = value;
-                    _singleCityItem = SelectItem(label: data?.name ?? '', value: value, data: data);
+                    _citySingle = value;
+                    _citySingleItem = SelectItem(label: data?.name ?? '', value: value, data: data);
                   });
                 },
-                onRemoteSearch: (keyword) async {
-                  return getAsyncData(keyword: keyword);
-                },
+                onRemoteSearch: (keyword) async => getAsyncData(keyword: keyword),
               ),
-              // 0-2. 测试远程搜索模式（不传 items，通过 onRemoteSearch 异步获取）
+
+              const Text('远程搜索 + 多选 + tags 模式', style: TextStyle(fontSize: 13, color: Colors.grey)),
               DropdownChoose<int, AreaInfo>(
                 required: true,
-                formLabel: '城市',
+                formLabel: '配送城市',
                 multiple: true,
-                selectedValues: _remoteCities,
-                // selectedItems: _remoteCitiesItems,
                 type: SelectModalType.remote,
                 displayMode: DisplayMode.tags,
-                showAdd: true,
-                maxCount: 5,
-                maxShowTags: 1,
-                addLabel: '新增城市',
-                onRemoteSearch: (keyword) async {
-                  return getAsyncData(keyword: keyword);
+                selectedValues: _citiesMulti,
+                maxShowTags: 2,
+                onSaved: (v) => debugPrint('配送城市: $v'),
+                onConfirm: (values, datas, items) {
+                  setState(() => _citiesMulti = values.toSet());
                 },
-                // items: [],
-                onAdd: (keyword) async {
-                  final controller = TextEditingController(text: keyword);
-                  final result = await showDialog<String>(
-                    context: context,
-                    builder: (ctx) {
-                      return AlertDialog(
-                        title: const Text('新增城市'),
-                        content: TextField(
-                          controller: controller,
-                          decoration: const InputDecoration(hintText: '请输入城市名称'),
-                        ),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('取消')),
-                          TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('确定')),
-                        ],
-                      );
-                    },
-                  );
-                  if (result != null && result.isNotEmpty) {
-                    addMockArea(name: result);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已新增城市: $result，列表已自动刷新')));
-                    }
-                  }
-                },
-                onSaved: (v) => debugPrint('城市: $v'),
-                onConfirm: (List<int> values, List<AreaInfo?> datas, List<SelectItem<int, AreaInfo>> items) {
-                  print('多选最后结果开始33333333333333');
-                  print(values);
-                  print(datas);
-                  print('多选最后结果结束33333333333333');
+                onRemoteSearch: (keyword) async => getAsyncData(keyword: keyword),
+              ),
+
+              const Text('远程搜索 + 单选', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              DropdownChoose<int, BrandInfo>(
+                required: true,
+                formLabel: '品牌',
+                value: _brand,
+                selectedItems: _brandItem != null ? [_brandItem!] : null,
+                type: SelectModalType.remote,
+                prefixIcon: const Icon(Icons.bookmark_outline),
+                onClear: () => debugPrint('品牌已清除'),
+                onSaved: (v) => debugPrint('品牌: $v'),
+                onSelect: (value, data) {
                   setState(() {
-                    _remoteCities = values.toSet();
-                    _remoteCitiesItems = items;
+                    _brand = value;
+                    _brandItem = SelectItem(label: data?.name ?? '', value: value, data: data);
                   });
                 },
-              ),
-              // 1. 仅必填
-              InputText(
-                required: true,
-                formLabel: '姓名',
-                prefixIcon: const Icon(Icons.person, color: Colors.blue),
-                onSaved: (v) => debugPrint('姓名: $v'),
+                onRemoteSearch: (keyword) async => getBrandAsyncData(keyword: keyword),
               ),
 
-              // 2. 必填 + 数字格式
-              InputText(
-                required: true,
-                validRuleType: ValidRuleType.numeric,
-                formLabel: '年龄',
-                inputType: InputType.integer,
-                prefixIcon: const Icon(Icons.numbers, color: Colors.green),
-                onSaved: (v) => debugPrint('年龄: $v'),
-              ),
-
-              // 3. 必填 + 密码规则（6位+大写字母）
-              InputText(
-                required: true,
-                validRuleType: ValidRuleType.password,
-                formLabel: '密码',
-                password: true,
-                prefixIcon: const Icon(Icons.lock, color: Colors.red),
-                onSaved: (v) => debugPrint('密码: $v'),
-              ),
-
-              const SizedBox(height: 8),
-              const Text(' 输入类型限制', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const Divider(height: 1),
-
-              // 4. 只能输入小数
-              InputText(
-                required: true,
-                validRuleType: ValidRuleType.decimal,
-                formLabel: '价格',
-                inputType: InputType.decimal,
-                hintText: '如 99.99',
-                prefixIcon: const Icon(Icons.attach_money, color: Colors.orange),
-                onSaved: (v) => debugPrint('价格: $v'),
-              ),
-
-              // 5. 只能输入中文
-              InputText(
-                required: true,
-                validRuleType: ValidRuleType.chineseName,
-                formLabel: '中文名',
-                inputType: InputType.chinese,
-                prefixIcon: const Icon(Icons.language, color: Colors.purple),
-                onSaved: (v) => debugPrint('中文名: $v'),
-              ),
-
-              // 6. 只能输入英文
-              InputText(
-                required: true,
-                formLabel: '英文名',
-                inputType: InputType.english,
-                prefixIcon: const Icon(Icons.translate, color: Colors.teal),
-                onSaved: (v) => debugPrint('英文名: $v'),
-              ),
-
-              // 7. 单字符（验证码）
-              InputText(
-                required: true,
-                formLabel: '验证码',
-                inputType: InputType.char,
-                maxLen: 6,
-                minLen: 6,
-                hintText: '6位验证码',
-                prefixIcon: const Icon(Icons.security, color: Colors.indigo),
-                onSaved: (v) => debugPrint('验证码: $v'),
-              ),
-
-              const SizedBox(height: 8),
-              const Text('📱 格式校验', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const Divider(height: 1),
-
-              // 8. 手机号
-              InputText(
-                required: true,
-                validRuleType: ValidRuleType.phone,
-                formLabel: '手机号',
-                inputType: InputType.integer,
-                keyboardType: TextInputType.phone,
-                prefixIcon: const Icon(Icons.phone, color: Colors.cyan),
-                onSaved: (v) => debugPrint('手机号: $v'),
-              ),
-
-              // 9. 邮箱
-              InputText(
-                required: true,
-                validRuleType: ValidRuleType.email,
-                formLabel: '邮箱',
-                inputType: InputType.text,
-                keyboardType: TextInputType.emailAddress,
-                prefixIcon: const Icon(Icons.email, color: Colors.deepPurple),
-                onSaved: (v) => debugPrint('邮箱: $v'),
-              ),
-
-              const SizedBox(height: 8),
-              const Text('🎯 选择型组件', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const Divider(height: 1),
-
-              // 10. ActionSheet
-              ActionSheet<String, int>(
-                required: true,
-                formLabel: '性别',
-                title: '请选择性别',
-                value: _gender,
-                onSaved: (v) => debugPrint('性别: $v'),
+              const Text('远程搜索 + 单选', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              DropdownChoose<int, UserInfo>(
+                formLabel: '负责人',
+                value: _user,
+                selectedItems: _userItem != null ? [_userItem!] : null,
+                type: SelectModalType.remote,
+                prefixIcon: const Icon(Icons.person_outline),
+                hintText: '搜索用户名或部门',
+                onClear: () => debugPrint('负责人已清除'),
+                onSaved: (v) => debugPrint('负责人: $v'),
                 onSelect: (value, data) {
-                  setState(() => _gender = value);
+                  setState(() {
+                    _user = value;
+                    _userItem = SelectItem(label: data?.name ?? '', value: value, data: data);
+                  });
                 },
-                items: const [
-                  SelectItem(label: '男', value: '1', data: 1, icon: Icon(Icons.male)),
-                  SelectItem(label: '女', value: '2', data: 2, icon: Icon(Icons.female)),
-                ],
+                onRemoteSearch: (keyword) async => getUserAsyncData(keyword: keyword),
               ),
 
-              // 11. DropdownChoose 单选
-              DropdownChoose<String, int>(
+              const Text('远程搜索 + 多选 + compact 模式', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              DropdownChoose<int, ProductInfo>(
                 required: true,
-                formLabel: '所在区域',
-                value: _region,
-                onSaved: (v) => debugPrint('区域: $v'),
-                selectedItems: const [
-                  SelectItem(label: '北京', value: 'bj', data: 1),
-                  SelectItem(label: '上海', value: 'sh', data: 2),
-                  SelectItem(label: '广州', value: 'gz', data: 3),
-                ],
-                onSelect: (value, data) {
-                  setState(() => _region = value);
-                },
-                items: const [
-                  SelectItem(label: '北京', value: 'bj', data: 1),
-                  SelectItem(label: '上海', value: 'sh', data: 2),
-                  SelectItem(label: '广州', value: 'gz', data: 3),
-                  SelectItem(label: '深圳', value: 'sz', data: 4),
-                ],
-              ),
-
-              // 12. DropdownChoose 多选（text 模式）
-              DropdownChoose<String, int>(
-                required: true,
-                formLabel: '城市',
+                formLabel: '商品',
                 multiple: true,
-                // selectedValues: _cities,
-                onSaved: (v) => debugPrint('城市: $v'),
-                selectedItems: const [
-                  SelectItem(label: '北京', value: 'bj', data: 1),
-                  SelectItem(label: '上海', value: 'sh', data: 2),
-                ],
-                onConfirm: (values, datas, _) {
-                  setState(() => _cities = values.toSet());
+                type: SelectModalType.remote,
+                displayMode: DisplayMode.compact,
+                maxShowTags: 3,
+                selectedValues: _products,
+                prefixIcon: const Icon(Icons.shopping_cart_outlined),
+                hintText: '搜索商品名称',
+                onSaved: (v) => debugPrint('商品: $v'),
+                onConfirm: (values, datas, items) {
+                  setState(() => _products = values.toSet());
                 },
-                items: const [
-                  SelectItem(label: '北京', value: 'bj', data: 1),
-                  SelectItem(label: '上海', value: 'sh', data: 2),
-                  SelectItem(label: '广州', value: 'gz', data: 3),
-                  SelectItem(label: '深圳', value: 'sz', data: 4),
-                  SelectItem(label: '杭州', value: 'hz', data: 5),
-                  SelectItem(label: '广西', value: 'gx', data: 6),
-                  SelectItem(label: '成都', value: 'cd', data: 7),
-                  SelectItem(label: '西藏', value: 'xz', data: 8),
-                  SelectItem(label: '云南', value: 'yn', data: 9),
-                  SelectItem(label: '福建', value: 'fj', data: 10),
-                  SelectItem(label: '贵州', value: 'gz2', data: 11),
-                ],
+                onRemoteSearch: (keyword) async => getProductAsyncData(keyword: keyword),
               ),
 
-              // 13. DropdownChoose 多选（tags 模式）
-              DropdownChoose<String, int>(
+              const SizedBox(height: 8),
+              // ── 同步数据 ──
+              const Text(' 同步数据模式', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Divider(height: 1),
+
+              const Text('同步数据 + 单选', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              DropdownChoose<int, CategoryInfo>(
                 required: true,
-                formLabel: '城市',
+                formLabel: '商品分类',
+                value: _category,
+                selectedItems: _categoryItem != null ? [_categoryItem!] : null,
+                prefixIcon: const Icon(Icons.category_outlined),
+                onClear: () => debugPrint('分类已清除'),
+                onSaved: (v) => debugPrint('分类: $v'),
+                onSelect: (value, data) {
+                  setState(() {
+                    _category = value;
+                    _categoryItem = SelectItem(label: data?.name ?? '', value: value, data: data);
+                  });
+                },
+                items: getCategorySyncData(),
+              ),
+
+              const Text('同步数据 + 多选 + tags 模式', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              DropdownChoose<int, SpecInfo>(
+                required: true,
+                formLabel: '规格',
                 multiple: true,
                 displayMode: DisplayMode.tags,
-                selectedValues: _citiesTags,
-                onSaved: (v) => debugPrint('城市tags: $v'),
-                onConfirm: (values, datas, _) {
-                  setState(() => _citiesTags = values.toSet());
+                selectedValues: _specs,
+                maxShowTags: 3,
+                prefixIcon: const Icon(Icons.straighten),
+                onClear: () => debugPrint('规格已清除'),
+                onSaved: (v) => debugPrint('规格: $v'),
+                onConfirm: (values, datas, items) {
+                  setState(() => _specs = values.toSet());
                 },
-                items: const [
-                  SelectItem(label: '北京', value: 'bj', data: 1),
-                  SelectItem(label: '上海', value: 'sh', data: 2),
-                  SelectItem(label: '广州', value: 'gz', data: 3),
-                  SelectItem(label: '深圳', value: 'sz', data: 4),
-                  SelectItem(label: '杭州', value: 'hz', data: 5),
-                ],
+                items: getSpecSyncData(),
               ),
 
-              // 14. DropdownChoose 多选（compact 模式）
-              DropdownChoose<String, int>(
-                required: true,
-                formLabel: '城市',
-                multiple: true,
-                displayMode: DisplayMode.compact,
-                maxShowTags: 2,
-                selectedValues: _citiesCompact,
-                onSaved: (v) => debugPrint('城市compact: $v'),
-                onConfirm: (values, datas, _) {
-                  setState(() => _citiesCompact = values.toSet());
+              const Text('同步数据 + 单选', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              DropdownChoose<int, UnitInfo>(
+                formLabel: '计量单位',
+                value: _unit,
+                selectedItems: _unitItem != null ? [_unitItem!] : null,
+                prefixIcon: const Icon(Icons.balance),
+                hintText: '请选择单位',
+                onClear: () => debugPrint('单位已清除'),
+                onSaved: (v) => debugPrint('单位: $v'),
+                onSelect: (value, data) {
+                  setState(() {
+                    _unit = value;
+                    _unitItem = SelectItem(label: data?.name ?? '', value: value, data: data);
+                  });
                 },
-                items: const [
-                  SelectItem(label: '北京', value: 'bj', data: 1),
-                  SelectItem(label: '上海', value: 'sh', data: 2),
-                  SelectItem(label: '广州', value: 'gz', data: 3),
-                  SelectItem(label: '深圳', value: 'sz', data: 4),
-                  SelectItem(label: '杭州', value: 'hz', data: 5),
-                  SelectItem(label: '广西', value: 'gx', data: 6),
-                  SelectItem(label: '成都', value: 'cd', data: 7),
-                  SelectItem(label: '西藏', value: 'xz', data: 8),
-                ],
+                items: getUnitSyncData(),
               ),
             ],
           ),

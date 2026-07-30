@@ -290,9 +290,14 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   @override
   void didUpdateWidget(covariant DropdownChoose<V, D> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 外部 value 或 selectedValues 发生变化时，重置内部清除状态
+    // 外部 value 或 selectedValues 发生变化时，重置内部清除状态并同步 FormField
     if (widget.value != oldWidget.value || widget.selectedValues != oldWidget.selectedValues || widget.selectedItems != oldWidget.selectedItems) {
       _cleared = false;
+      // 外部值变化后同步 FormField 内部状态，触发重新验证（此时 widget.value 已是新值）
+      final newValue = widget.multiple ? (_effectiveSelectedValues()?.join(',') ?? '') : (widget.value?.toString() ?? '');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _formFieldKey.currentState?.didChange(newValue);
+      });
     }
   }
 
@@ -345,6 +350,13 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   // 默认验证规则
   String? defaultValid(String? value) {
     if (widget.required != true) return null;
+    // 感知内部清除状态：清除后视为空值，确保验证能正确触发失败
+    if (_cleared) {
+      if (widget.validator != null) {
+        return widget.validator!(null);
+      }
+      return '${widget.formLabel}是必填项不能为空';
+    }
     final effectiveValues = _effectiveSelectedValues();
     if (widget.validator != null) {
       if (widget.multiple) {
@@ -413,9 +425,13 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   _resolvedItems = [];
                 });
                 widget.onClear?.call();
+                // 同步 FormField 内部值为空，使验证能正确触发失败
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _formFieldKey.currentState?.didChange('');
+                });
               },
               onTap: () {
-                print(12121213131);
+                print(12121213131); // TODO: 移除调试日志
                 setState(() => _isExpanded = true);
                 DropdownChoose.show<V, D>(
                   context: context,
@@ -442,7 +458,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   onSelect: (value, data) {
                     setState(() => _cleared = false);
                     widget.onSelect?.call(value, data);
-                    _formFieldKey.currentState?.didChange(value?.toString() ?? '');
+                    // 不再在此处调用 didChange，由 didUpdateWidget 统一处理
                   },
                   onConfirm: widget.multiple
                       ? (values, datas, items) {
@@ -452,7 +468,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                           setState(() {
                             _resolvedItems = items;
                           });
-                          _formFieldKey.currentState?.didChange(values.join(','));
+                          // 不再在此处调用 didChange，由 didUpdateWidget 统一处理
                         }
                       : null,
                   maxCount: widget.maxCount,

@@ -53,12 +53,7 @@ class ShowContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasError = errorText != null && errorText!.isNotEmpty;
 
-    // 1. 错误状态
-    if (hasError) {
-      return Text(errorText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).errorColor));
-    }
-
-    // 2. 有值：优先 valueBuilder，其次 displayMode，最后 valueText
+    // 1. 有值时优先显示值（验证失败但有值时仍显示选中内容，错误提示由边框/外部处理）
     final labels = valueLabels;
     if (labels != null && labels.isNotEmpty) {
       // 自定义构建器优先
@@ -115,7 +110,7 @@ class ShowContent extends StatelessWidget {
       }
     }
 
-    // 3. 有 valueText 但无 labels
+    // 2. 有 valueText 但无 labels
     if (valueText != null) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -126,6 +121,11 @@ class ShowContent extends StatelessWidget {
           style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).textColor),
         ),
       );
+    }
+
+    // 3. 无值但有错误时显示错误提示
+    if (hasError) {
+      return Text(errorText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).errorColor));
     }
 
     // 4. 占位提示
