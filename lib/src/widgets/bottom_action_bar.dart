@@ -48,13 +48,14 @@ class BottomActionBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.canvasColor,
-        border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5))),
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
         top: false,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          spacing: 10,
           children: [
             // 左侧：已选数量提示（点击可查看已选项）
             SizedBox(
@@ -63,6 +64,7 @@ class BottomActionBar extends StatelessWidget {
                 icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
                 onPressed: selectedCount > 0 ? onViewSelected : null,
                 style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
                   side: BorderSide(color: theme.colorScheme.outlineVariant),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   foregroundColor: selectedCount > 0 ? theme.textTheme.bodyMedium?.color : theme.hintColor,
@@ -71,37 +73,43 @@ class BottomActionBar extends StatelessWidget {
               ),
             ),
             // 右侧：按钮组
-            Row(
-              children: [
-                SizedBox(
-                  height: 40,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.close, size: 18),
-                    onPressed: onCancel,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: theme.colorScheme.outlineVariant),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      foregroundColor: theme.textTheme.bodyMedium?.color,
+            Expanded(
+              child: Row(
+                spacing: 10,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.cancel_outlined, size: 18),
+                      onPressed: onCancel,
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        side: BorderSide(color: theme.colorScheme.outlineVariant),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        foregroundColor: theme.textTheme.bodyMedium?.color,
+                      ),
+                      label: Text(cancelLabel, style: const TextStyle(fontSize: 14)),
                     ),
-                    label: Text(cancelLabel, style: const TextStyle(fontSize: 14)),
                   ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 40,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.check, size: 18),
-                    onPressed: canConfirm ? onConfirm : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: canConfirm ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
-                      foregroundColor: canConfirm ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  Expanded(
+                    child: SizedBox(
+                      height: 40,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        onPressed: canConfirm ? onConfirm : null,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          backgroundColor: canConfirm ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+                          foregroundColor: canConfirm ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        label: Text(confirmLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      ),
                     ),
-                    label: Text(confirmLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

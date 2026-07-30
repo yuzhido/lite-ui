@@ -81,36 +81,37 @@ class _SelectedItemsDialogState<V> extends State<SelectedItemsDialog<V>> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
+        clipBehavior: Clip.antiAlias,
         width: double.infinity,
         constraints: const BoxConstraints(maxWidth: 340, maxHeight: 420),
         decoration: BoxDecoration(
-          color: theme.canvasColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, 8))],
+          color: const Color(0xFFF8F9FA),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 20, offset: const Offset(0, 6))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // 头部
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 12, 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+              ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: primary.withValues(alpha: 0.15)),
-                    ),
+                    decoration: BoxDecoration(color: primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle_rounded, size: 15, color: primary),
+                        Icon(Icons.check_circle_rounded, size: 14, color: primary),
                         const SizedBox(width: 5),
                         Text(
                           '已选 ${_items.length} 项',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primary),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: primary),
                         ),
                       ],
                     ),
@@ -121,37 +122,36 @@ class _SelectedItemsDialogState<V> extends State<SelectedItemsDialog<V>> {
                     child: InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(Icons.close_rounded, size: 20, color: theme.hintColor),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+                        child: Icon(Icons.close_rounded, size: 18, color: Colors.grey.shade400),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
-
             // 列表
             Flexible(
               child: _items.isEmpty
                   ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 36),
+                      padding: const EdgeInsets.symmetric(vertical: 40),
                       child: Column(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: theme.hintColor.withValues(alpha: 0.06), shape: BoxShape.circle),
-                            child: Icon(Icons.inbox_outlined, size: 32, color: theme.hintColor.withValues(alpha: 0.5)),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+                            child: Icon(Icons.inbox_outlined, size: 30, color: Colors.grey.shade400),
                           ),
                           const SizedBox(height: 12),
-                          Text('暂无已选项', style: TextStyle(fontSize: 14, color: theme.hintColor)),
+                          Text('暂无已选项', style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
                         ],
                       ),
                     )
                   : AnimatedList(
                       key: _listKey,
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                       shrinkWrap: true,
                       initialItemCount: _items.length,
                       itemBuilder: (context, index, animation) {
@@ -160,10 +160,7 @@ class _SelectedItemsDialogState<V> extends State<SelectedItemsDialog<V>> {
                           opacity: animation,
                           child: SizeTransition(
                             sizeFactor: animation,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 3),
-                              child: _SelectedItemRow(label: item.label, primary: primary, onRemove: () => _handleRemove(item.value)),
-                            ),
+                            child: _SelectedItemRow(label: item.label, primary: primary, onRemove: () => _handleRemove(item.value)),
                           ),
                         );
                       },
@@ -186,28 +183,28 @@ class _SelectedItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      margin: EdgeInsetsDirectional.only(bottom: 8),
       decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: primary.withValues(alpha: 0.08)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 1))],
       ),
       child: Row(
         children: [
           Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(color: primary.withValues(alpha: 0.12), shape: BoxShape.circle),
-            child: Icon(Icons.check_rounded, color: primary, size: 15),
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(color: primary.withValues(alpha: 0.10), shape: BoxShape.circle),
+            child: Icon(Icons.check_rounded, color: primary, size: 13),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 15, color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 14, color: const Color(0xFF333333), fontWeight: FontWeight.w500),
             ),
           ),
           if (onRemove != null)
@@ -215,10 +212,11 @@ class _SelectedItemRow extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: onRemove,
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(Icons.close_rounded, size: 18, color: Colors.grey.shade400),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
+                  child: Icon(Icons.delete_forever_outlined, size: 14, color: Colors.red.shade500),
                 ),
               ),
             ),
