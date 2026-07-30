@@ -94,6 +94,9 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 prefixIcon: const Icon(Icons.location_on),
                 showAdd: true,
                 addLabel: '新增城市',
+                onClear: () {
+                  print(255555);
+                },
                 forceRefresh: true,
                 onAdd: (keyword) async {
                   final controller = TextEditingController(text: keyword);

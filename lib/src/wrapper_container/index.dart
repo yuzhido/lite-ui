@@ -58,6 +58,9 @@ class WrapperContainer extends StatelessWidget {
   /// 多选模式下的选中值集合（非空时后缀显示 close 图标）
   final List<String>? selectedValues;
 
+  /// 有值时点击清除回调（透传给 SuffixIconLabel）
+  final VoidCallback? onClear;
+
   const WrapperContainer({
     super.key,
     this.onTap,
@@ -75,56 +78,60 @@ class WrapperContainer extends StatelessWidget {
     this.isExpanded,
     this.selectedValue,
     this.selectedValues,
+    this.onClear,
   });
 
   @override
   Widget build(BuildContext context) {
     final hasError = errorText != null && errorText!.isNotEmpty;
     final errorColor = LiteUITheme.of(context).errorColor;
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          contentPadding: EdgeInsets.all(0),
-          // 有错误时通过 label 显示错误文字，always 固定显示不触发浮动动画
-          label: (formLayout == FormLayout.column)
-              ? null
-              : hasError
-              ? Text(
-                  errorText!,
-                  style: TextStyle(fontSize: 16, color: errorColor, fontWeight: FontWeight.w500),
-                )
-              : null,
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          border: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
-          enabledBorder: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
-        ),
+    return InputDecorator(
+      decoration: InputDecoration(
+        contentPadding: EdgeInsets.all(0),
+        // 有错误时通过 label 显示错误文字，always 固定显示不触发浮动动画
+        label: (formLayout == FormLayout.column)
+            ? null
+            : hasError
+            ? Text(
+                errorText!,
+                style: TextStyle(fontSize: 16, color: errorColor, fontWeight: FontWeight.w500),
+              )
+            : null,
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        border: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
+        enabledBorder: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
+      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: onTap,
         child: SizedBox(
           height: 48,
           child: Row(
             children: [
-              PrefixIconLabel(required: required ?? false, prefixIcon: prefixIcon, label: formLabel ?? '表单标签'),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: ShowContent(
-                    errorText: errorText,
-                    valueLabels: valueLabels,
-                    valueText: valueText,
-                    hintText: hintText,
-                    formLabel: formLabel,
-                    displayMode: displayMode,
-                    maxShowTags: maxShowTags,
-                    valueBuilder: valueBuilder,
-                  ),
+                child: Row(
+                  children: [
+                    PrefixIconLabel(required: required ?? false, prefixIcon: prefixIcon, label: formLabel ?? '表单标签'),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: ShowContent(
+                          errorText: errorText,
+                          valueLabels: valueLabels,
+                          valueText: valueText,
+                          hintText: hintText,
+                          formLabel: formLabel,
+                          displayMode: displayMode,
+                          maxShowTags: maxShowTags,
+                          valueBuilder: valueBuilder,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SuffixIconLabel(
-                isExpanded: isExpanded ?? false,
-                selectedValue: selectedValue,
-                selectedValues: selectedValues,
-              ),
+              // 后缀图标区域独立于外层 GestureDetector，点击不会触发弹窗
+              SuffixIconLabel(isExpanded: isExpanded ?? false, onClear: onClear, selectedValue: selectedValue, selectedValues: selectedValues),
             ],
           ),
         ),

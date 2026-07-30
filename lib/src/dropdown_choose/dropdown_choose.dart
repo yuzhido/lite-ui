@@ -114,6 +114,11 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 不使用已有的缓存数据，也不会将本次结果写入缓存。
   final bool? forceRefresh;
 
+  /// 点击清除图标回调（有值时后缀 close 图标点击触发）
+  ///
+  /// 通常用于清空当前选中值，外部可在此回调中调用 setState 将 value/selectedValues 置空。
+  final VoidCallback? onClear;
+
   /// 显示一个从底部向上弹出的选择器弹窗
   ///
   /// [title] 主标题
@@ -239,6 +244,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.onConfirm,
     this.maxCount,
     this.forceRefresh,
+    this.onClear,
     this.onSaved,
     this.validator,
     this.autovalidateMode = AutovalidateMode.disabled,
@@ -275,6 +281,21 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   /// 弹窗是否展开
   bool _isExpanded = false;
 
+  /// 是否已内部清除（点击后缀 clear 图标后置为 true）
+  ///
+  /// 为 true 时 [_getAllLabels] 返回空列表，使组件立即显示为空。
+  /// 当外部 value/selectedValues 发生变化时自动重置。
+  bool _cleared = false;
+
+  @override
+  void didUpdateWidget(covariant DropdownChoose<V, D> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 外部 value 或 selectedValues 发生变化时，重置内部清除状态
+    if (widget.value != oldWidget.value || widget.selectedValues != oldWidget.selectedValues || widget.selectedItems != oldWidget.selectedItems) {
+      _cleared = false;
+    }
+  }
+
   /// 获取有效的选中值集合（优先 selectedValues，其次从 selectedItems 提取）
   Set<V>? _effectiveSelectedValues() {
     if (widget.selectedValues != null && widget.selectedValues!.isNotEmpty) {
@@ -286,7 +307,14 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
     return null;
   }
 
+  /// 弹窗打开时应使用的选中值（感知内部清除状态）
+  Set<V>? _modalSelectedValues() {
+    if (_cleared) return null;
+    return _effectiveSelectedValues();
+  }
+
   List<String> _getAllLabels() {
+    if (_cleared) return [];
     final allItems = <SelectItem<V, D>>[...?widget.items, ...?widget.selectedItems, ..._resolvedItems];
     final effectiveValues = _effectiveSelectedValues();
     if (widget.multiple) {
@@ -379,7 +407,15 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               isExpanded: _isExpanded,
               selectedValue: !widget.multiple ? (_getAllLabels().isNotEmpty ? _getAllLabels().first : null) : null,
               selectedValues: widget.multiple ? (_getAllLabels().isNotEmpty ? _getAllLabels() : null) : null,
+              onClear: () {
+                setState(() {
+                  _cleared = true;
+                  _resolvedItems = [];
+                });
+                widget.onClear?.call();
+              },
               onTap: () {
+                print(12121213131);
                 setState(() => _isExpanded = true);
                 DropdownChoose.show<V, D>(
                   context: context,
@@ -389,8 +425,8 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   // 远程模式：有缓存且非强制刷新则传缓存数据，否则传 null 触发请求
                   items: (widget.forceRefresh == true) ? null : (widget.items ?? _cachedRemoteItems),
                   multiple: widget.multiple,
-                  selectedValues: widget.multiple ? _effectiveSelectedValues() : (widget.value != null ? {widget.value as V} : null),
-                  selectedItems: widget.selectedItems,
+                  selectedValues: widget.multiple ? _modalSelectedValues() : (_cleared ? null : (widget.value != null ? {widget.value as V} : null)),
+                  selectedItems: _cleared ? null : widget.selectedItems,
                   showAdd: widget.showAdd,
                   addLabel: widget.addLabel,
                   onAdd: widget.onAdd,
@@ -404,11 +440,13 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                           }
                         },
                   onSelect: (value, data) {
+                    setState(() => _cleared = false);
                     widget.onSelect?.call(value, data);
                     _formFieldKey.currentState?.didChange(value?.toString() ?? '');
                   },
                   onConfirm: widget.multiple
                       ? (values, datas, items) {
+                          setState(() => _cleared = false);
                           widget.onConfirm?.call(values, datas, items);
                           // 自动缓存已选项完整数据（含 label），使表单字段能正确显示
                           setState(() {
