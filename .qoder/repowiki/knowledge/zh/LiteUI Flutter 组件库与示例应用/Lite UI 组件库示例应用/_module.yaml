@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: example_app
+title: Lite UI 组件库示例应用
+scope:
+    - example/
+source_files: []
+depends_on: []
+related_to:
+    - path: lite_ui_library
