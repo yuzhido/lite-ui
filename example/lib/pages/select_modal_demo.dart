@@ -19,7 +19,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.filterable,
       title: '选择城市',
-      description: '本地过滤选择，点击即选中',
+      subTitle: '本地过滤选择，点击即选中',
       items: SelectModalMockData.cityItems,
       searchHint: '输入城市名搜索',
       onSelect: (value, data) {
@@ -34,7 +34,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.filterable,
       title: '选择多个城市',
-      description: '支持多选，点击确认后返回',
+      subTitle: '支持多选，点击确认后返回',
       items: SelectModalMockData.cityItems,
       multiple: true,
       searchHint: '输入城市名搜索',
@@ -51,7 +51,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.filterable,
       title: '选择城市（带初始选中）',
-      description: '部分城市已预选',
+      subTitle: '部分城市已预选',
       items: SelectModalMockData.cityItems,
       multiple: true,
       selectedValues: const {'beijing', 'shanghai'},
@@ -69,7 +69,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.filterable,
       title: '选择操作',
-      description: '每个选项带有图标',
+      subTitle: '每个选项带有图标',
       items: SelectModalMockData.iconItems,
       searchHint: '输入关键字搜索',
       onSelect: (value, data) {
@@ -121,7 +121,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.filterable,
       title: '选择操作',
-      description: '部分操作不可用',
+      subTitle: '部分操作不可用',
       items: disabledItems,
       searchHint: '输入关键字搜索',
       onSelect: (value, data) {
@@ -136,15 +136,14 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.remote,
       title: '远程搜索城市',
-      description: '模拟异步搜索，支持防抖',
+      subTitle: '模拟异步搜索，支持防抖',
       searchHint: '输入关键字远程搜索',
-      onSearch: (keyword) async {
+      onRemoteSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
         if (keyword.isEmpty) return SelectModalMockData.cityItems;
         final kw = keyword.toLowerCase();
         return SelectModalMockData.cityItems.where((item) {
-          return item.label.toLowerCase().contains(kw) ||
-              (item.subtitle?.toLowerCase().contains(kw) ?? false);
+          return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
       onSelect: (value, data) {
@@ -159,16 +158,15 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.remote,
       title: '远程搜索多个城市',
-      description: '支持多选，点击确认后返回',
+      subTitle: '支持多选，点击确认后返回',
       searchHint: '输入关键字远程搜索',
       multiple: true,
-      onSearch: (keyword) async {
+      onRemoteSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
         if (keyword.isEmpty) return SelectModalMockData.cityItems;
         final kw = keyword.toLowerCase();
         return SelectModalMockData.cityItems.where((item) {
-          return item.label.toLowerCase().contains(kw) ||
-              (item.subtitle?.toLowerCase().contains(kw) ?? false);
+          return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
       onConfirm: (values, datas) {
@@ -184,16 +182,15 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.remote,
       title: '远程搜索城市（带初始数据）',
-      description: '打开时显示初始数据，搜索时远程获取',
+      subTitle: '打开时显示初始数据，搜索时远程获取',
       searchHint: '输入关键字远程搜索',
       items: SelectModalMockData.cityItems.sublist(0, 5),
-      onSearch: (keyword) async {
+      onRemoteSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
         if (keyword.isEmpty) return SelectModalMockData.cityItems;
         final kw = keyword.toLowerCase();
         return SelectModalMockData.cityItems.where((item) {
-          return item.label.toLowerCase().contains(kw) ||
-              (item.subtitle?.toLowerCase().contains(kw) ?? false);
+          return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
       onSelect: (value, data) {
@@ -208,18 +205,17 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.remote,
       title: '远程搜索城市（带初始选中）',
-      description: '部分城市已预选',
+      subTitle: '部分城市已预选',
       searchHint: '输入关键字远程搜索',
       multiple: true,
       selectedValues: const {'beijing', 'shanghai'},
       items: SelectModalMockData.cityItems,
-      onSearch: (keyword) async {
+      onRemoteSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
         if (keyword.isEmpty) return SelectModalMockData.cityItems;
         final kw = keyword.toLowerCase();
         return SelectModalMockData.cityItems.where((item) {
-          return item.label.toLowerCase().contains(kw) ||
-              (item.subtitle?.toLowerCase().contains(kw) ?? false);
+          return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
       onConfirm: (values, datas) {
@@ -235,16 +231,15 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       context: context,
       type: SelectModalType.remote,
       title: '远程搜索城市',
-      description: '自定义空状态提示',
+      subTitle: '自定义空状态提示',
       searchHint: '输入关键字远程搜索',
       emptyText: '没有找到匹配的城市',
-      onSearch: (keyword) async {
+      onRemoteSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
         if (keyword.isEmpty) return SelectModalMockData.cityItems;
         final kw = keyword.toLowerCase();
         return SelectModalMockData.cityItems.where((item) {
-          return item.label.toLowerCase().contains(kw) ||
-              (item.subtitle?.toLowerCase().contains(kw) ?? false);
+          return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
       onSelect: (value, data) {
@@ -256,10 +251,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('SelectModal 组件示例'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: AppBar(title: const Text('SelectModal 组件示例'), backgroundColor: Theme.of(context).colorScheme.inversePrimary),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -273,19 +265,11 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '选择结果',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                    Text('选择结果', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer)),
                     const SizedBox(height: 4),
                     Text(
                       _selectedResult,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -338,10 +322,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       onPressed: onPressed,
       icon: Icon(icon),
       label: Text(label),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        alignment: Alignment.centerLeft,
-      ),
+      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), alignment: Alignment.centerLeft),
     );
   }
 }

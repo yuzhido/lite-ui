@@ -8,7 +8,7 @@ import 'suffix_clear_icon.dart';
 /// 输入内容不会自动触发搜索，需点击搜索按钮。
 class InputSearch extends StatefulWidget {
   /// 搜索框提示文字
-  final String searchHint;
+  final String? searchHint;
 
   /// 搜索控制器
   final TextEditingController searchController;
@@ -30,16 +30,7 @@ class InputSearch extends StatefulWidget {
   /// 是否正在加载中（加载时禁用搜索按钮）
   final bool isLoading;
 
-  const InputSearch({
-    required this.searchHint,
-    required this.searchController,
-    this.onSearch,
-    this.onClear,
-    this.showClearButton = true,
-    this.keyword,
-    this.isLoading = false,
-    super.key,
-  });
+  const InputSearch({this.searchHint, required this.searchController, this.onSearch, this.onClear, this.showClearButton = true, this.keyword, this.isLoading = false, super.key});
 
   @override
   State<InputSearch> createState() => _InputSearchState();
@@ -75,7 +66,7 @@ class _InputSearchState extends State<InputSearch> {
                 controller: widget.searchController,
                 onSubmitted: (_) => _handleSearch(),
                 decoration: InputDecoration(
-                  hintText: widget.searchHint,
+                  hintText: widget.searchHint ?? '请输入关键字',
                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                   prefixIcon: Padding(
                     padding: EdgeInsetsGeometry.only(left: 10),

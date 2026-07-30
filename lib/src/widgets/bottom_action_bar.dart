@@ -7,6 +7,9 @@ class BottomActionBar extends StatelessWidget {
   /// 已选中数量
   final int selectedCount;
 
+  /// 多选最大可选数量，不传则无限制
+  final int? maxCount;
+
   /// 查看已选项回调（点击"已选 N 项"时触发）
   final VoidCallback? onViewSelected;
 
@@ -29,6 +32,7 @@ class BottomActionBar extends StatelessWidget {
     required this.selectedCount,
     required this.cancelLabel,
     required this.confirmLabel,
+    this.maxCount,
     this.onViewSelected,
     this.onCancel,
     this.onConfirm,
@@ -63,7 +67,7 @@ class BottomActionBar extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   foregroundColor: selectedCount > 0 ? theme.textTheme.bodyMedium?.color : theme.hintColor,
                 ),
-                label: Text('已选 $selectedCount 项', style: const TextStyle(fontSize: 14)),
+                label: Text(maxCount != null ? '已选 $selectedCount/$maxCount 项' : '已选 $selectedCount 项', style: const TextStyle(fontSize: 14)),
               ),
             ),
             // 右侧：按钮组

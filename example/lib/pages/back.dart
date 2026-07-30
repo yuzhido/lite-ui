@@ -200,7 +200,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '城市',
                 multiple: true,
-                values: _cities,
+                selectedValues: _cities,
                 onSaved: (v) => debugPrint('城市: $v'),
                 selectedItems: const [
                   SelectItem(label: '北京', value: 'bj', data: 1),
@@ -230,7 +230,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 formLabel: '城市',
                 multiple: true,
                 displayMode: DisplayMode.tags,
-                values: _citiesTags,
+                selectedValues: _citiesTags,
                 onSaved: (v) => debugPrint('城市tags: $v'),
                 onConfirm: (values, datas) {
                   setState(() => _citiesTags = values.toSet());
@@ -251,7 +251,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 multiple: true,
                 displayMode: DisplayMode.compact,
                 maxShowTags: 2,
-                values: _citiesCompact,
+                selectedValues: _citiesCompact,
                 onSaved: (v) => debugPrint('城市compact: $v'),
                 onConfirm: (values, datas) {
                   setState(() => _citiesCompact = values.toSet());

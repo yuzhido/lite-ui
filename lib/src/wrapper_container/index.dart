@@ -46,6 +46,9 @@ class WrapperContainer extends StatelessWidget {
   /// 表单布局方式
   final FormLayout? formLayout;
 
+  /// 前置图标
+  final Widget? prefixIcon;
+
   const WrapperContainer({
     super.key,
     this.onTap,
@@ -59,6 +62,7 @@ class WrapperContainer extends StatelessWidget {
     this.errorText,
     this.required,
     this.formLayout,
+    this.prefixIcon,
   });
 
   @override
@@ -88,7 +92,7 @@ class WrapperContainer extends StatelessWidget {
           height: 48,
           child: Row(
             children: [
-              PrefixIconLabel(required: required ?? false, label: formLabel ?? '表单标签'),
+              PrefixIconLabel(required: required ?? false, prefixIcon: prefixIcon, label: formLabel ?? '表单标签'),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5),

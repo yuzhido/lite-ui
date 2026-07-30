@@ -18,7 +18,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
   String? _region;
   int? _singleCity;
   SelectItem<int, AreaInfo>? _singleCityItem;
-  Set<int> _remoteCities = {};
+  Set<int> _remoteCities = {1918475623301, 1918475623303, 1918475623307, 1918475623312, 1918475623320};
   List<SelectItem<int, AreaInfo>> _remoteCitiesItems = [];
   Set<String> _cities = {};
   Set<String> _citiesTags = {};
@@ -29,6 +29,13 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
       _formKey.currentState?.save();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('表单验证通过')));
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _remoteCities.addAll([1918475623301, 1918475623303, 1918475623307, 1918475623312, 1918475623320]);
   }
 
   void _onReset() {
@@ -64,10 +71,11 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               // 0-1. 测试远程搜索 + 单选 + 新增功能
               DropdownChoose<int, AreaInfo>(
                 required: true,
-                formLabel: '城市(单选)',
+                formLabel: '城市单选',
                 value: _singleCity,
                 selectedItems: _singleCityItem != null ? [_singleCityItem!] : null,
                 type: SelectModalType.remote,
+                prefixIcon: const Icon(Icons.location_on),
                 showAdd: true,
                 addLabel: '新增城市',
                 onAdd: (keyword) async {
@@ -102,19 +110,20 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                     _singleCityItem = SelectItem(label: data?.name ?? '', value: value, data: data);
                   });
                 },
-                onSearch: (keyword) async {
+                onRemoteSearch: (keyword) async {
                   return getAsyncData(keyword: keyword);
                 },
               ),
-              // 0-2. 测试远程搜索模式（不传 items，通过 onSearch 异步获取）
+              // 0-2. 测试远程搜索模式（不传 items，通过 onRemoteSearch 异步获取）
               DropdownChoose<int, AreaInfo>(
                 required: true,
                 formLabel: '城市',
                 multiple: true,
-                values: _remoteCities,
-                selectedItems: _remoteCitiesItems,
+                selectedValues: _remoteCities,
+                // selectedItems: _remoteCitiesItems,
                 type: SelectModalType.remote,
                 showAdd: true,
+                maxCount: 5,
                 addLabel: '新增城市',
                 onAdd: (keyword) async {
                   final controller = TextEditingController(text: keyword);
@@ -142,13 +151,17 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   }
                 },
                 onSaved: (v) => debugPrint('城市: $v'),
-                onConfirm: (values, datas) {
+                onConfirm: (List<int> values, List<AreaInfo?> datas) {
+                  print('多选最后结果开始33333333333333');
+                  print(values);
+                  print(datas);
+                  print('多选最后结果结束33333333333333');
                   setState(() {
                     _remoteCities = values.toSet();
                     _remoteCitiesItems = List.generate(values.length, (i) => SelectItem(label: datas[i]?.name ?? '', value: values[i], data: datas[i]));
                   });
                 },
-                onSearch: (keyword) async {
+                onRemoteSearch: (keyword) async {
                   return getAsyncData(keyword: keyword);
                 },
               ),
@@ -299,7 +312,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '城市',
                 multiple: true,
-                values: _cities,
+                // selectedValues: _cities,
                 onSaved: (v) => debugPrint('城市: $v'),
                 selectedItems: const [
                   SelectItem(label: '北京', value: 'bj', data: 1),
@@ -329,7 +342,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 formLabel: '城市',
                 multiple: true,
                 displayMode: DisplayMode.tags,
-                values: _citiesTags,
+                selectedValues: _citiesTags,
                 onSaved: (v) => debugPrint('城市tags: $v'),
                 onConfirm: (values, datas) {
                   setState(() => _citiesTags = values.toSet());
@@ -350,7 +363,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 multiple: true,
                 displayMode: DisplayMode.compact,
                 maxShowTags: 2,
-                values: _citiesCompact,
+                selectedValues: _citiesCompact,
                 onSaved: (v) => debugPrint('城市compact: $v'),
                 onConfirm: (values, datas) {
                   setState(() => _citiesCompact = values.toSet());

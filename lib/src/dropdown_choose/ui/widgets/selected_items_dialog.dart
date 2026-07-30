@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// 已选项标签数据
-class SelectedItemLabel {
-  final dynamic value;
+class SelectedItemLabel<V> {
+  final V value;
   final String label;
   const SelectedItemLabel({required this.value, required this.label});
 }
@@ -11,32 +11,30 @@ class SelectedItemLabel {
 ///
 /// 展示当前已选中的项目列表，支持逐项移除。
 /// 内部维护列表状态，移除后自动刷新，全部移除后自动关闭。
-class SelectedItemsDialog extends StatefulWidget {
+class SelectedItemsDialog<V> extends StatefulWidget {
   /// 已选项列表
-  final List<SelectedItemLabel> items;
+  final List<SelectedItemLabel<V>> items;
 
   /// 移除某项的回调（传入原始 value）
-  final ValueChanged<dynamic>? onRemove;
+  final ValueChanged<V>? onRemove;
 
   const SelectedItemsDialog({required this.items, this.onRemove, super.key});
 
   /// 显示已选项弹窗
-  static void show<V>({required BuildContext context, required List<SelectedItemLabel> items, ValueChanged<dynamic>? onRemove}) {
+  static void show<V>({required BuildContext context, required List<SelectedItemLabel<V>> items, ValueChanged<V>? onRemove}) {
     showDialog(
       context: context,
-      builder: (ctx) => SelectedItemsDialog(items: items, onRemove: onRemove),
+      builder: (ctx) => SelectedItemsDialog<V>(items: items, onRemove: onRemove),
     );
   }
 
   @override
-  State<SelectedItemsDialog> createState() => _SelectedItemsDialogState();
+  State<SelectedItemsDialog<V>> createState() => _SelectedItemsDialogState<V>();
 }
 
-class _SelectedItemsDialogState extends State<SelectedItemsDialog> {
-  late List<SelectedItemLabel> _items;
-
-  /// 记录正在执行移除动画的 value，用于淡出效果
-  final Set<dynamic> _removingValues = {};
+class _SelectedItemsDialogState<V> extends State<SelectedItemsDialog<V>> {
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  late List<SelectedItemLabel<V>> _items;
 
   @override
   void initState() {
@@ -44,23 +42,34 @@ class _SelectedItemsDialogState extends State<SelectedItemsDialog> {
     _items = List.from(widget.items);
   }
 
-  void _handleRemove(dynamic value) {
-    // 先触发淡出动画
-    setState(() => _removingValues.add(value));
+  void _handleRemove(V value) {
+    final index = _items.indexWhere((item) => item.value == value);
+    if (index == -1) return;
 
-    Future.delayed(const Duration(milliseconds: 250), () {
-      if (!mounted) return;
-      setState(() {
-        _items.removeWhere((item) => item.value == value);
-        _removingValues.remove(value);
+    final removed = _items.removeAt(index);
+    _listKey.currentState?.removeItem(
+      index,
+      (context, animation) => SizeTransition(
+        sizeFactor: animation,
+        child: FadeTransition(
+          opacity: animation,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: _SelectedItemRow(label: removed.label, primary: Theme.of(context).colorScheme.primary),
+          ),
+        ),
+      ),
+      duration: const Duration(milliseconds: 250),
+    );
+    setState(() {}); // 刷新标题计数
+    widget.onRemove?.call(value);
+
+    // 全部移除后自动关闭
+    if (_items.isEmpty) {
+      Future.delayed(const Duration(milliseconds: 260), () {
+        if (mounted) Navigator.of(context).pop();
       });
-      widget.onRemove?.call(value);
-
-      // 全部移除后自动关闭
-      if (_items.isEmpty) {
-        Navigator.of(context).pop();
-      }
-    });
+    }
   }
 
   @override
@@ -140,25 +149,21 @@ class _SelectedItemsDialogState extends State<SelectedItemsDialog> {
                         ],
                       ),
                     )
-                  : ListView.builder(
+                  : AnimatedList(
+                      key: _listKey,
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                       shrinkWrap: true,
-                      itemCount: _items.length,
-                      itemBuilder: (context, index) {
+                      initialItemCount: _items.length,
+                      itemBuilder: (context, index, animation) {
                         final item = _items[index];
-                        final isRemoving = _removingValues.contains(item.value);
-                        return AnimatedOpacity(
-                          opacity: isRemoving ? 0.0 : 1.0,
-                          duration: const Duration(milliseconds: 220),
-                          child: AnimatedSize(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                            child: isRemoving
-                                ? const SizedBox.shrink()
-                                : Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 3),
-                                    child: _SelectedItemRow(label: item.label, primary: primary, onRemove: () => _handleRemove(item.value)),
-                                  ),
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SizeTransition(
+                            sizeFactor: animation,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: _SelectedItemRow(label: item.label, primary: primary, onRemove: () => _handleRemove(item.value)),
+                            ),
                           ),
                         );
                       },

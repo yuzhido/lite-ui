@@ -16,15 +16,18 @@ class DropdownChoose<V, D> extends StatefulWidget {
   final V? value;
 
   /// 当前选中的值集合（多选模式）
-  final Set<V>? values;
+  final Set<V>? selectedValues;
 
   /// 操作项列表
   final List<SelectItem<V, D>>? items;
 
-  /// 已选中项的完整数据（用于弹窗回显，确保之前选中的项在列表中可见）
+  /// 前置图标
+  final Widget? prefixIcon;
+
+  /// 已选中项的完整数据（用于「查看已选」弹窗回显 label）
   ///
-  /// 适用于编辑场景：当 items 为空或不包含已选值时（如 remote 模式），
-  /// 传入此参数可确保已选项在弹窗中显示并标记为选中。
+  /// 适用于编辑场景：当后端返回完整数据时传入，确保查看已选时能显示 label。
+  /// 与 selectedValues 同时传递时，长度必须相等。
   final List<SelectItem<V, D>>? selectedItems;
 
   /// 占位提示文字
@@ -39,17 +42,25 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 选择器模式，默认 [SelectModalType.filterable]（本地过滤）
   ///
   /// - [SelectModalType.filterable]：本地过滤选择器（直接传 items，组件内部过滤）
-  /// - [SelectModalType.remote]：远程搜索选择器（传 onSearch 异步搜索）
+  /// - [SelectModalType.remote]：远程搜索选择器（传 onRemoteSearch 异步搜索）
   final SelectModalType type;
 
   /// 远程搜索回调（remote 模式下必填），搜索时调用远程接口而非本地过滤
-  final RemoteSearchCallback<V, D>? onSearch;
+  final RemoteSearchCallback<V, D>? onRemoteSearch;
 
-  /// 单选回调（单选模式下使用）
+  /// 选中回调（单选/多选模式下点击项时均触发）
+  ///
+  /// 单选模式：触发后弹窗自动关闭
+  /// 多选模式：仅切换勾选状态，不关闭弹窗（最终确认由 [onConfirm] 处理）
   final OnSelectChange<V, D>? onSelect;
 
   /// 多选确认回调（多选模式下使用）
   final OnMultiSelectConfirm<V, D>? onConfirm;
+
+  /// 多选最大可选数量，不传则无限制
+  ///
+  /// 达到上限后列表项点击不再新增选中，但不影响取消选中。
+  final int? maxCount;
 
   // 保存函数
   final Function(String)? onSaved;
@@ -91,19 +102,19 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 显示一个从底部向上弹出的选择器弹窗
   ///
   /// [title] 主标题
-  /// [description] 副标题/描述
+  /// [subTitle] 副标题/描述
   /// [items] 选项列表数据（直接传递给 SelectModalContent）
   /// [multiple] 是否多选模式，默认 false（单选）
   /// [selectedValues] 初始选中项的 value 集合
   /// [selectedItems] 已选中项的完整数据（确保回显时这些项一定出现在列表中）
-  /// [onSelect] 单选回调（返回 value 和 data）
+  /// [onSelect] 选中回调（单选/多选均触发，返回当前点击项的 value 和 data）
   /// [onConfirm] 多选确认回调（返回 values 和 datas）
   /// [searchHint] 搜索框提示文字
   /// [cancelLabel] 取消按钮文字
   /// [confirmLabel] 确定按钮文字
   ///
   /// --- remote 专属参数 ---
-  /// [onSearch] 远程搜索回调（传入后启用远程搜索模式）
+  /// [onRemoteSearch] 远程搜索回调（传入后启用远程搜索模式）
   /// [emptyText] 空状态提示文字
   ///
   /// --- 新增功能参数 ---
@@ -114,19 +125,20 @@ class DropdownChoose<V, D> extends StatefulWidget {
     required BuildContext context,
     SelectModalType type = SelectModalType.filterable,
     String? title,
-    String? description,
+    String? subTitle,
     List<SelectItem<V, D>>? items,
     bool multiple = false,
     Set<V>? selectedValues,
     List<SelectItem<V, D>>? selectedItems,
     OnSelectChange<V, D>? onSelect,
     OnMultiSelectConfirm<V, D>? onConfirm,
-    String searchHint = '搜索',
+    int? maxCount,
+    String? searchHint,
     String cancelLabel = '取消',
     String confirmLabel = '确定',
 
     // remote 专属
-    RemoteSearchCallback<V, D>? onSearch,
+    RemoteSearchCallback<V, D>? onRemoteSearch,
     String emptyText = '暂无数据',
 
     // 新增功能
@@ -134,6 +146,10 @@ class DropdownChoose<V, D> extends StatefulWidget {
     String addLabel = '新增',
     Future<void> Function(String keyword)? onAdd,
   }) {
+    assert((items != null) ^ (onRemoteSearch != null), 'items 和 onRemoteSearch 必须且只能传递一个：传 items 为本地数据模式，传 onRemoteSearch 为远程搜索模式');
+    assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
+    assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效');
+    assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
     return showModalBottomSheet<V>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -147,15 +163,16 @@ class DropdownChoose<V, D> extends StatefulWidget {
             constraints: constraints,
             child: SelectModalContent<V, D>(
               title: title,
-              description: description,
+              subTitle: subTitle,
               type: type,
-              items: items ?? [],
-              onSearch: onSearch,
+              items: items,
+              onRemoteSearch: onRemoteSearch,
               multiple: multiple,
               selectedValues: selectedValues,
               selectedItems: selectedItems,
               onSelect: onSelect,
               onConfirm: onConfirm,
+              maxCount: maxCount,
               searchHint: searchHint,
               cancelLabel: cancelLabel,
               confirmLabel: confirmLabel,
@@ -174,14 +191,14 @@ class DropdownChoose<V, D> extends StatefulWidget {
     super.key,
     required this.formLabel,
     this.value,
-    this.values,
+    this.selectedValues,
     this.items,
     this.selectedItems,
     this.hintText,
     this.required = false,
     this.multiple = false,
     this.type = SelectModalType.filterable,
-    this.onSearch,
+    this.onRemoteSearch,
     this.displayMode = DisplayMode.text,
     this.maxShowTags = 3,
     this.valueBuilder,
@@ -190,11 +207,16 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.onAdd,
     this.onSelect,
     this.onConfirm,
+    this.maxCount,
     this.onSaved,
     this.validator,
     this.autovalidateMode = AutovalidateMode.disabled,
     this.formLayout = FormLayout.row,
-  });
+    this.prefixIcon,
+  }) : assert((items != null) ^ (onRemoteSearch != null), 'items 和 onRemoteSearch 必须且只能传递一个：传 items 为本地数据模式，传 onRemoteSearch 为远程搜索模式'),
+       assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
+       assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
+       assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
 
   @override
   State<DropdownChoose<V, D>> createState() => _DropdownChooseState<V, D>();
@@ -207,9 +229,9 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   List<String> _getAllLabels() {
     final allItems = <SelectItem<V, D>>[...?widget.items, ...?widget.selectedItems];
     if (widget.multiple) {
-      if (widget.values == null || widget.values!.isEmpty) return [];
+      if (widget.selectedValues == null || widget.selectedValues!.isEmpty) return [];
       final labels = <String>[];
-      for (final v in widget.values!) {
+      for (final v in widget.selectedValues!) {
         for (final item in allItems) {
           if (item.value == v) {
             labels.add(item.label);
@@ -232,12 +254,12 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
     if (widget.required != true) return null;
     if (widget.validator != null) {
       if (widget.multiple) {
-        return widget.validator!((widget.values?.isEmpty ?? true) ? null : widget.values!.join(','));
+        return widget.validator!((widget.selectedValues?.isEmpty ?? true) ? null : widget.selectedValues!.join(','));
       }
       return widget.validator!(widget.value?.toString());
     }
     if (widget.multiple) {
-      if (widget.values == null || widget.values!.isEmpty) {
+      if (widget.selectedValues == null || widget.selectedValues!.isEmpty) {
         return '${widget.formLabel}是必填项不能为空';
       }
     } else {
@@ -254,10 +276,10 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
       key: _formFieldKey,
       validator: widget.required ? defaultValid : null,
       autovalidateMode: widget.autovalidateMode,
-      initialValue: widget.multiple ? (widget.values?.join(',') ?? '') : (widget.value?.toString() ?? ''),
+      initialValue: widget.multiple ? (widget.selectedValues?.join(',') ?? '') : (widget.value?.toString() ?? ''),
       onSaved: (value) {
         if (widget.multiple) {
-          widget.onSaved?.call(widget.values?.join(',') ?? '');
+          widget.onSaved?.call(widget.selectedValues?.join(',') ?? '');
         } else {
           widget.onSaved?.call(widget.value?.toString() ?? '');
         }
@@ -281,6 +303,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               formLayout: widget.formLayout,
               errorText: state.errorText,
               required: widget.required,
+              prefixIcon: widget.prefixIcon,
               formLabel: widget.formLabel,
               valueLabels: _getAllLabels(),
               displayMode: widget.displayMode,
@@ -291,11 +314,11 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                 DropdownChoose.show<V, D>(
                   context: context,
                   type: widget.type,
-                  onSearch: widget.onSearch,
+                  onRemoteSearch: widget.onRemoteSearch,
                   title: '请选择${widget.formLabel}',
                   items: widget.items,
                   multiple: widget.multiple,
-                  selectedValues: widget.multiple ? widget.values : (widget.value != null ? {widget.value as V} : null),
+                  selectedValues: widget.multiple ? widget.selectedValues : (widget.value != null ? {widget.value as V} : null),
                   selectedItems: widget.selectedItems,
                   showAdd: widget.showAdd,
                   addLabel: widget.addLabel,
@@ -304,10 +327,13 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                     widget.onSelect?.call(value, data);
                     _formFieldKey.currentState?.didChange(value?.toString() ?? '');
                   },
-                  onConfirm: (values, datas) {
-                    widget.onConfirm?.call(values, datas);
-                    _formFieldKey.currentState?.didChange(values.join(','));
-                  },
+                  onConfirm: widget.multiple
+                      ? (values, datas) {
+                          widget.onConfirm?.call(values, datas);
+                          _formFieldKey.currentState?.didChange(values.join(','));
+                        }
+                      : null,
+                  maxCount: widget.maxCount,
                 );
               },
             ),
