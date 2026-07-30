@@ -108,6 +108,12 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 参数为 value → label 的映射，仅包含本次新解析到的项。
   final void Function(Map<V, String> resolvedLabels)? onLabelsResolved;
 
+  /// 强制刷新，不使用缓存
+  ///
+  /// 默认为 null（启用缓存）；设为 true 时每次打开弹窗都重新获取远程数据，
+  /// 不使用已有的缓存数据，也不会将本次结果写入缓存。
+  final bool? forceRefresh;
+
   /// 显示一个从底部向上弹出的选择器弹窗
   ///
   /// [title] 主标题
@@ -157,9 +163,17 @@ class DropdownChoose<V, D> extends StatefulWidget {
 
     // label 解析回调
     void Function(Map<V, String> resolvedLabels)? onLabelsResolved,
+
+    // 数据加载完成回调（用于外部缓存）
+    void Function(List<SelectItem<V, D>> data)? onDataLoaded,
+
+    // 强制刷新
+    bool? forceRefresh,
   }) {
-    assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items');
-    assert(type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null, '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch');
+    assert(
+      type == SelectModalType.remote ? onRemoteSearch != null : (items != null && onRemoteSearch == null),
+      '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)必须传递 items 且不能传递 onRemoteSearch',
+    );
     assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
     assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效');
     assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
@@ -194,6 +208,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
               addLabel: addLabel,
               onAdd: onAdd,
               onLabelsResolved: onLabelsResolved,
+              onDataLoaded: onDataLoaded,
             ),
           ),
         );
@@ -223,6 +238,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.onSelect,
     this.onConfirm,
     this.maxCount,
+    this.forceRefresh,
     this.onSaved,
     this.validator,
     this.autovalidateMode = AutovalidateMode.disabled,
@@ -249,6 +265,12 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   /// 当用户未传递 selectedItems 时，通过 onConfirm 返回的 datas 自动构建，
   /// 使表单字段能正确显示 label 而非 ID。
   List<SelectItem<V, D>> _resolvedItems = [];
+
+  /// 远程模式首次加载成功的初始数据缓存
+  ///
+  /// 首次打开弹窗加载成功且数据非空时缓存，后续打开直接使用，避免重复远程请求。
+  /// 若首次加载失败或返回空数据，则不缓存，每次打开仍重新请求。
+  List<SelectItem<V, D>>? _cachedRemoteItems;
 
   /// 获取有效的选中值集合（优先 selectedValues，其次从 selectedItems 提取）
   Set<V>? _effectiveSelectedValues() {
@@ -357,7 +379,8 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   type: widget.type,
                   onRemoteSearch: widget.onRemoteSearch,
                   title: '请选择${widget.formLabel}',
-                  items: widget.items,
+                  // 远程模式：有缓存且非强制刷新则传缓存数据，否则传 null 触发请求
+                  items: (widget.forceRefresh == true) ? null : (widget.items ?? _cachedRemoteItems),
                   multiple: widget.multiple,
                   selectedValues: widget.multiple ? _effectiveSelectedValues() : (widget.value != null ? {widget.value as V} : null),
                   selectedItems: widget.selectedItems,
@@ -365,6 +388,14 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   addLabel: widget.addLabel,
                   onAdd: widget.onAdd,
                   onLabelsResolved: widget.onLabelsResolved,
+                  onDataLoaded: (widget.forceRefresh == true)
+                      ? null
+                      : (data) {
+                          // 仅缓存首次加载结果（之前未缓存过）
+                          if (_cachedRemoteItems == null) {
+                            setState(() => _cachedRemoteItems = data);
+                          }
+                        },
                   onSelect: (value, data) {
                     widget.onSelect?.call(value, data);
                     _formFieldKey.currentState?.didChange(value?.toString() ?? '');

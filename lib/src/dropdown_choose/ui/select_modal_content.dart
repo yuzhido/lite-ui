@@ -93,6 +93,12 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 参数为 value → label 的映射，仅包含本次新解析到的项。
   final void Function(Map<V, String> resolvedLabels)? onLabelsResolved;
 
+  /// 首次加载数据成功时通知外部缓存
+  ///
+  /// 仅在远程模式首次加载（keyword 为空）且结果非空时触发，
+  /// 外部可据此缓存数据，下次打开弹窗直接使用，避免重复请求。
+  final void Function(List<SelectItem<V, D>> data)? onDataLoaded;
+
   const SelectModalContent({
     super.key,
     this.title,
@@ -114,10 +120,10 @@ class SelectModalContent<V, D> extends StatefulWidget {
     this.addLabel = '新增',
     this.onAdd,
     this.onLabelsResolved,
-  }) : assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
-       assert(
-         type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null,
-         '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch',
+    this.onDataLoaded,
+  }) : assert(
+         type == SelectModalType.remote ? onRemoteSearch != null : (items != null && onRemoteSearch == null),
+         '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)必须传递 items 且不能传递 onRemoteSearch',
        ),
        assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
        assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
@@ -196,6 +202,10 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
           });
           if (resolvedLabels.isNotEmpty) {
             widget.onLabelsResolved?.call(resolvedLabels);
+          }
+          // 首次加载（keyword 为空）且数据非空时，通知外部缓存
+          if (keyword.isEmpty && results.isNotEmpty) {
+            widget.onDataLoaded?.call(results);
           }
         }
       } catch (_) {

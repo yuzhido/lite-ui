@@ -94,6 +94,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 prefixIcon: const Icon(Icons.location_on),
                 showAdd: true,
                 addLabel: '新增城市',
+                forceRefresh: true,
                 onAdd: (keyword) async {
                   final controller = TextEditingController(text: keyword);
                   final result = await showDialog<String>(
