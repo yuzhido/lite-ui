@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lite_ui/src/models/enum.dart';
 import 'package:lite_ui/src/theme/index.dart';
 
+import 'content_tag.dart';
+
 /// 值显示内容组件
 ///
 /// 用于在表单容器中显示选中值的多种模式：
@@ -78,14 +80,14 @@ class ShowContent extends StatelessWidget {
       }
 
       // tags / compact 模式
-      final tagColor = const Color(0xFF3B82F6);
+      final tagColor = LiteUITheme.of(context).tagColor;
       final tagTextColor = Colors.white;
 
       if (mode == DisplayMode.tags) {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: labels.map((label) => ShowContentTag(label: label, bgColor: tagColor, textColor: tagTextColor)).toList(),
+            children: labels.map((label) => ContentTag(label: label, bgColor: tagColor, textColor: tagTextColor)).toList(),
           ),
         );
       }
@@ -95,7 +97,7 @@ class ShowContent extends StatelessWidget {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: labels.map((label) => ShowContentTag(label: label, bgColor: tagColor, textColor: tagTextColor)).toList(),
+              children: labels.map((label) => ContentTag(label: label, bgColor: tagColor, textColor: tagTextColor)).toList(),
             ),
           );
         }
@@ -105,8 +107,8 @@ class ShowContent extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              ...visibleLabels.map((label) => ShowContentTag(label: label, bgColor: tagColor, textColor: tagTextColor)),
-              ShowContentTag(label: '+$remaining', bgColor: tagColor.withValues(alpha: 0.6), textColor: tagTextColor),
+              ...visibleLabels.map((label) => ContentTag(label: label, bgColor: tagColor, textColor: tagTextColor)),
+              ContentTag(label: '+$remaining', bgColor: tagColor.withValues(alpha: 0.6), textColor: tagTextColor),
             ],
           ),
         );
@@ -128,22 +130,5 @@ class ShowContent extends StatelessWidget {
 
     // 4. 占位提示
     return Text(hintText ?? '请选择$formLabel', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).hintColor));
-  }
-}
-
-// tag
-class ShowContentTag extends StatelessWidget {
-  final String label;
-  final Color bgColor;
-  final Color textColor;
-  const ShowContentTag({super.key, required this.label, required this.bgColor, required this.textColor});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
-      child: Text(label, style: TextStyle(fontSize: 13, color: textColor)),
-    );
   }
 }

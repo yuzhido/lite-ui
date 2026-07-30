@@ -24,6 +24,9 @@ class LiteUIThemeData {
   /// 默认文字颜色  Colors.black87
   final Color textColor;
 
+  /// 标签背景颜色（用于 tags / compact 显示模式）
+  final Color tagColor;
+
   const LiteUIThemeData({
     this.borderColor = const Color(0xFFE2E8F0),
     this.errorColor = const Color(0xFFEF4444),
@@ -31,6 +34,7 @@ class LiteUIThemeData {
     this.borderRadius = 5,
     this.hintColor = const Color(0x61000000),
     this.textColor = Colors.black87,
+    this.tagColor = const Color(0xFF64748B),
   });
 
   /// 默认主题数据

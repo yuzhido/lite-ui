@@ -107,27 +107,19 @@ class WrapperContainer extends StatelessWidget {
         child: SizedBox(
           height: 48,
           child: Row(
+            spacing: 5,
             children: [
+              PrefixIconLabel(required: required ?? false, prefixIcon: prefixIcon, label: formLabel ?? '表单标签'),
               Expanded(
-                child: Row(
-                  children: [
-                    PrefixIconLabel(required: required ?? false, prefixIcon: prefixIcon, label: formLabel ?? '表单标签'),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: ShowContent(
-                          errorText: errorText,
-                          valueLabels: valueLabels,
-                          valueText: valueText,
-                          hintText: hintText,
-                          formLabel: formLabel,
-                          displayMode: displayMode,
-                          maxShowTags: maxShowTags,
-                          valueBuilder: valueBuilder,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: ShowContent(
+                  errorText: errorText,
+                  valueLabels: valueLabels,
+                  valueText: valueText,
+                  hintText: hintText,
+                  formLabel: formLabel,
+                  displayMode: displayMode,
+                  maxShowTags: maxShowTags,
+                  valueBuilder: valueBuilder,
                 ),
               ),
               // 后缀图标区域独立于外层 GestureDetector，点击不会触发弹窗
