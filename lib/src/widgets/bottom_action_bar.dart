@@ -28,6 +28,15 @@ class BottomActionBar extends StatelessWidget {
   /// 选中数量为 0 时是否禁用确认按钮，默认 true
   final bool disableWhenEmpty;
 
+  /// 确认按钮背景色，不传则使用默认蓝色
+  final Color? confirmButtonColor;
+
+  /// 确认按钮文字/图标颜色，不传则使用白色
+  final Color? confirmButtonTextColor;
+
+  /// 取消按钮文字/边框颜色，不传则使用灰色
+  final Color? cancelButtonColor;
+
   const BottomActionBar({
     required this.selectedCount,
     required this.cancelLabel,
@@ -37,6 +46,9 @@ class BottomActionBar extends StatelessWidget {
     this.onCancel,
     this.onConfirm,
     this.disableWhenEmpty = true,
+    this.confirmButtonColor,
+    this.confirmButtonTextColor,
+    this.cancelButtonColor,
     super.key,
   });
 
@@ -44,6 +56,9 @@ class BottomActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final canConfirm = !disableWhenEmpty || selectedCount > 0;
+    final confirmBg = confirmButtonColor ?? const Color(0xFF007AFF);
+    final confirmFg = confirmButtonTextColor ?? Colors.white;
+    final cancelFg = cancelButtonColor ?? const Color(0xFF666666);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -86,7 +101,7 @@ class BottomActionBar extends StatelessWidget {
                         padding: EdgeInsets.symmetric(horizontal: 12),
                         side: BorderSide(color: theme.colorScheme.outlineVariant),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        foregroundColor: theme.textTheme.bodyMedium?.color,
+                        foregroundColor: cancelFg,
                       ),
                       label: Text(cancelLabel, style: const TextStyle(fontSize: 14)),
                     ),
@@ -99,8 +114,8 @@ class BottomActionBar extends StatelessWidget {
                         onPressed: canConfirm ? onConfirm : null,
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(horizontal: 20),
-                          backgroundColor: canConfirm ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
-                          foregroundColor: canConfirm ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
+                          backgroundColor: canConfirm ? confirmBg : theme.colorScheme.surfaceContainerHighest,
+                          foregroundColor: canConfirm ? confirmFg : theme.colorScheme.onSurfaceVariant,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),

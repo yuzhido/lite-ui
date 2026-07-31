@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import '../widgets/keyword_highlight.dart';
 
-import 'model.dart';
-import 'ui/tree_select.dart';
+import 'models/index.dart';
+import 'ui/tree_select_content.dart';
 
 /// 树形选择器便捷方法
 ///
-/// 提供 [show]（单选）和 [showMultiple]（多选）两个静态方法，
+/// 提供统一的 [show] 静态方法，支持单选和多选模式，
 /// 一行代码弹出底部树形选择面板。
 class TreeSelectHelper {
   TreeSelectHelper._();
 
-  /// 显示树形选择器弹窗（单选模式）
+  /// 显示树形选择器弹窗
   ///
-  /// 选中节点后自动关闭并返回该节点，取消返回 null。
+  /// 单选模式（[multiple] = false）：选中节点后自动关闭，返回该节点，取消返回 null。
+  /// 多选模式（[multiple] = true）：通过 [onConfirm] 回调返回选中节点列表。
   ///
-  /// [selectedId] 预选中的节点ID，传 null 表示无预选中。
+  /// [selectedIds] 预选中的节点ID集合。
   static Future<TreeNode<T>?> show<T extends Object>({
     required BuildContext context,
     required List<TreeNode<T>> treeData,
@@ -23,14 +24,22 @@ class TreeSelectHelper {
     String searchHint = '搜索...',
     String emptyText = '暂无数据',
     bool showSearch = true,
+    bool multiple = false,
     bool parentSelectable = false,
-    T? selectedId,
+    Set<T> selectedIds = const {},
     TreeNodeTapCallback<T>? onSelect,
+    TreeNodeSelectCallback<T>? onConfirm,
     TreeNodeLoadChildrenCallback<T>? onLoadChildren,
     String cancelLabel = '取消',
     String confirmLabel = '确定',
     KeywordHighlightStyle? highlightStyle,
+    Color? searchButtonColor,
+    Color? searchButtonTextColor,
+    Color? confirmButtonColor,
+    Color? confirmButtonTextColor,
+    Color? cancelButtonColor,
   }) {
+    assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
     return showModalBottomSheet<TreeNode<T>>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -40,75 +49,26 @@ class TreeSelectHelper {
         return SafeArea(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: screenHeight * 0.75, minHeight: screenHeight * 0.5),
-            child: TreeSelect<T>(
+            child: TreeModalContent<T>(
               treeData: treeData,
-              config: TreeSelectConfig<T>(
-                title: title,
-                searchHint: searchHint,
-                emptyText: emptyText,
-                showSearch: showSearch,
-                multiple: false,
-                parentSelectable: parentSelectable,
-                selectedIds: selectedId != null ? {selectedId} : const {},
-                onSelect: onSelect,
-                onLoadChildren: onLoadChildren,
-                cancelLabel: cancelLabel,
-                confirmLabel: confirmLabel,
-                highlightStyle: highlightStyle,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// 显示树形选择器弹窗（多选模式）
-  ///
-  /// 用户选择完成后点击"确定"关闭，返回选中的节点列表，取消返回 null。
-  ///
-  /// [selectedIds] 预选中的节点ID列表，内部自动转为 Set。
-  /// 可直接传入后端返回的 ID 列表，无需手动转换。
-  static Future<List<TreeNode<T>>?> showMultiple<T extends Object>({
-    required BuildContext context,
-    required List<TreeNode<T>> treeData,
-    String title = '请选择',
-    String searchHint = '搜索...',
-    String emptyText = '暂无数据',
-    bool showSearch = true,
-    bool parentSelectable = false,
-    List<T> selectedIds = const [],
-    TreeNodeSelectCallback<T>? onConfirm,
-    TreeNodeLoadChildrenCallback<T>? onLoadChildren,
-    String cancelLabel = '取消',
-    String confirmLabel = '确定',
-    KeywordHighlightStyle? highlightStyle,
-  }) {
-    return showModalBottomSheet<List<TreeNode<T>>>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) {
-        final screenHeight = MediaQuery.of(ctx).size.height;
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: screenHeight * 0.75, minHeight: screenHeight * 0.5),
-            child: TreeSelect<T>(
-              treeData: treeData,
-              config: TreeSelectConfig<T>(
-                title: title,
-                searchHint: searchHint,
-                emptyText: emptyText,
-                showSearch: showSearch,
-                multiple: true,
-                parentSelectable: parentSelectable,
-                selectedIds: selectedIds.toSet(),
-                onConfirm: onConfirm,
-                onLoadChildren: onLoadChildren,
-                cancelLabel: cancelLabel,
-                confirmLabel: confirmLabel,
-                highlightStyle: highlightStyle,
-              ),
+              title: title,
+              searchHint: searchHint,
+              emptyText: emptyText,
+              showSearch: showSearch,
+              multiple: multiple,
+              parentSelectable: parentSelectable,
+              selectedIds: selectedIds,
+              onSelect: onSelect,
+              onConfirm: onConfirm,
+              onLoadChildren: onLoadChildren,
+              cancelLabel: cancelLabel,
+              confirmLabel: confirmLabel,
+              highlightStyle: highlightStyle,
+              searchButtonColor: searchButtonColor,
+              searchButtonTextColor: searchButtonTextColor,
+              confirmButtonColor: confirmButtonColor,
+              confirmButtonTextColor: confirmButtonTextColor,
+              cancelButtonColor: cancelButtonColor,
             ),
           ),
         );

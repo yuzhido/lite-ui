@@ -30,7 +30,13 @@ class InputSearch extends StatefulWidget {
   /// 是否正在加载中（加载时禁用搜索按钮）
   final bool isLoading;
 
-  const InputSearch({this.searchHint, required this.searchController, this.onSearch, this.onClear, this.showClearButton = true, this.keyword, this.isLoading = false, super.key});
+  /// 搜索按钮背景色，不传则使用主题色
+  final Color? searchButtonColor;
+
+  /// 搜索按钮文字/图标颜色，不传则使用白色
+  final Color? searchButtonTextColor;
+
+  const InputSearch({this.searchHint, required this.searchController, this.onSearch, this.onClear, this.showClearButton = true, this.keyword, this.isLoading = false, this.searchButtonColor, this.searchButtonTextColor, super.key});
 
   @override
   State<InputSearch> createState() => _InputSearchState();
@@ -52,6 +58,8 @@ class _InputSearchState extends State<InputSearch> {
   @override
   Widget build(BuildContext context) {
     final hasKeyword = (widget.keyword ?? '').isNotEmpty;
+    final searchBg = widget.searchButtonColor ?? const Color(0xFF007AFF);
+    final searchFg = widget.searchButtonTextColor ?? Colors.white;
     return Container(
       height: 45,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -92,15 +100,15 @@ class _InputSearchState extends State<InputSearch> {
           SizedBox(
             child: ElevatedButton.icon(
               icon: widget.isLoading
-                  ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary))
+                  ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: searchFg))
                   : Icon(Icons.search_rounded),
               onPressed: widget.isLoading ? null : _handleSearch,
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
-                disabledForegroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6),
+                backgroundColor: searchBg,
+                foregroundColor: searchFg,
+                disabledBackgroundColor: searchBg.withValues(alpha: 0.5),
+                disabledForegroundColor: searchFg.withValues(alpha: 0.5),
                 iconSize: 20,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),

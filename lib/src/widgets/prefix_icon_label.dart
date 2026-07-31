@@ -11,12 +11,11 @@ class PrefixIconLabel extends StatelessWidget {
   const PrefixIconLabel({required this.label, this.required = false, super.key, this.labelWidth, this.prefixIcon, this.prefixIconData, this.prefixIconColor});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(left: 5),
-      child: Stack(
-        children: [
-          // 主要内容
-          Container(
+    return Stack(
+      children: [
+        Container(
+          margin: EdgeInsets.only(left: 5),
+          child: Container(
             color: Colors.transparent,
             padding: EdgeInsets.symmetric(horizontal: 5),
             child: Row(
@@ -31,19 +30,20 @@ class PrefixIconLabel extends StatelessWidget {
               ],
             ),
           ),
-          // 是否必填
-          if (required)
-            Positioned(
-              // top: 0,
-              bottom: 0,
-              child: Text(
-                '*',
-                strutStyle: StrutStyle(leading: 0, forceStrutHeight: true),
-                style: TextStyle(color: Colors.red, fontSize: 16, height: 1),
-              ),
+        ),
+
+        // 是否必填
+        if (required)
+          Positioned(
+            left: 3,
+            bottom: 0,
+            child: Text(
+              '*',
+              strutStyle: StrutStyle(leading: 0, forceStrutHeight: true),
+              style: TextStyle(color: Colors.red, fontSize: 16, height: 1),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

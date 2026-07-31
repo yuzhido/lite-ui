@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/keyword_highlight.dart';
 
-import '../model.dart';
-import '../tree_utils.dart';
+import '../models/index.dart';
+import '../utils/index.dart';
 
 /// 纯展示型树形列表组件
 ///

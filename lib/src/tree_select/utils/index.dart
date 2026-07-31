@@ -1,4 +1,4 @@
-import 'model.dart';
+import '../models/index.dart';
 
 /// 树形结构操作工具类
 ///
