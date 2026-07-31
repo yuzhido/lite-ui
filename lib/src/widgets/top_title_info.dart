@@ -44,6 +44,8 @@ class TopTitleInfo extends StatelessWidget {
                 if (subTitle != null)
                   Text(
                     subTitle ?? '--',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF999999)),
                   ),
               ],

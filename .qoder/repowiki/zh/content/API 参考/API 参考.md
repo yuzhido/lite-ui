@@ -16,7 +16,6 @@
 </cite>
 
 ## 目录
-
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
@@ -29,11 +28,9 @@
 10. [附录：版本与兼容性](#附录版本与兼容性)
 
 ## 简介
-
 Lite UI 是一个轻量级 Flutter UI 组件库，提供常用弹窗、按钮、表单控件、文件上传等能力。组件具备高可配置性、支持泛型适配业务数据类型，并内置主题与校验工具，便于快速集成与扩展。
 
 ## 项目结构
-
 - 入口导出统一在 lite_ui.dart，集中暴露各组件、模型、枚举与工具类。
 - 各组件按功能模块划分在 lib/src 下，每个模块包含 index.dart 作为对外导出入口。
 - 示例工程位于 example/，用于演示用法与集成方式。
@@ -50,18 +47,14 @@ A --> H["input_text/index.dart"]
 A --> I["dropdown_choose/index.dart"]
 ```
 
-**图表来源**
-
+**图表来源** 
 - [lite_ui.dart:1-19](file://lib/lite_ui.dart#L1-L19)
 
 **章节来源**
-
 - [lite_ui.dart:1-19](file://lib/lite_ui.dart#L1-L19)
 
 ## 核心组件
-
 本库提供以下核心组件（均通过 lite_ui.dart 统一导出）：
-
 - ActionButton：操作按钮，支持多种样式与异步加载态
 - ActionSheet：底部操作面板，支持普通列表与分组模式
 - DialogAction：居中弹窗，支持 alert/confirm/input/multiAction/custom
@@ -72,14 +65,11 @@ A --> I["dropdown_choose/index.dart"]
 - DropdownChoose：底部选择器，支持本地过滤与远程搜索
 
 **章节来源**
-
 - [lite_ui.dart:1-19](file://lib/lite_ui.dart#L1-L19)
 - [README.md:24-126](file://README.md#L24-L126)
 
 ## 架构总览
-
 组件整体采用“壳子 + 内容”的解耦设计：
-
 - 弹窗类组件（DialogAction、ActionSheet、DropdownChoose）负责弹出壳子与生命周期管理，具体内容由内部子组件渲染。
 - 表单类组件（InputText、InputNumber、FileUpload）封装交互与校验逻辑，并通过回调与父组件通信。
 - 通用数据模型与枚举集中在 models 与 utils 中，保证类型一致性与复用性。
@@ -223,8 +213,7 @@ class DropdownChoose~V,D~ {
 }
 ```
 
-**图表来源**
-
+**图表来源** 
 - [action_button.dart:43-94](file://lib/src/action_button/action_button.dart#L43-L94)
 - [action_sheet.dart:22-153](file://lib/src/action_sheet/action_sheet.dart#L22-L153)
 - [dialog_action.dart:24-131](file://lib/src/dialog_action/dialog_action.dart#L24-L131)
@@ -237,7 +226,6 @@ class DropdownChoose~V,D~ {
 ## 详细组件分析
 
 ### ActionButton（操作按钮）
-
 - 构造函数参数
   - type：按钮类型，默认 elevated；可选 elevated/outlined/text/filled/toned/icon
   - text：按钮文字（icon 类型时忽略）
@@ -271,16 +259,13 @@ AB-->>U : "直接执行"
 end
 ```
 
-**图表来源**
-
+**图表来源** 
 - [action_button.dart:96-175](file://lib/src/action_button/action_button.dart#L96-L175)
 
 **章节来源**
-
 - [action_button.dart:43-208](file://lib/src/action_button/action_button.dart#L43-L208)
 
 ### ActionSheet（底部操作面板）
-
 - 构造函数参数
   - child：自定义触发器（不传则使用默认触发器 UI）
   - formLabel：表单标签（默认触发器模式使用）
@@ -311,16 +296,13 @@ AS->>FS : "didChange(value.toString())"
 C-->>AS : "Navigator.pop(value)"
 ```
 
-**图表来源**
-
+**图表来源** 
 - [action_sheet.dart:155-254](file://lib/src/action_sheet/action_sheet.dart#L155-L254)
 
 **章节来源**
-
 - [action_sheet.dart:22-255](file://lib/src/action_sheet/action_sheet.dart#L22-L255)
 
 ### DialogAction（居中弹窗）
-
 - 静态方法 show<V>(...)
   - type：弹窗类型（alert/confirm/input/multiAction/custom）
   - title/content：标题与内容
@@ -348,16 +330,13 @@ DA->>DLG : "showDialog(builder=内容组件)"
 DLG-->>Caller : "pop(value) 或 void"
 ```
 
-**图表来源**
-
+**图表来源** 
 - [dialog_action.dart:56-131](file://lib/src/dialog_action/dialog_action.dart#L56-L131)
 
 **章节来源**
-
 - [dialog_action.dart:24-248](file://lib/src/dialog_action/dialog_action.dart#L24-L248)
 
 ### EmptyData（空状态占位）
-
 - 构造函数参数
   - type：场景类型（空数据、无权限、网络错误、搜索无结果等）
   - style：布局风格（default/compact/card/minimal）
@@ -373,11 +352,9 @@ DLG-->>Caller : "pop(value) 或 void"
   - 自定义 actionWidget 优先级高于 actionLabel
 
 **章节来源**
-
 - [empty_data_content.dart:26-167](file://lib/src/empty_data/empty_data_content.dart#L26-L167)
 
 ### FileUpload（文件上传）
-
 - 构造函数参数
   - pickFile：选择器类型（file/gallery/camera/imageOrCamera/all）
   - multiple：是否多选，默认 true
@@ -421,17 +398,14 @@ Success --> |是| OnSuccess["onFileChanged(success)"]
 Success --> |否| OnFailed["onFileChanged(failed)"]
 ```
 
-**图表来源**
-
+**图表来源** 
 - [file_upload.dart:379-383](file://lib/src/file_upload/file_upload.dart#L379-L383)
 - [file_upload.dart:341-375](file://lib/src/file_upload/file_upload.dart#L341-L375)
 
 **章节来源**
-
 - [file_upload.dart:15-594](file://lib/src/file_upload/file_upload.dart#L15-L594)
 
 ### InputNumber（数字步进器）
-
 - 构造函数参数
   - value：当前值（必填）
   - onChanged：值变化回调
@@ -449,11 +423,9 @@ Success --> |否| OnFailed["onFileChanged(failed)"]
   - 禁用状态下无法操作
 
 **章节来源**
-
 - [input_number.dart:21-307](file://lib/src/input_number/input_number.dart#L21-L307)
 
 ### InputText（文本输入框）
-
 - 构造函数参数
   - label/formLabel/hintText：标签、表单标签、提示文字
   - prefixIcon/suffixIcon：前后置图标（Widget 或 IconData）
@@ -473,11 +445,9 @@ Success --> |否| OnFailed["onFileChanged(failed)"]
   - 外部传入 controller 时需自行 dispose
 
 **章节来源**
-
 - [input_text.dart:15-365](file://lib/src/input_text/input_text.dart#L15-L365)
 
 ### DropdownChoose（底部选择器）
-
 - 构造函数参数
   - formLabel：表单标签
   - value/selectedValues：单选值或多选值集合
@@ -501,23 +471,20 @@ Success --> |否| OnFailed["onFileChanged(failed)"]
 sequenceDiagram
 participant Caller as "调用方"
 participant DC as "DropdownChoose"
-participant SM as "ModalContent"
+participant SM as "SelectModalContent"
 Caller->>DC : "点击触发器"
 DC->>SM : "showModalBottomSheet(...)"
 SM-->>Caller : "onSelect(value,data) / onConfirm(values,datas,items)"
 Caller-->>DC : "didChange(value.toString()/values.join(','))"
 ```
 
-**图表来源**
-
+**图表来源** 
 - [dropdown_choose.dart:314-391](file://lib/src/dropdown_choose/dropdown_choose.dart#L314-L391)
 
 **章节来源**
-
 - [dropdown_choose.dart:11-392](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L392)
 
 ## 依赖关系分析
-
 - 包依赖
   - flutter：框架依赖
   - image_picker：图片选择与拍照
@@ -541,8 +508,7 @@ IT["InputText"] --> IFmt["InputFormat"]
 IN["InputNumber"] --> IFmt
 ```
 
-**图表来源**
-
+**图表来源** 
 - [pubspec.yaml:1-21](file://pubspec.yaml#L1-L21)
 - [dropdown_choose.dart:1-10](file://lib/src/dropdown_choose/dropdown_choose.dart#L1-L10)
 - [action_sheet.dart:1-8](file://lib/src/action_sheet/action_sheet.dart#L1-L8)
@@ -550,11 +516,9 @@ IN["InputNumber"] --> IFmt
 - [input_text.dart:1-12](file://lib/src/input_text/input_text.dart#L1-L12)
 
 **章节来源**
-
 - [pubspec.yaml:1-21](file://pubspec.yaml#L1-L21)
 
 ## 性能与可用性建议
-
 - 避免频繁 rebuild：对于大数据量选择器，优先使用 remote 模式并按需分页加载。
 - 合理使用受控模式：表单字段受控时注意 state 更新粒度，避免不必要的重建。
 - 文件上传并发控制：通过 UploadConfig.maxConcurrent 控制并发，避免阻塞主线程。
@@ -564,7 +528,6 @@ IN["InputNumber"] --> IFmt
 [本节为通用指导，无需引用具体文件]
 
 ## 故障排查指南
-
 - ActionButton 点击无响应
   - 检查 disabled 与 loading 状态
   - 确认 onPressed 是否为空
@@ -582,7 +545,6 @@ IN["InputNumber"] --> IFmt
   - 检查输入格式化与提交处理
 
 **章节来源**
-
 - [action_button.dart:96-175](file://lib/src/action_button/action_button.dart#L96-L175)
 - [action_sheet.dart:196-254](file://lib/src/action_sheet/action_sheet.dart#L196-L254)
 - [file_upload.dart:341-375](file://lib/src/file_upload/file_upload.dart#L341-L375)
@@ -590,18 +552,15 @@ IN["InputNumber"] --> IFmt
 - [input_number.dart:153-162](file://lib/src/input_number/input_number.dart#L153-L162)
 
 ## 结论
-
 Lite UI 提供了丰富且易用的 UI 组件，涵盖按钮、弹窗、表单与文件上传等常见场景。通过统一的导出与清晰的 API 设计，开发者可以快速集成并定制。建议在复杂场景中结合远程搜索与并发控制优化性能，并利用内置校验与主题提升一致性。
 
 [本节为总结，无需引用具体文件]
 
 ## 附录：版本与兼容性
-
 - 包版本：1.2.0
 - SDK 要求：^3.12.2
 - Flutter 要求：>=1.17.0
 - 主要依赖：image_picker 1.2.3、file_picker 12.0.0-beta.7
 
 **章节来源**
-
 - [pubspec.yaml:1-21](file://pubspec.yaml#L1-L21)

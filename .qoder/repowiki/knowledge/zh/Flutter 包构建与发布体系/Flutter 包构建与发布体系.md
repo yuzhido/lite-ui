@@ -6,33 +6,32 @@ scope:
     - '**'
 source_files:
     - pubspec.yaml
-    - example/pubspec.yaml
     - analysis_options.yaml
-    - example/android/app/build.gradle.kts
-    - example/android/settings.gradle.kts
+    - example/pubspec.yaml
 ---
 
-该仓库是一个基于 Flutter 的轻量级 UI 组件库，构建系统完全依赖 Flutter/Dart 官方工具链，采用标准的 pub 包管理方式，没有自定义 Makefile、Dockerfile 或 CI 脚本。
+该仓库是一个标准的 Flutter 包（package），采用 Flutter/Dart 官方推荐的包结构，没有自定义的 Makefile、Dockerfile 或 CI/CD 脚本。构建系统完全依赖 Flutter SDK 和 pub 包管理器。
 
-**构建系统与工具**
-- 使用 `pubspec.yaml` 统一声明包元数据、依赖版本和 SDK 约束（SDK ^3.12.2, flutter >=1.17.0）
-- 通过 `flutter pub get` 拉取依赖，`flutter build` 生成各平台产物
-- 代码质量检查使用 `flutter_lints`，配置在根目录 `analysis_options.yaml` 中继承 `package:flutter_lints/flutter.yaml`
-- 测试框架为 `flutter_test`，位于 `dev_dependencies` 中
+**核心构建配置**
+- `pubspec.yaml`：定义包名 lite_ui、版本 1.2.0、SDK 约束 ^3.12.2、依赖 file_picker 和 image_picker
+- `analysis_options.yaml`：继承 flutter_lints 进行代码分析
+- `example/`：示例应用通过 path 引用本地包，用于开发时验证组件
 
-**包结构与发布策略**
-- 根目录 `pubspec.yaml` 定义可发布包 `lite_ui`（当前版本 1.2.0），包含业务组件源码于 `lib/src/`
-- `example/` 子项目作为演示应用，通过 `path: ../` 引用本地 lite_ui 包进行开发调试
-- 示例应用独立维护自己的 `pubspec.yaml`，`publish_to: 'none'` 表明仅用于本地演示
+**构建流程**
+- 使用 `flutter pub get` 获取依赖
+- 使用 `flutter test` 运行测试
+- 使用 `flutter analyze` 执行静态分析
+- 使用 `flutter build` 生成各平台产物
+- 使用 `dart pub publish` 发布到 pub.dev
 
-**多平台构建支持**
-- Android：Gradle Kotlin DSL (`build.gradle.kts`) + Gradle Wrapper (9.1.0)，JVM Target 17
-- iOS/macOS：Xcode 工程文件（`.xcodeproj`/`.xcworkspace`）+ `.xcconfig` 配置文件
-- Linux/Windows：CMake 构建系统，由 Flutter 工具链自动生成
-- Web：标准 `web/index.html` + `manifest.json` 配置
+**跨平台支持**
+- Android：Gradle (Kotlin DSL)
+- iOS：Xcode 工程
+- Web：标准 Flutter Web 构建
+- Linux/macOS/Windows：CMake 原生构建
 
-**开发者约定**
-- 新增组件应放在 `lib/src/` 下，并通过 `lib/lite_ui.dart` 统一导出
-- 依赖版本需严格锁定在 `pubspec.yaml` 中，避免隐式升级导致兼容性问题
-- 示例代码应在 `example/lib/` 中按功能模块组织页面
-- 无自动化 CI/CD 流水线，发布流程依赖手动执行 `flutter pub publish`
+**约定**
+- 无自动化 CI/CD 配置
+- 无 Docker 化部署
+- 无自定义构建脚本
+- 遵循 Flutter 包的标准目录结构和命名规范
