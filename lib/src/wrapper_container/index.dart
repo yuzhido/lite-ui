@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ui/src/models/enum.dart';
+import 'package:lite_ui/src/models/select_item.dart';
 import 'package:lite_ui/src/theme/index.dart';
 import 'package:lite_ui/src/widgets/border_builder.dart';
 import 'package:lite_ui/src/widgets/prefix_icon_label.dart';
@@ -10,7 +11,7 @@ import 'show_content.dart';
 /// 包装容器
 ///
 /// 用于包装其他组件，提供表单标签 + 值显示 + 后缀图标的统一布局
-class WrapperContainer extends StatelessWidget {
+class WrapperContainer<V, D> extends StatelessWidget {
   /// 点击回调
   final VoidCallback? onTap;
 
@@ -20,9 +21,6 @@ class WrapperContainer extends StatelessWidget {
   /// 选中的值文本（中间显示，有值时高亮色）
   final String? valueText;
 
-  /// 选中值的 label 列表（用于 displayMode 渲染）
-  final List<String>? valueLabels;
-
   /// 值显示模式，默认 [DisplayMode.text]
   final DisplayMode displayMode;
 
@@ -31,8 +29,8 @@ class WrapperContainer extends StatelessWidget {
 
   /// 自定义值显示 Widget 构建器（优先级最高）
   ///
-  /// 传入后忽略 [displayMode] 的默认逻辑，[labels] 为当前所有选中值的 label 列表。
-  final Widget Function(List<String> labels)? valueBuilder;
+  /// 传入后忽略 [displayMode] 的默认逻辑，[items] 为当前所有选中值的 label 列表。
+  final Widget Function(List<SelectItem<V, D>> items)? valueBuilder;
 
   /// 占位提示文字（无值时显示）
   final String? hintText;
@@ -52,21 +50,19 @@ class WrapperContainer extends StatelessWidget {
   /// 是否展开（弹窗打开状态），用于切换后缀图标
   final bool? isExpanded;
 
-  /// 单选模式下的选中值（有值时后缀显示 close 图标）
-  final String? selectedValue;
-
-  /// 多选模式下的选中值集合（非空时后缀显示 close 图标）
-  final List<String>? selectedValues;
-
   /// 有值时点击清除回调（透传给 SuffixIconLabel）
   final VoidCallback? onClear;
+
+  // ===========================-----------====================
+  final List<SelectItem<V, D>> selectItems;
+
+  // ===========================-----------====================
 
   const WrapperContainer({
     super.key,
     this.onTap,
     this.formLabel,
     this.valueText,
-    this.valueLabels,
     this.displayMode = DisplayMode.text,
     this.maxShowTags = 3,
     this.valueBuilder,
@@ -76,9 +72,8 @@ class WrapperContainer extends StatelessWidget {
     this.formLayout,
     this.prefixIcon,
     this.isExpanded,
-    this.selectedValue,
-    this.selectedValues,
     this.onClear,
+    required this.selectItems,
   });
 
   @override
@@ -112,8 +107,8 @@ class WrapperContainer extends StatelessWidget {
               PrefixIconLabel(required: required ?? false, prefixIcon: prefixIcon, label: formLabel ?? '表单标签'),
               Expanded(
                 child: ShowContent(
+                  selectItems: selectItems,
                   errorText: errorText,
-                  valueLabels: valueLabels,
                   valueText: valueText,
                   hintText: hintText,
                   formLabel: formLabel,
@@ -123,7 +118,7 @@ class WrapperContainer extends StatelessWidget {
                 ),
               ),
               // 后缀图标区域独立于外层 GestureDetector，点击不会触发弹窗
-              SuffixIconLabel(isExpanded: isExpanded ?? false, onClear: onClear, selectedValue: selectedValue, selectedValues: selectedValues),
+              SuffixIconLabel(isExpanded: isExpanded ?? false, onClear: onClear, hasValue: selectItems.isNotEmpty == true),
             ],
           ),
         ),

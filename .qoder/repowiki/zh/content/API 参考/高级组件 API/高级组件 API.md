@@ -8,7 +8,9 @@
 - [index.dart（file_upload）](file://lib/src/file_upload/index.dart)
 - [dropdown_choose.dart](file://lib/src/dropdown_choose/dropdown_choose.dart)
 - [wrapper_container/index.dart](file://lib/src/wrapper_container/index.dart)
+- [show_content.dart](file://lib/src/wrapper_container/show_content.dart)
 - [suffix_icon_label.dart](file://lib/src/widgets/suffix_icon_label.dart)
+- [content_tag.dart](file://lib/src/wrapper_container/content_tag.dart)
 - [select_item.dart](file://lib/src/models/select_item.dart)
 - [callbacks.dart](file://lib/src/models/callbacks.dart)
 - [enum.dart（models）](file://lib/src/models/enum.dart)
@@ -19,10 +21,10 @@
 
 ## 更新摘要
 **已进行的更改**   
-- 更新了 DropdownChoose 组件的 onClear 回调功能说明
-- 新增了弹窗状态管理和动态后缀图标切换功能的详细说明
-- 完善了清除后弹窗选中状态同步机制的技术细节
-- 增强了 WrapperContainer 和 SuffixIconLabel 的状态驱动图标切换逻辑
+- 更新了 show_content 组件的文本溢出处理能力说明，为错误消息和占位符文本添加了 maxLines: 1 和 overflow: TextOverflow.ellipsis 属性
+- 完善了 WrapperContainer 组件中 ShowContent 的使用方式说明
+- 增强了长文本内容的布局稳定性保障机制
+- 优化了表单字段中长文本显示的用户体验
 
 ## 目录
 1. [简介](#简介)
@@ -39,7 +41,7 @@
 ## 简介
 本文件为 Lite UI 高级组件的权威 API 文档，聚焦以下复杂组件：
 - 文件上传 FileUpload：支持多模式选择、自动/手动/自定义上传、进度回调、头像模式等。
-- 下拉选择 DropdownChoose：本地过滤与远程搜索双模式、多选确认、标签展示、新增扩展点、清除回调、动态后缀图标。
+- 下拉选择 DropdownChoose：本地过滤与远程搜索双模式、多选确认、标签展示、新增扩展点、清除回调、动态后缀图标、FormField 集成优化。
 - 树形选择 TreeSelect：懒加载子节点、搜索高亮、父子联动、单选/多选交互。
 
 文档涵盖接口规范、参数说明、事件回调、状态管理、性能优化、内存管理与第三方集成方式，并提供可视化架构图与流程图，帮助开发者快速上手并高效使用。
@@ -69,7 +71,7 @@ A --> G["src/utils/input_regex.dart"]
 ## 核心组件
 本节概览三大高级组件的职责与能力边界：
 - FileUpload：文件选择、预览、删除、替换、上传控制（自动/手动/自定义）、进度与状态回调、头像模式。
-- DropdownChoose：表单字段封装、本地过滤与远程搜索、多选确认、值展示模式（文本/标签/紧凑）、新增扩展、清除回调、动态后缀图标。
+- DropdownChoose：表单字段封装、本地过滤与远程搜索、多选确认、值展示模式（文本/标签/紧凑）、新增扩展、清除回调、动态后缀图标、FormField 集成优化。
 - TreeSelect：树形数据弹窗、搜索过滤与高亮、懒加载、父子联动、单选/多选确认。
 
 章节来源
@@ -98,6 +100,8 @@ class DropdownChoose~V,D~ {
 +属性 : formLabel, value/selectedValues, items, type, displayMode...
 +静态 : show(context,...)
 +回调 : onSelect(value,data), onConfirm(values,datas,items), onClear()
++内部状态 : _cleared, _resolvedItems, _isExpanded
++方法 : _modalSelectedValues(), _effectiveSelectedValues()
 }
 class TreeSelect~T~ {
 +属性 : treeData, config(TreeSelectConfig)
@@ -115,16 +119,33 @@ class WrapperContainer {
 +selectedValues : List<String>?
 +onClear : VoidCallback?
 }
+class ShowContent {
++errorText : String?
++valueLabels : List<String>?
++valueText : String?
++hintText : String?
++formLabel : String?
++displayMode : DisplayMode
++maxShowTags : int
++valueBuilder : Widget Function(List<String>)?
+}
 class SuffixIconLabel {
 +selectedValue : String?
 +selectedValues : List<String>?
 +isExpanded : bool
 +onClear : VoidCallback?
 }
+class ContentTag {
++label : String
++bgColor : Color
++textColor : Color
+}
 FileUpload --> UploadConfig : "使用"
 DropdownChoose --> SelectItem : "使用"
 DropdownChoose --> WrapperContainer : "使用"
+WrapperContainer --> ShowContent : "使用"
 WrapperContainer --> SuffixIconLabel : "使用"
+ShowContent --> ContentTag : "使用"
 TreeSelect --> TreeNode : "使用"
 ```
 
@@ -133,7 +154,9 @@ TreeSelect --> TreeNode : "使用"
 - [upload_config.dart:38-99](file://lib/src/file_upload/model/upload_config.dart#L38-L99)
 - [dropdown_choose.dart:11-248](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L248)
 - [wrapper_container/index.dart:10-82](file://lib/src/wrapper_container/index.dart#L10-L82)
+- [show_content.dart:13-50](file://lib/src/wrapper_container/show_content.dart#L13-L50)
 - [suffix_icon_label.dart:3-11](file://lib/src/widgets/suffix_icon_label.dart#L3-L11)
+- [content_tag.dart:4-8](file://lib/src/wrapper_container/content_tag.dart#L4-L8)
 - [tree_select.dart（UI）:17-28](file://lib/src/tree_select/ui/tree_select.dart#L17-L28)
 - [model.dart（tree_select）:11-44](file://lib/src/tree_select/model.dart#L11-L44)
 - [select_item.dart:9-77](file://lib/src/models/select_item.dart#L9-L77)
@@ -213,6 +236,7 @@ FU-->>U : onFileChanged(success/failed)
   - 已选回显：selectedItems 与 selectedValues 协同，确保 label 正确显示。
   - **清除功能**：onClear 回调支持清空选中值，动态后缀图标根据状态切换。
   - **状态管理**：内部 _cleared 状态确保清除后弹窗选中状态同步。
+  - **FormField 集成优化**：增强的状态同步机制，解决验证后回显异常和清除后验证不生效问题。
 
 - 关键参数与行为
   - type：filterable/remote，约束 items 与 onRemoteSearch 的使用。
@@ -230,21 +254,57 @@ FU-->>U : onFileChanged(success/failed)
 
 - **新增功能详解**
 
-#### 清除回调与状态管理
+#### FormField 状态同步机制优化
+**更新** 修复了 DropdownChoose 组件中 FormField 内部状态与实际选中值不同步的问题：
+
 ```mermaid
 flowchart TD
-Start(["用户点击清除图标"]) --> SetCleared["_cleared = true<br/>_resolvedItems = []"]
-SetCleared --> UpdateUI["立即刷新UI显示为空"]
-UpdateUI --> CallOnClear["调用 widget.onClear()"]
-CallOnClear --> ExternalState["外部组件执行setState清空value/selectedValues"]
-ExternalState --> ResetCleared{"外部value/selectedValues变化?"}
-ResetCleared --> |是| ResetState["_cleared = false<br/>重置清除状态"]
-ResetCleared --> |否| End(["等待用户操作"])
+Start(["用户操作"]) --> CheckState{"检查操作类型"}
+CheckState --> |onSelect| UpdateInternal["_cleared = false<br/>调用 widget.onSelect()"]
+CheckState --> |onConfirm| UpdateInternal2["_cleared = false<br>_resolvedItems = items<br/>调用 widget.onConfirm()"]
+CheckState --> |onClear| ClearState["_cleared = true<br>_resolvedItems = []<br/>调用 widget.onClear()"]
+UpdateInternal --> SyncFormField["didUpdateWidget 统一处理<br/>_formFieldKey.currentState?.didChange(newValue)"]
+UpdateInternal2 --> SyncFormField
+ClearState --> DirectSync["直接同步空值<br/>_formFieldKey.currentState?.didChange('')"]
+SyncFormField --> Validate["触发表单验证"]
+DirectSync --> Validate
+Validate --> End(["完成"])
 ```
 
-**图表来源**   
-- [dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-L416)
-- [dropdown_choose.dart:291-297](file://lib/src/dropdown_choose/dropdown_choose.dart#L291-L297)
+**关键改进点：**
+1. **统一状态同步**：在 `didUpdateWidget` 中统一处理 FormField 状态同步，避免重复调用
+2. **清除功能增强**：onClear 回调中直接同步空值，确保验证能正确触发失败
+3. **智能判断**：根据 multiple 模式计算正确的 newValue 值
+
+**Section sources**   
+- [dropdown_choose.dart:291-302](file://lib/src/dropdown_choose/dropdown_choose.dart#L291-L302)
+- [dropdown_choose.dart:422-432](file://lib/src/dropdown_choose/dropdown_choose.dart#L422-L432)
+- [dropdown_choose.dart:458-472](file://lib/src/dropdown_choose/dropdown_choose.dart#L458-L472)
+
+#### 弹窗选中状态同步机制
+修复了清除后弹窗仍显示已选中项的问题：
+- 新增 `_modalSelectedValues()` 方法感知 `_cleared` 状态
+- 弹窗打开时使用 `_modalSelectedValues()` 而非 `_effectiveSelectedValues()`
+- 确保清除后弹窗不显示旧选中项
+
+```mermaid
+stateDiagram-v2
+[*] --> 正常状态
+正常状态 --> 清除状态 : 点击清除图标
+清除状态 --> 正常状态 : 外部value/selectedValues变化
+state 正常状态 {
+[*] --> 有选中值 : _effectiveSelectedValues()
+有选中值 --> 弹窗显示 : selectedValues非空
+}
+state 清除状态 {
+[*] --> 无选中值 : _modalSelectedValues()返回null
+无选中值 --> 弹窗清空 : selectedValues为空
+}
+```
+
+**Section sources**   
+- [dropdown_choose.dart:315-319](file://lib/src/dropdown_choose/dropdown_choose.dart#L315-L319)
+- [dropdown_choose.dart:444](file://lib/src/dropdown_choose/dropdown_choose.dart#L444)
 
 #### 动态后缀图标切换
 ```mermaid
@@ -266,19 +326,6 @@ state 展开状态 {
 **图表来源**   
 - [suffix_icon_label.dart:16-37](file://lib/src/widgets/suffix_icon_label.dart#L16-L37)
 - [wrapper_container/index.dart:125-126](file://lib/src/wrapper_container/index.dart#L125-L126)
-
-#### 弹窗选中状态同步机制
-修复了清除后弹窗仍显示已选中项的问题：
-- 新增 `_modalSelectedValues()` 方法感知 `_cleared` 状态
-- 弹窗打开时使用 `_modalSelectedValues()` 而非 `_effectiveSelectedValues()`
-- 确保清除后弹窗不显示旧选中项
-
-**Section sources**   
-- [dropdown_choose.dart:117-121](file://lib/src/dropdown_choose/dropdown_choose.dart#L117-L121)
-- [dropdown_choose.dart:310-314](file://lib/src/dropdown_choose/dropdown_choose.dart#L310-L314)
-- [dropdown_choose.dart:428](file://lib/src/dropdown_choose/dropdown_choose.dart#L428)
-- [wrapper_container/index.dart:52-62](file://lib/src/wrapper_container/index.dart#L52-L62)
-- [suffix_icon_label.dart:3-11](file://lib/src/widgets/suffix_icon_label.dart#L3-L11)
 
 - 典型流程（远程搜索）
 ```mermaid
@@ -305,9 +352,9 @@ DC-->>U : onClear 回调
 ```
 
 图表来源 
-- [dropdown_choose.dart:133-208](file://lib/src/dropdown_choose/dropdown_choose.dart#L133-L208)
-- [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-L410)
-- [dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-L416)
+- [dropdown_choose.dart:133-208](file://lib/src/dropdown_choose/dropdown_choose.dart#L133-208)
+- [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-410)
+- [dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-416)
 - [callbacks.dart:1-13](file://lib/src/models/callbacks.dart#L1-L13)
 
 - 性能与内存要点
@@ -318,7 +365,7 @@ DC-->>U : onClear 回调
 
 章节来源
 - [dropdown_choose.dart:11-248](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L248)
-- [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-L410)
+- [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-410)
 - [wrapper_container/index.dart:10-82](file://lib/src/wrapper_container/index.dart#L10-L82)
 - [suffix_icon_label.dart:1-39](file://lib/src/widgets/suffix_icon_label.dart#L1-L39)
 - [select_item.dart:9-77](file://lib/src/models/select_item.dart#L9-L77)
@@ -371,11 +418,89 @@ SelectSingle --> End
 - [tree_select.dart（UI）:88-170](file://lib/src/tree_select/ui/tree_select.dart#L88-L170)
 - [model.dart（tree_select）:59-122](file://lib/src/tree_select/model.dart#L59-L122)
 
+### ShowContent 内容显示组件
+- 能力概述
+  - 多种显示模式：text（单行文本）、tags（标签模式）、compact（紧凑模式）
+  - 优先级处理：自定义构建器 > 值标签 > 值文本 > 错误提示 > 占位提示
+  - **文本溢出处理**：所有文本内容均支持 maxLines: 1 和 overflow: TextOverflow.ellipsis，确保长文本不会破坏布局
+  - 主题适配：自动应用 LiteUITheme 的颜色配置
+
+- 关键参数与行为
+  - errorText：错误提示文字（有值时优先显示）
+  - valueLabels：选中值的 label 列表
+  - valueText：选中的值文本（无 labels 时使用）
+  - hintText：占位提示文字（无值时显示）
+  - formLabel：表单标签（用于占位提示）
+  - displayMode：值显示模式，默认 DisplayMode.text
+  - maxShowTags：compact 模式下最多显示的 tag 数，默认 3
+  - valueBuilder：自定义值显示 Widget 构建器（优先级最高）
+
+- **文本溢出处理增强**
+  **更新** ShowContent 组件现在为所有文本内容添加了文本溢出处理能力：
+
+```mermaid
+flowchart TD
+Start(["ShowContent 渲染"]) --> CheckValue{"是否有值标签?"}
+CheckValue --> |是| ModeCheck{"检查显示模式"}
+CheckValue --> |否| CheckValueText{"是否有值文本?"}
+ModeCheck --> |text| TextMode["单行文本 + ellipsis"]
+ModeCheck --> |tags| TagsMode["标签模式 + 横向滚动"]
+ModeCheck --> |compact| CompactMode["紧凑模式 + ellipsis"]
+CheckValueText --> |是| ValueTextMode["值文本 + ellipsis"]
+CheckValueText --> |否| CheckError{"是否有错误?"}
+CheckError --> |是| ErrorMode["错误提示 + ellipsis"]
+CheckError --> |否| HintMode["占位提示 + ellipsis"]
+TextMode --> End(["完成"])
+TagsMode --> End
+CompactMode --> End
+ValueTextMode --> End
+ErrorMode --> End
+HintMode --> End
+```
+
+**关键改进点：**
+1. **统一溢出处理**：所有 Text 组件都设置了 maxLines: 1 和 overflow: TextOverflow.ellipsis
+2. **布局稳定性**：确保长文本内容不会破坏整体布局
+3. **用户体验优化**：提供省略号提示，用户可以了解存在更多内容
+
+**Section sources**   
+- [show_content.dart:65-75](file://lib/src/wrapper_container/show_content.dart#L65-L75)
+- [show_content.dart:114-124](file://lib/src/wrapper_container/show_content.dart#L114-L124)
+- [show_content.dart:127-134](file://lib/src/wrapper_container/show_content.dart#L127-L134)
+- [show_content.dart:137-143](file://lib/src/wrapper_container/show_content.dart#L137-L143)
+
+- 典型使用场景
+```mermaid
+sequenceDiagram
+participant WC as "WrapperContainer"
+participant SC as "ShowContent"
+participant User as "用户"
+WC->>SC : 传递参数(errorText, valueLabels, valueText, hintText)
+SC->>SC : 判断显示优先级
+alt 有值标签
+SC-->>User : 按displayMode渲染标签
+else 有值文本
+SC-->>User : 显示值文本(带ellipsis)
+else 有错误
+SC-->>User : 显示错误提示(带ellipsis)
+else 占位
+SC-->>User : 显示占位提示(带ellipsis)
+end
+```
+
+**图表来源**   
+- [wrapper_container/index.dart:114-124](file://lib/src/wrapper_container/index.dart#L114-L124)
+- [show_content.dart:52-143](file://lib/src/wrapper_container/show_content.dart#L52-L143)
+
+章节来源
+- [show_content.dart:1-145](file://lib/src/wrapper_container/show_content.dart#L1-L145)
+- [wrapper_container/index.dart:114-124](file://lib/src/wrapper_container/index.dart#L114-L124)
+
 ## 依赖关系分析
 - 组件间耦合度低，各自通过独立的 index.dart 导出，便于按需引入。
 - 共享模型：SelectItem、回调类型、显示模式等在 models 中统一定义，保证一致性。
 - 主题与工具：theme 与 input_regex 提供通用能力，不侵入业务逻辑。
-- **新增依赖**：DropdownChoose 现在依赖 WrapperContainer 和 SuffixIconLabel 实现动态图标切换。
+- **新增依赖**：DropdownChoose 现在依赖 WrapperContainer 和 SuffixIconLabel 实现动态图标切换，WrapperContainer 依赖 ShowContent 实现内容显示。
 
 ```mermaid
 graph LR
@@ -385,7 +510,9 @@ Models --> EN["enum.dart"]
 FU["file_upload/index.dart"] --> FC["file_upload.dart"]
 DC["dropdown_choose/index.dart"] --> DD["dropdown_choose.dart"]
 DD --> WC["wrapper_container/index.dart"]
+WC --> SC["show_content.dart"]
 WC --> SIL["suffix_icon_label.dart"]
+SC --> CT["content_tag.dart"]
 TS["tree_select/index.dart"] --> TU["ui/tree_select.dart"]
 ```
 
@@ -411,10 +538,15 @@ TS["tree_select/index.dart"] --> TU["ui/tree_select.dart"]
   - 缓存策略：首次加载成功后缓存 items，减少重复请求。
   - 标签展示：tags/compact 模式注意横向滚动性能，必要时虚拟化列表。
   - **状态管理优化**：清除状态管理避免不必要的重新计算，提升响应性能。
+  - **FormField 集成优化**：统一的状态同步机制减少重复计算，提升表单验证性能。
 - TreeSelect
   - 懒加载：仅在展开时加载子节点，避免一次性渲染整棵树。
   - 搜索优化：关键字匹配尽量在前端轻量完成；超大数据集建议后端过滤。
   - 数据结构：使用 cloneTree 保护原始数据，避免不必要的重新计算。
+- **ShowContent 性能优化**
+  - **文本溢出处理**：使用 maxLines: 1 和 TextOverflow.ellipsis 避免长文本导致的布局重排
+  - **条件渲染**：根据优先级快速决定显示内容，减少不必要的计算
+  - **主题适配**：通过 LiteUITheme 获取颜色，避免硬编码
 
 [本节为通用指导，无需特定文件引用]
 
@@ -429,20 +561,29 @@ TS["tree_select/index.dart"] --> TU["ui/tree_select.dart"]
   - 多选确认未触发：确认 multiple=true 且 onConfirm 已设置。
   - **清除功能异常**：确认 onClear 回调已设置；检查外部组件是否正确执行 setState 清空值。
   - **弹窗状态不同步**：确认 _cleared 状态管理正常；检查 _modalSelectedValues() 是否正确返回 null。
+  - **FormField 验证问题**：确认 didUpdateWidget 中的状态同步逻辑；检查 initialValue 计算是否正确。
   - **后缀图标不切换**：确认 isExpanded、selectedValue、selectedValues 参数传递正确。
 - TreeSelect
   - 懒加载无响应：检查 onLoadChildren 是否返回有效 children；确认 isLoading 状态重置。
   - 父子联动异常：确认 parentSelectable 配置是否符合预期；检查 selectedIds 同步逻辑。
+- **ShowContent 文本显示问题**
+  - **文本溢出**：确认所有 Text 组件都设置了 maxLines: 1 和 overflow: TextOverflow.ellipsis
+  - **布局错乱**：检查 wrapper_container 的高度设置是否足够容纳内容
+  - **主题颜色异常**：确认 LiteUITheme 是否正确配置
 
 章节来源
 - [file_upload.dart:341-375](file://lib/src/file_upload/file_upload.dart#L341-L375)
-- [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-L410)
+- [dropdown_choose.dart:250-410](file://lib/src/dropdown_choose/dropdown_choose.dart#L250-410)
 - [dropdown_choose.dart:410-416](file://lib/src/dropdown_choose/dropdown_choose.dart#L410-L416)
 - [suffix_icon_label.dart:16-37](file://lib/src/widgets/suffix_icon_label.dart#L16-L37)
 - [tree_select.dart（UI）:146-170](file://lib/src/tree_select/ui/tree_select.dart#L146-L170)
+- [show_content.dart:65-75](file://lib/src/wrapper_container/show_content.dart#L65-L75)
+- [show_content.dart:114-124](file://lib/src/wrapper_container/show_content.dart#L114-L124)
+- [show_content.dart:127-134](file://lib/src/wrapper_container/show_content.dart#L127-L134)
+- [show_content.dart:137-143](file://lib/src/wrapper_container/show_content.dart#L137-L143)
 
 ## 结论
-Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化。FileUpload 提供灵活的上传策略与状态管理；DropdownChoose 支持本地与远程双模式，兼顾易用性与扩展性，新增的清除回调和动态后缀图标功能进一步提升了用户体验；TreeSelect 通过懒加载与搜索高亮提升大数据集体验。遵循本文档的配置与最佳实践，可在复杂业务场景中稳定高效地使用这些组件。
+Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化。FileUpload 提供灵活的上传策略与状态管理；DropdownChoose 支持本地与远程双模式，兼顾易用性与扩展性，新增的清除回调、动态后缀图标功能和优化的 FormField 集成进一步提升了用户体验；TreeSelect 通过懒加载与搜索高亮提升大数据集体验。**ShowContent 组件的文本溢出处理增强确保了长文本内容的布局稳定性，提升了整体用户体验**。遵循本文档的配置与最佳实践，可在复杂业务场景中稳定高效地使用这些组件。
 
 [本节为总结，无需特定文件引用]
 
@@ -459,10 +600,15 @@ Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化
   - 选择：multiple、maxCount、onSelect、onConfirm
   - 扩展：showAdd、addLabel、onAdd、onLabelsResolved、onDataLoaded
   - **新增**：onClear（清除回调）
-  - **状态管理**：内部 _cleared 状态、_modalSelectedValues() 方法
+  - **状态管理**：内部 _cleared 状态、_modalSelectedValues() 方法、FormField 集成优化
 - TreeSelect
   - 数据：treeData（TreeNode 列表）
   - 配置：TreeSelectConfig（title/searchHint/emptyText/showSearch/multiple/selectedIds/onSelect/onConfirm/onLoadChildren/parentSelectable/highlightStyle）
+- **ShowContent**
+  - 显示模式：displayMode（text/tags/compact）
+  - 内容参数：errorText、valueLabels、valueText、hintText、formLabel
+  - 自定义：valueBuilder、maxShowTags
+  - **文本处理**：maxLines: 1、overflow: TextOverflow.ellipsis
 
 章节来源
 - [file_upload.dart:15-165](file://lib/src/file_upload/file_upload.dart#L15-L165)
@@ -470,4 +616,5 @@ Lite UI 的高级组件在设计上注重模块化、可扩展性与性能优化
 - [dropdown_choose.dart:11-248](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L248)
 - [wrapper_container/index.dart:52-62](file://lib/src/wrapper_container/index.dart#L52-L62)
 - [suffix_icon_label.dart:3-11](file://lib/src/widgets/suffix_icon_label.dart#L3-L11)
+- [show_content.dart:13-50](file://lib/src/wrapper_container/show_content.dart#L13-L50)
 - [model.dart（tree_select）:59-122](file://lib/src/tree_select/model.dart#L59-L122)

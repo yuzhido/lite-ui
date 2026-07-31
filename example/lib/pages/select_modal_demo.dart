@@ -22,7 +22,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       subTitle: '本地过滤选择，点击即选中',
       items: SelectModalMockData.cityItems,
       searchHint: '输入城市名搜索',
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '单选结果：$value');
       },
     );
@@ -54,7 +54,10 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       subTitle: '部分城市已预选',
       items: SelectModalMockData.cityItems,
       multiple: true,
-      selectedValues: const {'beijing', 'shanghai'},
+      selectedItems: const [
+        SelectItem(label: '北京', value: 'beijing'),
+        SelectItem(label: '上海', value: 'shanghai'),
+      ],
       searchHint: '输入城市名搜索',
       onConfirm: (values, datas, _) {
         final names = values.join('、');
@@ -72,7 +75,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       subTitle: '每个选项带有图标',
       items: SelectModalMockData.iconItems,
       searchHint: '输入关键字搜索',
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '图标选择：$value');
       },
     );
@@ -124,7 +127,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       subTitle: '部分操作不可用',
       items: disabledItems,
       searchHint: '输入关键字搜索',
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '禁用状态选择：$value');
       },
     );
@@ -146,7 +149,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
           return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '远程搜索结果：$value');
       },
     );
@@ -193,7 +196,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
           return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '带初始数据结果：$value');
       },
     );
@@ -208,7 +211,10 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
       subTitle: '部分城市已预选',
       searchHint: '输入关键字远程搜索',
       multiple: true,
-      selectedValues: const {'beijing', 'shanghai'},
+      selectedItems: const [
+        SelectItem(label: '北京', value: 'beijing'),
+        SelectItem(label: '上海', value: 'shanghai'),
+      ],
       items: SelectModalMockData.cityItems,
       onRemoteSearch: (keyword) async {
         await Future.delayed(const Duration(milliseconds: 500));
@@ -242,7 +248,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
           return item.label.toLowerCase().contains(kw) || (item.subtitle?.toLowerCase().contains(kw) ?? false);
         }).toList();
       },
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '自定义空状态结果：$value');
       },
     );

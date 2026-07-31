@@ -35,7 +35,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
           ],
         ),
       ],
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '分组选择：$value');
       },
     );
@@ -48,38 +48,13 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
       title: '操作菜单',
       description: '每个操作项带有图标',
       items: [
-        SelectItem.withIcon(
-          label: '拍照',
-          value: 'camera',
-          iconData: Icons.camera_alt,
-          iconColor: Colors.blue,
-        ),
-        SelectItem.withIcon(
-          label: '从相册选择',
-          value: 'album',
-          iconData: Icons.photo_library,
-          iconColor: Colors.green,
-        ),
-        SelectItem.withIcon(
-          label: '录制视频',
-          value: 'video',
-          iconData: Icons.videocam,
-          iconColor: Colors.red,
-        ),
-        SelectItem.withIcon(
-          label: '文件管理器',
-          value: 'files',
-          iconData: Icons.folder_open,
-          iconColor: Colors.orange,
-        ),
-        SelectItem.withIcon(
-          label: '收藏夹',
-          value: 'favorites',
-          iconData: Icons.star,
-          iconColor: Colors.amber,
-        ),
+        SelectItem.withIcon(label: '拍照', value: 'camera', iconData: Icons.camera_alt, iconColor: Colors.blue),
+        SelectItem.withIcon(label: '从相册选择', value: 'album', iconData: Icons.photo_library, iconColor: Colors.green),
+        SelectItem.withIcon(label: '录制视频', value: 'video', iconData: Icons.videocam, iconColor: Colors.red),
+        SelectItem.withIcon(label: '文件管理器', value: 'files', iconData: Icons.folder_open, iconColor: Colors.orange),
+        SelectItem.withIcon(label: '收藏夹', value: 'favorites', iconData: Icons.star, iconColor: Colors.amber),
       ],
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '图标选择：$value');
       },
     );
@@ -93,42 +68,13 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
       description: '部分操作不可用',
       showDisabledBadge: true,
       items: [
-        SelectItem.withIcon(
-          label: '拍照',
-          value: 'camera',
-          iconData: Icons.camera_alt,
-          iconColor: Colors.blue,
-        ),
-        SelectItem.withIcon(
-          label: '从相册选择',
-          value: 'album',
-          iconData: Icons.photo_library,
-          iconColor: Colors.green,
-          disabled: true,
-          disabledLabel: '不可用',
-        ),
-        SelectItem.withIcon(
-          label: '录制视频',
-          value: 'video',
-          iconData: Icons.videocam,
-          iconColor: Colors.red,
-        ),
-        SelectItem.withIcon(
-          label: '文件管理器',
-          value: 'files',
-          iconData: Icons.folder_open,
-          iconColor: Colors.orange,
-          disabled: true,
-          disabledLabel: '不可用',
-        ),
-        SelectItem.withIcon(
-          label: '收藏夹',
-          value: 'favorites',
-          iconData: Icons.star,
-          iconColor: Colors.amber,
-        ),
+        SelectItem.withIcon(label: '拍照', value: 'camera', iconData: Icons.camera_alt, iconColor: Colors.blue),
+        SelectItem.withIcon(label: '从相册选择', value: 'album', iconData: Icons.photo_library, iconColor: Colors.green, disabled: true, disabledLabel: '不可用'),
+        SelectItem.withIcon(label: '录制视频', value: 'video', iconData: Icons.videocam, iconColor: Colors.red),
+        SelectItem.withIcon(label: '文件管理器', value: 'files', iconData: Icons.folder_open, iconColor: Colors.orange, disabled: true, disabledLabel: '不可用'),
+        SelectItem.withIcon(label: '收藏夹', value: 'favorites', iconData: Icons.star, iconColor: Colors.amber),
       ],
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '禁用状态选择：$value');
       },
     );
@@ -145,53 +91,21 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
         ActionSheetSection(
           title: '文件操作',
           items: [
-            SelectItem.withIcon(
-              label: '新建文档',
-              value: 'new_doc',
-              iconData: Icons.description,
-              iconColor: Colors.blue,
-            ),
-            SelectItem.withIcon(
-              label: '新建文件夹',
-              value: 'new_folder',
-              iconData: Icons.folder,
-              iconColor: Colors.orange,
-            ),
-            SelectItem.withIcon(
-              label: '从剪贴板粘贴',
-              value: 'paste',
-              iconData: Icons.content_paste,
-              iconColor: Colors.green,
-              disabled: true,
-              disabledLabel: '不可用',
-            ),
+            SelectItem.withIcon(label: '新建文档', value: 'new_doc', iconData: Icons.description, iconColor: Colors.blue),
+            SelectItem.withIcon(label: '新建文件夹', value: 'new_folder', iconData: Icons.folder, iconColor: Colors.orange),
+            SelectItem.withIcon(label: '从剪贴板粘贴', value: 'paste', iconData: Icons.content_paste, iconColor: Colors.green, disabled: true, disabledLabel: '不可用'),
           ],
         ),
         ActionSheetSection(
           title: '分享选项',
           items: [
-            SelectItem.withIcon(
-              label: '微信好友',
-              value: 'wechat',
-              iconData: Icons.chat_bubble,
-              iconColor: Colors.green,
-            ),
-            SelectItem.withIcon(
-              label: '短信分享',
-              value: 'sms',
-              iconData: Icons.sms,
-              iconColor: Colors.blue,
-            ),
-            SelectItem.withIcon(
-              label: '复制链接',
-              value: 'copy_link',
-              iconData: Icons.link,
-              iconColor: Colors.purple,
-            ),
+            SelectItem.withIcon(label: '微信好友', value: 'wechat', iconData: Icons.chat_bubble, iconColor: Colors.green),
+            SelectItem.withIcon(label: '短信分享', value: 'sms', iconData: Icons.sms, iconColor: Colors.blue),
+            SelectItem.withIcon(label: '复制链接', value: 'copy_link', iconData: Icons.link, iconColor: Colors.purple),
           ],
         ),
       ],
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '组合功能选择：$value');
       },
     );
@@ -200,10 +114,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('ActionSheet 新功能'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: AppBar(title: const Text('ActionSheet 新功能'), backgroundColor: Theme.of(context).colorScheme.inversePrimary),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -217,19 +128,11 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '选择结果',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                    Text('选择结果', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer)),
                     const SizedBox(height: 4),
                     Text(
                       _selectedResult,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -244,30 +147,13 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '新功能说明',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('新功能说明', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
-                    _buildFeatureItem(
-                      '分组显示',
-                      '通过 ActionSheetSection 实现操作项分组，每组有独立标题',
-                      Icons.view_list,
-                    ),
+                    _buildFeatureItem('分组显示', '通过 ActionSheetSection 实现操作项分组，每组有独立标题', Icons.view_list),
                     const SizedBox(height: 8),
-                    _buildFeatureItem(
-                      '图标支持',
-                      '通过 SelectItem.withIcon() 或 iconData 属性添加图标',
-                      Icons.image,
-                    ),
+                    _buildFeatureItem('图标支持', '通过 SelectItem.withIcon() 或 iconData 属性添加图标', Icons.image),
                     const SizedBox(height: 8),
-                    _buildFeatureItem(
-                      '禁用状态',
-                      '通过 disabled: true 禁用操作项，可选显示禁用标签',
-                      Icons.block,
-                    ),
+                    _buildFeatureItem('禁用状态', '通过 disabled: true 禁用操作项，可选显示禁用标签', Icons.block),
                   ],
                 ),
               ),
@@ -293,22 +179,13 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '代码示例',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('代码示例', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        '''ActionSheet.show<String, void>(
+                      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                      child: const Text('''ActionSheet.show<String, void>(
   context: context,
   title: '操作菜单',
   showDisabledBadge: true,
@@ -333,15 +210,10 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
       ],
     ),
   ],
-  onSelect: (value, data) {
+  onSelect: (value, item, data) {
     print('选中: \$value');
   },
-);''',
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                        ),
-                      ),
+);''', style: TextStyle(fontFamily: 'monospace', fontSize: 12)),
                     ),
                   ],
                 ),
@@ -363,21 +235,9 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               const SizedBox(height: 2),
-              Text(
-                description,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
+              Text(description, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
             ],
           ),
         ),
@@ -390,10 +250,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
       onPressed: onPressed,
       icon: Icon(icon),
       label: Text(label),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        alignment: Alignment.centerLeft,
-      ),
+      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), alignment: Alignment.centerLeft),
     );
   }
 }

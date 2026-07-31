@@ -106,7 +106,7 @@ class ActionSheetListView<V, D> extends StatelessWidget {
       isDisabled: item.disabled,
       disabledLabel: item.disabledLabel,
       showDisabledBadge: showDisabledBadge,
-      onTap: () => onSelect?.call(item.value, item.data),
+      onTap: () => onSelect?.call(item.value, item, item.data),
     );
   }
 }

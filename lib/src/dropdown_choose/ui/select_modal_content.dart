@@ -40,13 +40,11 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 是否为多选模式，默认 false（单选）
   final bool multiple;
 
-  /// 初始选中项的 value 集合
-  final Set<V>? selectedValues;
-
-  /// 已选中项的完整数据（用于「查看已选」弹窗回显 label）
+  /// 已选中项的完整数据（用于回显勾选状态和「查看已选」弹窗显示 label）
   ///
-  /// 与 [selectedValues] 同时传递时，长度必须相等。
-  /// 若只传 [selectedValues]（只有 ID），查看已选时降级显示 value.toString()。
+  /// 传入即完成回显：组件内部自动提取 value 集合作为初始选中状态。
+  /// 若只有 value 无完整数据，可自行构造：
+  /// `ids.map((id) => SelectItem(value: id, label: '$id')).toList()`
   final List<SelectItem<V, D>>? selectedItems;
 
   /// 选中回调（单选/多选模式下点击项时均触发，返回当前点击项的 value 和 data）
@@ -86,9 +84,9 @@ class SelectModalContent<V, D> extends StatefulWidget {
 
   /// 远程搜索模式下，当已选值的 label 被解析出来时触发
   ///
-  /// 适用于只传 selectedValues（无 selectedItems）的场景：
-  /// 弹窗打开后通过远程搜索获取数据，匹配到已选值的 label 后通过此回调通知父组件，
-  /// 父组件可据此更新 selectedItems 使表单字段显示正确的 label 而非 ID。
+  /// 适用于 selectedItems 中 label 为降级值（如 ID）的场景：
+  /// 弹窗打开后通过远程搜索获取数据，匹配到已选值的真实 label 后通过此回调通知父组件，
+  /// 父组件可据此更新 selectedItems 使表单字段显示正确的 label。
   ///
   /// 参数为 value → label 的映射，仅包含本次新解析到的项。
   final void Function(Map<V, String> resolvedLabels)? onLabelsResolved;
@@ -98,7 +96,6 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 仅在远程模式首次加载（keyword 为空）且结果非空时触发，
   /// 外部可据此缓存数据，下次打开弹窗直接使用，避免重复请求。
   final void Function(List<SelectItem<V, D>> data)? onDataLoaded;
-
   const SelectModalContent({
     super.key,
     this.title,
@@ -107,7 +104,6 @@ class SelectModalContent<V, D> extends StatefulWidget {
     this.items,
     this.onRemoteSearch,
     this.multiple = false,
-    this.selectedValues,
     this.selectedItems,
     this.onSelect,
     this.onConfirm,
@@ -126,8 +122,7 @@ class SelectModalContent<V, D> extends StatefulWidget {
          '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)必须传递 items 且不能传递 onRemoteSearch',
        ),
        assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
-       assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
-       assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
+       assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效');
 
   @override
   State<SelectModalContent<V, D>> createState() => _SelectModalContentState<V, D>();
@@ -143,7 +138,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   List<SelectItem<V, D>> _results = [];
 
   /// 当前选中项的 value 集合
-  Set<V> _selectedValues = {};
+  final Set<V> _selectedValues = {};
 
   /// 已选中项的完整数据缓存（value → SelectItem）
   ///
@@ -166,9 +161,6 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   @override
   void initState() {
     super.initState();
-    if (widget.selectedValues != null) {
-      _selectedValues = Set.from(widget.selectedValues!);
-    }
     if (widget.selectedItems != null) {
       for (final item in widget.selectedItems!) {
         _selectedValues.add(item.value);
@@ -241,9 +233,13 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   /// [newlyResolved] 用于收集本次新解析到的 value → label 映射，供回调使用。
   void _syncSelectedItemMap([Map<V, String>? newlyResolved]) {
     for (final item in _results) {
-      if (_selectedValues.contains(item.value) && !_selectedItemMap.containsKey(item.value)) {
+      if (_selectedValues.contains(item.value)) {
+        final old = _selectedItemMap[item.value];
         _selectedItemMap[item.value] = item;
-        newlyResolved?[item.value] = item.label;
+        // 之前没有或 label 不同（降级值→真实label），通知外部
+        if (old == null || old.label != item.label) {
+          newlyResolved?[item.value] = item.label;
+        }
       }
     }
   }
@@ -307,7 +303,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
     if (item.disabled) return;
 
     // 单选多选：触发选中回调
-    widget.onSelect?.call(item.value, item.data);
+    widget.onSelect?.call(item.value, item, item.data);
     if (widget.multiple) {
       // 多选：切换勾选状态
       final isSelected = _selectedValues.contains(item.value);
@@ -334,7 +330,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
     final selectedItems = _selectedValues.map(_getSelectedItem).toList();
     final values = selectedItems.map((e) => e.value).toList();
     final datas = selectedItems.map((e) => e.data).toList();
-    widget.onConfirm?.call(values, datas, selectedItems);
+    widget.onConfirm?.call(values, selectedItems, datas);
 
     Navigator.of(context).pop();
   }

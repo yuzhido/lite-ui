@@ -20,7 +20,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
       title: '操作菜单',
       description: '选择一个操作',
       items: ActionSheetMockData.defaultItems,
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '本地操作：选择了 $value');
       },
     );
@@ -33,7 +33,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
       title: '文件操作',
       description: '选择一个操作',
       sections: ActionSheetMockData.sectionedItems,
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '分组选择：$value');
       },
     );
@@ -46,7 +46,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
       title: '操作菜单',
       description: '每个操作项带有图标',
       items: ActionSheetMockData.iconItems,
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '图标选择：$value');
       },
     );
@@ -97,7 +97,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
       description: '部分操作不可用',
       showDisabledBadge: true,
       items: disabledItems,
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '禁用状态选择：$value');
       },
     );
@@ -160,7 +160,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
           ],
         ),
       ],
-      onSelect: (value, data) {
+      onSelect: (value, item, data) {
         setState(() => _selectedResult = '组合功能选择：$value');
       },
     );
@@ -169,10 +169,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('ActionSheet 组件示例'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: AppBar(title: const Text('ActionSheet 组件示例'), backgroundColor: Theme.of(context).colorScheme.inversePrimary),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -186,19 +183,11 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '选择结果',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                    Text('选择结果', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer)),
                     const SizedBox(height: 4),
                     Text(
                       _selectedResult,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -233,10 +222,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
       onPressed: onPressed,
       icon: Icon(icon),
       label: Text(label),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        alignment: Alignment.centerLeft,
-      ),
+      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), alignment: Alignment.centerLeft),
     );
   }
 }

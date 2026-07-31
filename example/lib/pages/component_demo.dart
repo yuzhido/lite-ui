@@ -19,56 +19,46 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
   final _formKey = GlobalKey<FormState>();
 
   // 远程搜索单选 — 城市
-  int? _citySingle;
   SelectItem<int, AreaInfo>? _citySingleItem;
 
   // 远程搜索多选 — 城市
-  Set<int> _citiesMulti = {};
+  List<SelectItem<int, AreaInfo>> _citiesMulti = [];
 
   // 同步单选 — 商品分类
-  int? _category;
   SelectItem<int, CategoryInfo>? _categoryItem;
 
   // 远程搜索单选 — 品牌
-  int? _brand;
   SelectItem<int, BrandInfo>? _brandItem;
 
   // 同步多选 — 规格
-  Set<int> _specs = {};
+  List<SelectItem<int, SpecInfo>> _specs = [];
 
   // 同步单选 — 计量单位
-  int? _unit;
   SelectItem<int, UnitInfo>? _unitItem;
 
   // 远程搜索单选 — 用户
-  int? _user;
   SelectItem<int, UserInfo>? _userItem;
 
   // 远程搜索多选 — 商品
-  Set<int> _products = {};
+  List<SelectItem<int, ProductInfo>> _products = [];
 
   @override
   void initState() {
     super.initState();
-    _citiesMulti = {1918475623301, 1918475623303};
+    _citiesMulti = [const SelectItem(label: '1918475623301', value: 1918475623301), const SelectItem(label: '1918475623303', value: 1918475623303)];
   }
 
   void _onReset() {
     _formKey.currentState?.reset();
     setState(() {
-      _citySingle = null;
       _citySingleItem = null;
-      _citiesMulti = {};
-      _category = null;
+      _citiesMulti = [];
       _categoryItem = null;
-      _brand = null;
       _brandItem = null;
-      _specs = {};
-      _unit = null;
+      _specs = [];
       _unitItem = null;
-      _user = null;
       _userItem = null;
-      _products = {};
+      _products = [];
     });
   }
 
@@ -121,7 +111,14 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               DropdownChoose<int, AreaInfo>(
                 required: true,
                 formLabel: '城市',
-                value: _citySingle,
+                // displayMode: DisplayMode.compact,
+                // displayMode: DisplayMode.tags,
+                validator: (v) {
+                  print(v);
+                  print(v);
+                  print(v);
+                  return '远程搜索 + 单选 + 新增校验失败';
+                },
                 selectedItems: _citySingleItem != null ? [_citySingleItem!] : null,
                 type: SelectModalType.remote,
                 prefixIcon: const Icon(Icons.location_on),
@@ -138,11 +135,8 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   }
                 },
                 onSaved: (v) => debugPrint('城市: $v'),
-                onSelect: (value, data) {
-                  setState(() {
-                    _citySingle = value;
-                    _citySingleItem = SelectItem(label: data?.name ?? '', value: value, data: data);
-                  });
+                onSelect: (value, item, data) {
+                  setState(() => _citySingleItem = SelectItem(label: data?.name ?? '', value: value, data: data));
                 },
                 onRemoteSearch: (keyword) async => getAsyncData(keyword: keyword),
               ),
@@ -154,11 +148,24 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 multiple: true,
                 type: SelectModalType.remote,
                 displayMode: DisplayMode.tags,
-                selectedValues: _citiesMulti,
-                maxShowTags: 2,
+                selectedItems: _citiesMulti,
+                validator: (v) {
+                  print(v);
+                  print(v);
+                  print(v);
+                  return '远程搜索 + 多选 + tags 模式校验失败';
+                },
                 onSaved: (v) => debugPrint('配送城市: $v'),
-                onConfirm: (values, datas, items) {
-                  setState(() => _citiesMulti = values.toSet());
+                onConfirm: (values, items, datas) {
+                  setState(() => _citiesMulti = items);
+                },
+                onLabelsResolved: (resolvedLabels) {
+                  setState(() {
+                    _citiesMulti = _citiesMulti.map((item) {
+                      final newLabel = resolvedLabels[item.value];
+                      return newLabel != null ? SelectItem(label: newLabel, value: item.value, data: item.data) : item;
+                    }).toList();
+                  });
                 },
                 onRemoteSearch: (keyword) async => getAsyncData(keyword: keyword),
               ),
@@ -167,17 +174,13 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               DropdownChoose<int, BrandInfo>(
                 required: true,
                 formLabel: '品牌',
-                value: _brand,
                 selectedItems: _brandItem != null ? [_brandItem!] : null,
                 type: SelectModalType.remote,
                 prefixIcon: const Icon(Icons.bookmark_outline),
                 onClear: () => debugPrint('品牌已清除'),
                 onSaved: (v) => debugPrint('品牌: $v'),
-                onSelect: (value, data) {
-                  setState(() {
-                    _brand = value;
-                    _brandItem = SelectItem(label: data?.name ?? '', value: value, data: data);
-                  });
+                onSelect: (value, item, data) {
+                  setState(() => _brandItem = SelectItem(label: data?.name ?? '', value: value, data: data));
                 },
                 onRemoteSearch: (keyword) async => getBrandAsyncData(keyword: keyword),
               ),
@@ -185,18 +188,14 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               const Text('远程搜索 + 单选', style: TextStyle(fontSize: 13, color: Colors.grey)),
               DropdownChoose<int, UserInfo>(
                 formLabel: '负责人',
-                value: _user,
                 selectedItems: _userItem != null ? [_userItem!] : null,
                 type: SelectModalType.remote,
                 prefixIcon: const Icon(Icons.person_outline),
                 hintText: '搜索用户名或部门',
                 onClear: () => debugPrint('负责人已清除'),
                 onSaved: (v) => debugPrint('负责人: $v'),
-                onSelect: (value, data) {
-                  setState(() {
-                    _user = value;
-                    _userItem = SelectItem(label: data?.name ?? '', value: value, data: data);
-                  });
+                onSelect: (value, item, data) {
+                  setState(() => _userItem = SelectItem(label: data?.name ?? '', value: value, data: data));
                 },
                 onRemoteSearch: (keyword) async => getUserAsyncData(keyword: keyword),
               ),
@@ -208,13 +207,13 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 multiple: true,
                 type: SelectModalType.remote,
                 displayMode: DisplayMode.compact,
+                selectedItems: _products,
                 maxShowTags: 3,
-                selectedValues: _products,
                 prefixIcon: const Icon(Icons.shopping_cart_outlined),
                 hintText: '搜索商品名称',
                 onSaved: (v) => debugPrint('商品: $v'),
-                onConfirm: (values, datas, items) {
-                  setState(() => _products = values.toSet());
+                onConfirm: (values, items, datas) {
+                  setState(() => _products = items);
                 },
                 onRemoteSearch: (keyword) async => getProductAsyncData(keyword: keyword),
               ),
@@ -228,16 +227,12 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               DropdownChoose<int, CategoryInfo>(
                 required: true,
                 formLabel: '商品分类',
-                value: _category,
                 selectedItems: _categoryItem != null ? [_categoryItem!] : null,
                 prefixIcon: const Icon(Icons.category_outlined),
                 onClear: () => debugPrint('分类已清除'),
                 onSaved: (v) => debugPrint('分类: $v'),
-                onSelect: (value, data) {
-                  setState(() {
-                    _category = value;
-                    _categoryItem = SelectItem(label: data?.name ?? '', value: value, data: data);
-                  });
+                onSelect: (value, item, data) {
+                  setState(() => _categoryItem = SelectItem(label: data?.name ?? '', value: value, data: data));
                 },
                 items: getCategorySyncData(),
               ),
@@ -248,13 +243,12 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 formLabel: '规格',
                 multiple: true,
                 displayMode: DisplayMode.tags,
-                selectedValues: _specs,
-                maxShowTags: 3,
+                selectedItems: _specs,
                 prefixIcon: const Icon(Icons.straighten),
                 onClear: () => debugPrint('规格已清除'),
                 onSaved: (v) => debugPrint('规格: $v'),
-                onConfirm: (values, datas, items) {
-                  setState(() => _specs = values.toSet());
+                onConfirm: (values, items, datas) {
+                  setState(() => _specs = items);
                 },
                 items: getSpecSyncData(),
               ),
@@ -262,17 +256,13 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               const Text('同步数据 + 单选', style: TextStyle(fontSize: 13, color: Colors.grey)),
               DropdownChoose<int, UnitInfo>(
                 formLabel: '计量单位',
-                value: _unit,
                 selectedItems: _unitItem != null ? [_unitItem!] : null,
                 prefixIcon: const Icon(Icons.balance),
                 hintText: '请选择单位',
                 onClear: () => debugPrint('单位已清除'),
                 onSaved: (v) => debugPrint('单位: $v'),
-                onSelect: (value, data) {
-                  setState(() {
-                    _unit = value;
-                    _unitItem = SelectItem(label: data?.name ?? '', value: value, data: data);
-                  });
+                onSelect: (value, item, data) {
+                  setState(() => _unitItem = SelectItem(label: data?.name ?? '', value: value, data: data));
                 },
                 items: getUnitSyncData(),
               ),

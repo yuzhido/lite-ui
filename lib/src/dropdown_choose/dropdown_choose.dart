@@ -9,14 +9,47 @@ import 'package:lite_ui/src/theme/index.dart';
 import '../wrapper_container/index.dart';
 
 class DropdownChoose<V, D> extends StatefulWidget {
+  const DropdownChoose({
+    super.key,
+    required this.formLabel,
+    this.items,
+    this.selectedItems,
+    this.hintText,
+    this.required = false,
+    this.multiple = false,
+    this.type = SelectModalType.filterable,
+    this.onRemoteSearch,
+    this.displayMode = DisplayMode.text,
+    this.maxShowTags,
+    this.valueBuilder,
+    this.showAdd = false,
+    this.addLabel = '新增',
+    this.onAdd,
+    this.onLabelsResolved,
+    this.onSelect,
+    this.onConfirm,
+    this.maxCount,
+    this.forceRefresh,
+    this.onClear,
+    this.onSaved,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.disabled,
+    this.formLayout = FormLayout.row,
+    this.prefixIcon,
+  }) : assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
+       assert(
+         type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null,
+         '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch',
+       ),
+       assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
+       assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
+       assert(maxShowTags == null || displayMode == DisplayMode.compact, 'maxShowTags 仅在 displayMode 为 compact 时有效'),
+       assert(displayMode != DisplayMode.compact || multiple, 'compact 模式仅支持多选'),
+       assert(selectedItems == null || maxCount == null || selectedItems.length <= maxCount, 'selectedItems 数量不能超过 maxCount'),
+       assert(selectedItems == null || multiple || selectedItems.length <= 1, '单选模式 selectedItems 最多只能有 1 项');
+
   /// 表单标签
   final String formLabel;
-
-  /// 当前选中的值（单选模式）
-  final V? value;
-
-  /// 当前选中的值集合（多选模式）
-  final Set<V>? selectedValues;
 
   /// 操作项列表
   final List<SelectItem<V, D>>? items;
@@ -24,10 +57,13 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 前置图标
   final Widget? prefixIcon;
 
-  /// 已选中项的完整数据（用于「查看已选」弹窗回显 label）
+  /// 已选中项的完整数据（单选/多选统一使用）
   ///
-  /// 适用于编辑场景：当后端返回完整数据时传入，确保查看已选时能显示 label。
-  /// 与 selectedValues 同时传递时，长度必须相等。
+  /// - 单选模式：最多 1 项
+  /// - 多选模式：任意数量
+  ///
+  /// 若只有 value 无完整数据，可自行构造：
+  /// `ids.map((id) => SelectItem(value: id, label: '$id')).toList()`
   final List<SelectItem<V, D>>? selectedItems;
 
   /// 占位提示文字
@@ -65,7 +101,9 @@ class DropdownChoose<V, D> extends StatefulWidget {
   // 保存函数
   final Function(String)? onSaved;
 
-  // 校验函数
+  /// ## 校验函数
+  ///
+  /// 返回 null 表示验证通过，返回字符串表示验证失败的提示文字。
   final String? Function(String?)? validator;
 
   /// 自动验证模式
@@ -81,14 +119,14 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// - [DisplayMode.compact]：显示前 N 个 tag，剩余以 "+M" 显示
   final DisplayMode displayMode;
 
-  /// compact 模式下最多显示的 tag 数，默认 3
-  final int maxShowTags;
+  /// compact 模式下最多显示的 tag 数，仅在 displayMode 为 compact 时有效
+  final int? maxShowTags;
 
   /// 自定义值显示 Widget 构建器
   ///
   /// 传入后优先使用此构建器，忽略 [displayMode] 的默认逻辑。
-  /// [labels] 为当前所有选中值的 label 列表。
-  final Widget Function(List<String> labels)? valueBuilder;
+  /// 传入后忽略 [displayMode] 的默认逻辑，[items] 为当前所有选中值的 label 列表。
+  final Widget Function(List<SelectItem<V, D>> items)? valueBuilder;
 
   /// 是否显示新增按钮（搜索无结果时），默认 false
   final bool showAdd;
@@ -101,9 +139,9 @@ class DropdownChoose<V, D> extends StatefulWidget {
 
   /// 远程搜索模式下，当已选值的 label 被解析出来时触发
   ///
-  /// 适用于只传 selectedValues（无 selectedItems）的场景：
-  /// 弹窗打开后通过远程搜索获取数据，匹配到已选值的 label 后通过此回调通知父组件，
-  /// 父组件可据此更新 selectedItems 使表单字段显示正确的 label 而非 ID。
+  /// 适用于 selectedItems 中 label 为降级值（如 ID）的场景：
+  /// 弹窗打开后通过远程搜索获取数据，匹配到已选值的真实 label 后通过此回调通知父组件，
+  /// 父组件可据此更新 selectedItems 使表单字段显示正确的 label。
   ///
   /// 参数为 value → label 的映射，仅包含本次新解析到的项。
   final void Function(Map<V, String> resolvedLabels)? onLabelsResolved;
@@ -116,7 +154,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
 
   /// 点击清除图标回调（有值时后缀 close 图标点击触发）
   ///
-  /// 通常用于清空当前选中值，外部可在此回调中调用 setState 将 value/selectedValues 置空。
+  /// 通常用于清空当前选中值，外部可在此回调中调用 setState 将 value/selectedItems 置空。
   final VoidCallback? onClear;
 
   /// 显示一个从底部向上弹出的选择器弹窗
@@ -125,7 +163,6 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// [subTitle] 副标题/描述
   /// [items] 选项列表数据（直接传递给 SelectModalContent）
   /// [multiple] 是否多选模式，默认 false（单选）
-  /// [selectedValues] 初始选中项的 value 集合
   /// [selectedItems] 已选中项的完整数据（确保回显时这些项一定出现在列表中）
   /// [onSelect] 选中回调（单选/多选均触发，返回当前点击项的 value 和 data）
   /// [onConfirm] 多选确认回调（返回 values 和 datas）
@@ -148,7 +185,6 @@ class DropdownChoose<V, D> extends StatefulWidget {
     String? subTitle,
     List<SelectItem<V, D>>? items,
     bool multiple = false,
-    Set<V>? selectedValues,
     List<SelectItem<V, D>>? selectedItems,
     OnSelectChange<V, D>? onSelect,
     OnMultiSelectConfirm<V, D>? onConfirm,
@@ -171,7 +207,6 @@ class DropdownChoose<V, D> extends StatefulWidget {
 
     // 数据加载完成回调（用于外部缓存）
     void Function(List<SelectItem<V, D>> data)? onDataLoaded,
-
     // 强制刷新
     bool? forceRefresh,
   }) {
@@ -181,7 +216,6 @@ class DropdownChoose<V, D> extends StatefulWidget {
     );
     assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
     assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效');
-    assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
     return showModalBottomSheet<V>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -200,7 +234,6 @@ class DropdownChoose<V, D> extends StatefulWidget {
               items: items,
               onRemoteSearch: onRemoteSearch,
               multiple: multiple,
-              selectedValues: selectedValues,
               selectedItems: selectedItems,
               onSelect: onSelect,
               onConfirm: onConfirm,
@@ -221,44 +254,6 @@ class DropdownChoose<V, D> extends StatefulWidget {
     );
   }
 
-  const DropdownChoose({
-    super.key,
-    required this.formLabel,
-    this.value,
-    this.selectedValues,
-    this.items,
-    this.selectedItems,
-    this.hintText,
-    this.required = false,
-    this.multiple = false,
-    this.type = SelectModalType.filterable,
-    this.onRemoteSearch,
-    this.displayMode = DisplayMode.text,
-    this.maxShowTags = 3,
-    this.valueBuilder,
-    this.showAdd = false,
-    this.addLabel = '新增',
-    this.onAdd,
-    this.onLabelsResolved,
-    this.onSelect,
-    this.onConfirm,
-    this.maxCount,
-    this.forceRefresh,
-    this.onClear,
-    this.onSaved,
-    this.validator,
-    this.autovalidateMode = AutovalidateMode.disabled,
-    this.formLayout = FormLayout.row,
-    this.prefixIcon,
-  }) : assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
-       assert(
-         type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null,
-         '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch',
-       ),
-       assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
-       assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
-       assert(selectedValues == null || selectedItems == null || selectedValues.length == selectedItems.length, 'selectedValues 与 selectedItems 同时传递时，长度必须相等');
-
   @override
   State<DropdownChoose<V, D>> createState() => _DropdownChooseState<V, D>();
 }
@@ -266,11 +261,20 @@ class DropdownChoose<V, D> extends StatefulWidget {
 class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
   final _formFieldKey = GlobalKey<FormFieldState<String>>();
 
-  /// 内部缓存的已选项完整数据（由 onConfirm 回调自动填充）
   ///
-  /// 当用户未传递 selectedItems 时，通过 onConfirm 返回的 datas 自动构建，
-  /// 使表单字段能正确显示 label 而非 ID。
-  List<SelectItem<V, D>> _resolvedItems = [];
+  //整理开始---------------------------------------------------->
+  //整理开始---------------------------------------------------->
+  //整理开始---------------------------------------------------->
+  /// 单选模式下缓存的选中项
+  SelectItem<V, D>? chooseItem;
+
+  /// 多选模式下缓存的选中项
+  List<SelectItem<V, D>>? chooseItems = [];
+
+  ///
+  // 整理结束<----------------------------------------------------
+  // 整理结束<----------------------------------------------------
+  // 整理结束<----------------------------------------------------
 
   /// 远程模式首次加载成功的初始数据缓存
   ///
@@ -283,68 +287,62 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
 
   /// 是否已内部清除（点击后缀 clear 图标后置为 true）
   ///
-  /// 为 true 时 [_getAllLabels] 返回空列表，使组件立即显示为空。
-  /// 当外部 value/selectedValues 发生变化时自动重置。
+  /// 为 true 时组件显示为空，弹窗不回显任何选中项。
+  /// 当外部 selectedItems 发生变化时自动重置。
   bool _cleared = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 从外部初始值初始化内部缓存，确保首次渲染即可回显
+    if (widget.selectedItems != null && widget.selectedItems!.isNotEmpty) {
+      if (widget.multiple) {
+        chooseItems = widget.selectedItems;
+      } else {
+        chooseItem = widget.selectedItems!.first;
+      }
+    }
+  }
 
   @override
   void didUpdateWidget(covariant DropdownChoose<V, D> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 外部 value 或 selectedValues 发生变化时，重置内部清除状态并同步 FormField
-    if (widget.value != oldWidget.value || widget.selectedValues != oldWidget.selectedValues || widget.selectedItems != oldWidget.selectedItems) {
+    // 外部 selectedItems 发生变化时，重置内部清除状态并同步 FormField
+    if (widget.selectedItems != oldWidget.selectedItems) {
       _cleared = false;
-      // 外部值变化后同步 FormField 内部状态，触发重新验证（此时 widget.value 已是新值）
-      final newValue = widget.multiple ? (_effectiveSelectedValues()?.join(',') ?? '') : (widget.value?.toString() ?? '');
+      // 仅当外部值被清空时，才清除内部缓存的选中项，避免正常选中流程被误清
+      final newEffectiveValues = _effectiveSelectedValues();
+      if (newEffectiveValues == null || newEffectiveValues.isEmpty) {
+        chooseItem = null;
+        chooseItems = [];
+      } else {
+        // 外部值变化时同步内部缓存
+        if (widget.multiple) {
+          chooseItems = widget.selectedItems;
+        } else {
+          chooseItem = widget.selectedItems!.isNotEmpty ? widget.selectedItems!.first : null;
+        }
+      }
+      // 外部值变化后同步 FormField 内部状态，触发重新验证
+      final newValue = newEffectiveValues?.join(',') ?? '';
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _formFieldKey.currentState?.didChange(newValue);
       });
     }
   }
 
-  /// 获取有效的选中值集合（优先 selectedValues，其次从 selectedItems 提取）
+  /// 获取有效的选中值集合（从 selectedItems 提取）
   Set<V>? _effectiveSelectedValues() {
-    if (widget.selectedValues != null && widget.selectedValues!.isNotEmpty) {
-      return widget.selectedValues;
-    }
     if (widget.selectedItems != null && widget.selectedItems!.isNotEmpty) {
       return widget.selectedItems!.map((e) => e.value).toSet();
     }
     return null;
   }
 
-  /// 弹窗打开时应使用的选中值（感知内部清除状态）
-  Set<V>? _modalSelectedValues() {
+  /// 弹窗打开时应使用的选中项（感知内部清除状态）
+  List<SelectItem<V, D>>? _modalSelectedItems() {
     if (_cleared) return null;
-    return _effectiveSelectedValues();
-  }
-
-  List<String> _getAllLabels() {
-    if (_cleared) return [];
-    final allItems = <SelectItem<V, D>>[...?widget.items, ...?widget.selectedItems, ..._resolvedItems];
-    final effectiveValues = _effectiveSelectedValues();
-    if (widget.multiple) {
-      if (effectiveValues == null || effectiveValues.isEmpty) return [];
-      final labels = <String>[];
-      for (final v in effectiveValues) {
-        String? matched;
-        for (final item in allItems) {
-          if (item.value == v) {
-            matched = item.label;
-            break;
-          }
-        }
-        // 未匹配到完整数据时，降级用 value.toString() 作为 label
-        labels.add(matched ?? v.toString());
-      }
-      return labels;
-    } else {
-      if (widget.value == null) return [];
-      for (final item in allItems) {
-        if (item.value == widget.value) return [item.label];
-      }
-      // 未匹配到完整数据时，降级用 value.toString() 作为 label
-      return [widget.value!.toString()];
-    }
+    return widget.selectedItems;
   }
 
   // 默认验证规则
@@ -352,43 +350,29 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
     if (widget.required != true) return null;
     // 感知内部清除状态：清除后视为空值，确保验证能正确触发失败
     if (_cleared) {
-      if (widget.validator != null) {
-        return widget.validator!(null);
-      }
+      if (widget.validator != null) return widget.validator?.call(null);
       return '${widget.formLabel}是必填项不能为空';
     }
     final effectiveValues = _effectiveSelectedValues();
+    final validatorValue = (effectiveValues?.isEmpty ?? true) ? null : effectiveValues!.join(',');
     if (widget.validator != null) {
-      if (widget.multiple) {
-        return widget.validator!((effectiveValues?.isEmpty ?? true) ? null : effectiveValues!.join(','));
-      }
-      return widget.validator!(widget.value?.toString());
+      return widget.validator!(validatorValue);
     }
-    if (widget.multiple) {
-      if (effectiveValues == null || effectiveValues.isEmpty) {
-        return '${widget.formLabel}是必填项不能为空';
-      }
-    } else {
-      if (widget.value == null) {
-        return '${widget.formLabel}是必填项不能为空';
-      }
+    if (effectiveValues == null || effectiveValues.isEmpty) {
+      return '${widget.formLabel}是必填项不能为空';
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FormField<String>(
+    return FormField(
       key: _formFieldKey,
       validator: widget.required ? defaultValid : null,
       autovalidateMode: widget.autovalidateMode,
-      initialValue: widget.multiple ? (_effectiveSelectedValues()?.join(',') ?? '') : (widget.value?.toString() ?? ''),
+      initialValue: _effectiveSelectedValues()?.join(',') ?? '',
       onSaved: (value) {
-        if (widget.multiple) {
-          widget.onSaved?.call(_effectiveSelectedValues()?.join(',') ?? '');
-        } else {
-          widget.onSaved?.call(widget.value?.toString() ?? '');
-        }
+        widget.onSaved?.call(_effectiveSelectedValues()?.join(',') ?? '');
       },
       builder: (FormFieldState<String> state) {
         return Column(
@@ -405,24 +389,27 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   ],
                 ),
               ),
-            WrapperContainer(
+            WrapperContainer<V, D>(
+              selectItems: (widget.multiple == true)
+                  ? chooseItems ?? []
+                  : chooseItem != null
+                  ? [chooseItem!]
+                  : [],
               formLayout: widget.formLayout,
               errorText: state.errorText,
               required: widget.required,
               prefixIcon: widget.prefixIcon,
               formLabel: widget.formLabel,
-              valueLabels: _getAllLabels(),
               displayMode: widget.displayMode,
-              maxShowTags: widget.maxShowTags,
+              maxShowTags: widget.maxShowTags ?? 1,
               valueBuilder: widget.valueBuilder,
               hintText: widget.hintText,
               isExpanded: _isExpanded,
-              selectedValue: !widget.multiple ? (_getAllLabels().isNotEmpty ? _getAllLabels().first : null) : null,
-              selectedValues: widget.multiple ? (_getAllLabels().isNotEmpty ? _getAllLabels() : null) : null,
               onClear: () {
                 setState(() {
                   _cleared = true;
-                  _resolvedItems = [];
+                  chooseItem = null;
+                  chooseItems = [];
                 });
                 widget.onClear?.call();
                 // 同步 FormField 内部值为空，使验证能正确触发失败
@@ -431,7 +418,6 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                 });
               },
               onTap: () {
-                print(12121213131); // TODO: 移除调试日志
                 setState(() => _isExpanded = true);
                 DropdownChoose.show<V, D>(
                   context: context,
@@ -441,8 +427,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   // 远程模式：有缓存且非强制刷新则传缓存数据，否则传 null 触发请求
                   items: (widget.forceRefresh == true) ? null : (widget.items ?? _cachedRemoteItems),
                   multiple: widget.multiple,
-                  selectedValues: widget.multiple ? _modalSelectedValues() : (_cleared ? null : (widget.value != null ? {widget.value as V} : null)),
-                  selectedItems: _cleared ? null : widget.selectedItems,
+                  selectedItems: _modalSelectedItems(),
                   showAdd: widget.showAdd,
                   addLabel: widget.addLabel,
                   onAdd: widget.onAdd,
@@ -455,19 +440,23 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                             setState(() => _cachedRemoteItems = data);
                           }
                         },
-                  onSelect: (value, data) {
-                    setState(() => _cleared = false);
-                    widget.onSelect?.call(value, data);
+                  onSelect: (value, item, data) {
+                    chooseItem = item;
+                    // setState(() => _cleared = false);
+                    widget.onSelect?.call(value, item, data);
                     // 不再在此处调用 didChange，由 didUpdateWidget 统一处理
                   },
-                  onConfirm: widget.multiple
+
+                  /// 这样写的目的是为了单选的时候提示不要传递 onConfirm
+                  onConfirm: (widget.multiple == true)
                       ? (values, datas, items) {
-                          setState(() => _cleared = false);
+                          chooseItems = datas;
+                          // setState(() => _cleared = false);
                           widget.onConfirm?.call(values, datas, items);
                           // 自动缓存已选项完整数据（含 label），使表单字段能正确显示
-                          setState(() {
-                            _resolvedItems = items;
-                          });
+                          // setState(() {
+                          //   _resolvedItems = items;
+                          // });
                           // 不再在此处调用 didChange，由 didUpdateWidget 统一处理
                         }
                       : null,

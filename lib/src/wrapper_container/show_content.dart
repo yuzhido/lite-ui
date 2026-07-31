@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ui/src/models/enum.dart';
+import 'package:lite_ui/src/models/select_item.dart';
 import 'package:lite_ui/src/theme/index.dart';
 
 import 'content_tag.dart';
@@ -10,15 +11,9 @@ import 'content_tag.dart';
 /// - [DisplayMode.text]：单行文本，顿号分隔
 /// - [DisplayMode.tags]：每个值显示为 tag，横向滚动
 /// - [DisplayMode.compact]：显示前 N 个 tag，剩余以 "+M" 显示
-class ShowContent extends StatelessWidget {
+class ShowContent<V, D> extends StatelessWidget {
   /// 错误提示文字（有值时优先显示）
   final String? errorText;
-
-  /// 选中值的 label 列表
-  final List<String>? valueLabels;
-
-  /// 选中的值文本（无 labels 时使用）
-  final String? valueText;
 
   /// 占位提示文字（无值时显示）
   final String? hintText;
@@ -34,35 +29,39 @@ class ShowContent extends StatelessWidget {
 
   /// 自定义值显示 Widget 构建器（优先级最高）
   ///
-  /// 传入后忽略 [displayMode] 的默认逻辑，[labels] 为当前所有选中值的 label 列表。
-  final Widget Function(List<String> labels)? valueBuilder;
+  /// 传入后忽略 [displayMode] 的默认逻辑，[items] 为当前所有选中值的 label 列表。
+  final Widget Function(List<SelectItem<V, D>> items)? valueBuilder;
+
+  /// 选中的值列表
+  ///
+  /// 不管单选多选都传递一个列表进来
+  final List<SelectItem<V, D>> selectItems;
+
+  /// 选中的值文本（无 labels 时使用）
+  final String? valueText;
 
   const ShowContent({
     super.key,
     this.errorText,
-    this.valueLabels,
     this.valueText,
     this.hintText,
     this.formLabel,
     this.displayMode = DisplayMode.text,
     this.maxShowTags = 3,
     this.valueBuilder,
+    required this.selectItems,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasError = errorText != null && errorText!.isNotEmpty;
+    // 自定义构建器优先
+    if (valueBuilder != null) return valueBuilder!(selectItems);
 
     // 1. 有值时优先显示值（验证失败但有值时仍显示选中内容，错误提示由边框/外部处理）
-    final labels = valueLabels;
-    if (labels != null && labels.isNotEmpty) {
-      // 自定义构建器优先
-      if (valueBuilder != null) return valueBuilder!(labels);
-
-      final mode = displayMode;
-
+    final labels = selectItems.map((item) => item.label).toList();
+    if (labels.isNotEmpty) {
       // text 模式
-      if (mode == DisplayMode.text) {
+      if (displayMode == DisplayMode.text) {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Text(
@@ -78,7 +77,12 @@ class ShowContent extends StatelessWidget {
       final tagColor = LiteUITheme.of(context).tagColor;
       final tagTextColor = Colors.white;
 
-      if (mode == DisplayMode.tags) {
+      if (displayMode == DisplayMode.tags) {
+        print(maxShowTags);
+        print(maxShowTags);
+        print(maxShowTags);
+        print(maxShowTags);
+        print(maxShowTags);
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -87,7 +91,12 @@ class ShowContent extends StatelessWidget {
         );
       }
 
-      if (mode == DisplayMode.compact) {
+      if (displayMode == DisplayMode.compact) {
+        print(maxShowTags);
+        print(maxShowTags);
+        print(maxShowTags);
+        print(maxShowTags);
+        print(maxShowTags);
         if (labels.length <= maxShowTags) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -124,11 +133,21 @@ class ShowContent extends StatelessWidget {
     }
 
     // 3. 无值但有错误时显示错误提示
-    if (hasError) {
-      return Text(errorText ?? '', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).errorColor));
+    if (errorText != null && errorText!.isNotEmpty) {
+      return Text(
+        errorText ?? '',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).errorColor),
+      );
     }
 
     // 4. 占位提示
-    return Text(hintText ?? '请选择$formLabel', style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).hintColor));
+    return Text(
+      hintText ?? '请选择$formLabel',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(fontSize: 16, color: LiteUITheme.of(context).hintColor),
+    );
   }
 }

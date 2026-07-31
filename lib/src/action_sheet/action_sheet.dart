@@ -138,8 +138,8 @@ class ActionSheet<V, D> extends StatefulWidget {
           items: items,
           showDisabledBadge: showDisabledBadge,
           maxHeight: maxHeight,
-          onSelect: (value, data) {
-            onSelect?.call(value, data);
+          onSelect: (value, item, data) {
+            onSelect?.call(value, item, data);
             Navigator.of(ctx).pop(value);
           },
           cancelLabel: cancelLabel,
@@ -165,8 +165,8 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
       cancelLabel: widget.cancelLabel,
       showDisabledBadge: widget.showDisabledBadge,
       maxHeight: widget.maxHeight,
-      onSelect: (value, data) {
-        widget.onSelect?.call(value, data);
+      onSelect: (value, item, data) {
+        widget.onSelect?.call(value, item, data);
         // 同步选中值到 FormField
         _formFieldKey.currentState?.didChange(value?.toString() ?? '');
       },
@@ -238,6 +238,7 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
               child:
                   widget.child ??
                   WrapperContainer(
+                    selectItems: [],
                     formLayout: widget.formLayout,
                     errorText: state.errorText,
                     required: widget.required,

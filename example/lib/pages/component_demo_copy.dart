@@ -88,7 +88,6 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               DropdownChoose<int, AreaInfo>(
                 required: true,
                 formLabel: '城市单选',
-                value: _singleCity,
                 selectedItems: _singleCityItem != null ? [_singleCityItem!] : null,
                 type: SelectModalType.remote,
                 prefixIcon: const Icon(Icons.location_on),
@@ -124,7 +123,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   }
                 },
                 onSaved: (v) => debugPrint('城市(单选): $v'),
-                onSelect: (value, data) {
+                onSelect: (value, item, data) {
                   setState(() {
                     _singleCity = value;
                     _singleCityItem = SelectItem(label: data?.name ?? '', value: value, data: data);
@@ -139,7 +138,6 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '城市',
                 multiple: true,
-                selectedValues: _remoteCities,
                 // selectedItems: _remoteCitiesItems,
                 type: SelectModalType.remote,
                 displayMode: DisplayMode.tags,
@@ -177,7 +175,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   }
                 },
                 onSaved: (v) => debugPrint('城市: $v'),
-                onConfirm: (List<int> values, List<AreaInfo?> datas, List<SelectItem<int, AreaInfo>> items) {
+                onConfirm: (List<int> values, List<SelectItem<int, AreaInfo>> items, List<AreaInfo?> datas) {
                   print('多选最后结果开始33333333333333');
                   print(values);
                   print(datas);
@@ -297,9 +295,8 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '性别',
                 title: '请选择性别',
-                value: _gender,
                 onSaved: (v) => debugPrint('性别: $v'),
-                onSelect: (value, data) {
+                onSelect: (value, item, data) {
                   setState(() => _gender = value);
                 },
                 items: const [
@@ -312,14 +309,13 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               DropdownChoose<String, int>(
                 required: true,
                 formLabel: '所在区域',
-                value: _region,
                 onSaved: (v) => debugPrint('区域: $v'),
                 selectedItems: const [
                   SelectItem(label: '北京', value: 'bj', data: 1),
                   SelectItem(label: '上海', value: 'sh', data: 2),
                   SelectItem(label: '广州', value: 'gz', data: 3),
                 ],
-                onSelect: (value, data) {
+                onSelect: (value, item, data) {
                   setState(() => _region = value);
                 },
                 items: const [
@@ -335,7 +331,6 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '城市',
                 multiple: true,
-                // selectedValues: _cities,
                 onSaved: (v) => debugPrint('城市: $v'),
                 selectedItems: const [
                   SelectItem(label: '北京', value: 'bj', data: 1),
@@ -365,7 +360,6 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 formLabel: '城市',
                 multiple: true,
                 displayMode: DisplayMode.tags,
-                selectedValues: _citiesTags,
                 onSaved: (v) => debugPrint('城市tags: $v'),
                 onConfirm: (values, datas, _) {
                   setState(() => _citiesTags = values.toSet());
@@ -386,7 +380,6 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 multiple: true,
                 displayMode: DisplayMode.compact,
                 maxShowTags: 2,
-                selectedValues: _citiesCompact,
                 onSaved: (v) => debugPrint('城市compact: $v'),
                 onConfirm: (values, datas, _) {
                   setState(() => _citiesCompact = values.toSet());
