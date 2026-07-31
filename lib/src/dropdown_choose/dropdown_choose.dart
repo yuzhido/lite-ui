@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ui/src/models/enum.dart';
-import 'package:lite_ui/src/models/select_item.dart';
-import 'package:lite_ui/src/models/callbacks.dart';
-import 'package:lite_ui/src/dropdown_choose/models/index.dart';
-import 'package:lite_ui/src/dropdown_choose/ui/select_modal_content.dart';
 import 'package:lite_ui/src/theme/index.dart';
+import 'package:lite_ui/src/models/callbacks.dart';
+import 'package:lite_ui/src/models/select_item.dart';
+import 'package:lite_ui/src/dropdown_choose/models/index.dart';
+import 'package:lite_ui/src/dropdown_choose/ui/modal_content.dart';
 
 import '../wrapper_container/index.dart';
 
@@ -17,7 +17,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.hintText,
     this.required = false,
     this.multiple = false,
-    this.type = SelectModalType.filterable,
+    this.type = SelectType.filter,
     this.onRemoteSearch,
     this.displayMode = DisplayMode.text,
     this.maxShowTags,
@@ -36,11 +36,8 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.autovalidateMode = AutovalidateMode.disabled,
     this.formLayout = FormLayout.row,
     this.prefixIcon,
-  }) : assert(type == SelectModalType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
-       assert(
-         type == SelectModalType.remote ? onRemoteSearch != null : onRemoteSearch == null,
-         '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch',
-       ),
+  }) : assert(type == SelectType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
+       assert(type == SelectType.remote ? onRemoteSearch != null : onRemoteSearch == null, '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch'),
        assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
        assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效'),
        assert(maxShowTags == null || displayMode == DisplayMode.compact, 'maxShowTags 仅在 displayMode 为 compact 时有效'),
@@ -75,11 +72,11 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// 是否为多选模式，默认 false（单选）
   final bool multiple;
 
-  /// 选择器模式，默认 [SelectModalType.filterable]（本地过滤）
+  /// 选择器模式，默认 [SelectType.filter]（本地过滤）
   ///
-  /// - [SelectModalType.filterable]：本地过滤选择器（直接传 items，组件内部过滤）
-  /// - [SelectModalType.remote]：远程搜索选择器（传 onRemoteSearch 异步搜索）
-  final SelectModalType type;
+  /// - [SelectType.filter]：本地过滤选择器（直接传 items，组件内部过滤）
+  /// - [SelectType.remote]：远程搜索选择器（传 onRemoteSearch 异步搜索）
+  final SelectType type;
 
   /// 远程搜索回调（remote 模式下必填），搜索时调用远程接口而非本地过滤
   final RemoteSearchCallback<V, D>? onRemoteSearch;
@@ -135,7 +132,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
   final String addLabel;
 
   /// 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
-  final Future<void> Function(String keyword)? onAdd;
+  final OnAddCallback? onAdd;
 
   /// 远程搜索模式下，当已选值的 label 被解析出来时触发
   ///
@@ -180,7 +177,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
   /// [onAdd] 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
   static Future<V?> show<V, D>({
     required BuildContext context,
-    SelectModalType type = SelectModalType.filterable,
+    SelectType type = SelectType.filter,
     String? title,
     String? subTitle,
     List<SelectItem<V, D>>? items,
@@ -200,7 +197,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     // 新增功能
     bool showAdd = false,
     String addLabel = '新增',
-    Future<void> Function(String keyword)? onAdd,
+    OnAddCallback? onAdd,
 
     // label 解析回调
     void Function(Map<V, String> resolvedLabels)? onLabelsResolved,
@@ -211,7 +208,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     bool? forceRefresh,
   }) {
     assert(
-      type == SelectModalType.remote ? onRemoteSearch != null : (items != null && onRemoteSearch == null),
+      type == SelectType.remote ? onRemoteSearch != null : (items != null && onRemoteSearch == null),
       '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)必须传递 items 且不能传递 onRemoteSearch',
     );
     assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
@@ -227,7 +224,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
         return SafeArea(
           child: ConstrainedBox(
             constraints: constraints,
-            child: SelectModalContent<V, D>(
+            child: ModalContent<V, D>(
               title: title,
               subTitle: subTitle,
               type: type,

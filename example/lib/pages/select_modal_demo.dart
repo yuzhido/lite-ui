@@ -17,7 +17,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showFilterableSingle() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.filterable,
+      type: SelectType.filter,
       title: '选择城市',
       subTitle: '本地过滤选择，点击即选中',
       items: SelectModalMockData.cityItems,
@@ -32,7 +32,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showFilterableMulti() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.filterable,
+      type: SelectType.filter,
       title: '选择多个城市',
       subTitle: '支持多选，点击确认后返回',
       items: SelectModalMockData.cityItems,
@@ -49,7 +49,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showFilterableWithInitial() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.filterable,
+      type: SelectType.filter,
       title: '选择城市（带初始选中）',
       subTitle: '部分城市已预选',
       items: SelectModalMockData.cityItems,
@@ -70,7 +70,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showFilterableWithIcon() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.filterable,
+      type: SelectType.filter,
       title: '选择操作',
       subTitle: '每个选项带有图标',
       items: SelectModalMockData.iconItems,
@@ -122,7 +122,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
 
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.filterable,
+      type: SelectType.filter,
       title: '选择操作',
       subTitle: '部分操作不可用',
       items: disabledItems,
@@ -137,7 +137,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showRemoteSingle() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.remote,
+      type: SelectType.remote,
       title: '远程搜索城市',
       subTitle: '模拟异步搜索，支持防抖',
       searchHint: '输入关键字远程搜索',
@@ -159,7 +159,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showRemoteMulti() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.remote,
+      type: SelectType.remote,
       title: '远程搜索多个城市',
       subTitle: '支持多选，点击确认后返回',
       searchHint: '输入关键字远程搜索',
@@ -183,7 +183,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showRemoteWithInitial() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.remote,
+      type: SelectType.remote,
       title: '远程搜索城市（带初始数据）',
       subTitle: '打开时显示初始数据，搜索时远程获取',
       searchHint: '输入关键字远程搜索',
@@ -206,7 +206,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showRemoteWithSelected() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.remote,
+      type: SelectType.remote,
       title: '远程搜索城市（带初始选中）',
       subTitle: '部分城市已预选',
       searchHint: '输入关键字远程搜索',
@@ -235,7 +235,7 @@ class _SelectModalDemoPageState extends State<SelectModalDemoPage> {
   void _showRemoteCustomEmpty() async {
     await DropdownChoose.show<String, void>(
       context: context,
-      type: SelectModalType.remote,
+      type: SelectType.remote,
       title: '远程搜索城市',
       subTitle: '自定义空状态提示',
       searchHint: '输入关键字远程搜索',

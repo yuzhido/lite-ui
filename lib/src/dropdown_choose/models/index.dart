@@ -1,7 +1,7 @@
 /// SelectModal 内容类型
-enum SelectModalType {
+enum SelectType {
   /// 可过滤选择器（本地过滤+动态数据合并）
-  filterable,
+  filter,
 
   /// 远程搜索选择器（异步搜索）
   remote,

@@ -11,7 +11,7 @@ import 'check_list_item.dart';
 /// 泛型参数：
 /// - [V] 选项 value 的类型
 /// - [D] 选项 data 的类型（可选原始数据）
-class SelectModalContentList<V, D> extends StatelessWidget {
+class ModalContentList<V, D> extends StatelessWidget {
   /// 是否正在加载
   final bool isLoading;
 
@@ -45,7 +45,7 @@ class SelectModalContentList<V, D> extends StatelessWidget {
   /// 新增按钮点击回调
   final VoidCallback? onAdd;
 
-  const SelectModalContentList({
+  const ModalContentList({
     required this.isLoading,
     required this.displayItems,
     required this.selectedValues,

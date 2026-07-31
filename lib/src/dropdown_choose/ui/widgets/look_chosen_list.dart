@@ -1,40 +1,35 @@
 import 'package:flutter/material.dart';
 
-/// 已选项标签数据
-class SelectedItemLabel<V> {
-  final V value;
-  final String label;
-  const SelectedItemLabel({required this.value, required this.label});
-}
+import '../../../models/select_item.dart';
 
 /// 已选项查看弹窗（居中 Dialog）
 ///
 /// 展示当前已选中的项目列表，支持逐项移除。
 /// 内部维护列表状态，移除后自动刷新，全部移除后自动关闭。
-class SelectedItemsDialog<V> extends StatefulWidget {
+class LookChosenList<V, D> extends StatefulWidget {
   /// 已选项列表
-  final List<SelectedItemLabel<V>> items;
+  final List<SelectItem<V, D>> items;
 
   /// 移除某项的回调（传入原始 value）
   final ValueChanged<V>? onRemove;
 
-  const SelectedItemsDialog({required this.items, this.onRemove, super.key});
+  const LookChosenList({required this.items, this.onRemove, super.key});
 
   /// 显示已选项弹窗
-  static void show<V>({required BuildContext context, required List<SelectedItemLabel<V>> items, ValueChanged<V>? onRemove}) {
+  static void show<V, D>({required BuildContext context, required List<SelectItem<V, D>> items, ValueChanged<V>? onRemove}) {
     showDialog(
       context: context,
-      builder: (ctx) => SelectedItemsDialog<V>(items: items, onRemove: onRemove),
+      builder: (ctx) => LookChosenList<V, D>(items: items, onRemove: onRemove),
     );
   }
 
   @override
-  State<SelectedItemsDialog<V>> createState() => _SelectedItemsDialogState<V>();
+  State<LookChosenList<V, D>> createState() => _SelectedItemsDialogState<V, D>();
 }
 
-class _SelectedItemsDialogState<V> extends State<SelectedItemsDialog<V>> {
+class _SelectedItemsDialogState<V, D> extends State<LookChosenList<V, D>> {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-  late List<SelectedItemLabel<V>> _items;
+  late List<SelectItem<V, D>> _items;
 
   @override
   void initState() {
@@ -135,7 +130,8 @@ class _SelectedItemsDialogState<V> extends State<SelectedItemsDialog<V>> {
             // 列表
             Flexible(
               child: _items.isEmpty
-                  ? Padding(
+                  ? Container(
+                      height: 200,
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       child: Column(
                         children: [

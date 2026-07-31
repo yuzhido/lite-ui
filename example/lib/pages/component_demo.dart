@@ -120,7 +120,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                   return '远程搜索 + 单选 + 新增校验失败';
                 },
                 selectedItems: _citySingleItem != null ? [_citySingleItem!] : null,
-                type: SelectModalType.remote,
+                type: SelectType.remote,
                 prefixIcon: const Icon(Icons.location_on),
                 showAdd: true,
                 addLabel: '新增城市',
@@ -133,6 +133,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已新增城市: $result')));
                     }
                   }
+                  return null;
                 },
                 onSaved: (v) => debugPrint('城市: $v'),
                 onSelect: (value, item, data) {
@@ -146,7 +147,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '配送城市',
                 multiple: true,
-                type: SelectModalType.remote,
+                type: SelectType.remote,
                 displayMode: DisplayMode.tags,
                 selectedItems: _citiesMulti,
                 validator: (v) {
@@ -175,7 +176,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '品牌',
                 selectedItems: _brandItem != null ? [_brandItem!] : null,
-                type: SelectModalType.remote,
+                type: SelectType.remote,
                 prefixIcon: const Icon(Icons.bookmark_outline),
                 onClear: () => debugPrint('品牌已清除'),
                 onSaved: (v) => debugPrint('品牌: $v'),
@@ -189,7 +190,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
               DropdownChoose<int, UserInfo>(
                 formLabel: '负责人',
                 selectedItems: _userItem != null ? [_userItem!] : null,
-                type: SelectModalType.remote,
+                type: SelectType.remote,
                 prefixIcon: const Icon(Icons.person_outline),
                 hintText: '搜索用户名或部门',
                 onClear: () => debugPrint('负责人已清除'),
@@ -205,7 +206,7 @@ class _ComponentDemoPageState extends State<ComponentDemoPage> {
                 required: true,
                 formLabel: '商品',
                 multiple: true,
-                type: SelectModalType.remote,
+                type: SelectType.remote,
                 displayMode: DisplayMode.compact,
                 selectedItems: _products,
                 maxShowTags: 3,

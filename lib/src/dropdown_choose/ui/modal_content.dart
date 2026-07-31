@@ -8,8 +8,8 @@ import '../../widgets/top_title_info.dart';
 import '../../widgets/bottom_action_bar.dart';
 import '../models/index.dart';
 
-import 'widgets/select_modal_content_list.dart';
-import 'widgets/selected_items_dialog.dart';
+import 'widgets/modal_content_list.dart';
+import 'widgets/look_chosen_list.dart';
 
 /// SelectModal 统一内容组件
 ///
@@ -19,7 +19,7 @@ import 'widgets/selected_items_dialog.dart';
 /// 泛型参数：
 /// - [V] 选项 value 的类型
 /// - [D] 选项 data 的类型（可选原始数据）
-class SelectModalContent<V, D> extends StatefulWidget {
+class ModalContent<V, D> extends StatefulWidget {
   /// 主标题
   final String? title;
 
@@ -27,7 +27,7 @@ class SelectModalContent<V, D> extends StatefulWidget {
   final String? subTitle;
 
   /// 组件模式（filterable 本地过滤 / remote 远程搜索）
-  final SelectModalType type;
+  final SelectType type;
 
   /// 选项列表数据（直接传递，组件内部根据搜索关键字本地过滤）
   ///
@@ -80,7 +80,7 @@ class SelectModalContent<V, D> extends StatefulWidget {
   final String addLabel;
 
   /// 新增按钮点击回调（异步，传入当前搜索关键字，完成后自动刷新列表）
-  final Future<void> Function(String keyword)? onAdd;
+  final OnAddCallback? onAdd;
 
   /// 远程搜索模式下，当已选值的 label 被解析出来时触发
   ///
@@ -96,11 +96,11 @@ class SelectModalContent<V, D> extends StatefulWidget {
   /// 仅在远程模式首次加载（keyword 为空）且结果非空时触发，
   /// 外部可据此缓存数据，下次打开弹窗直接使用，避免重复请求。
   final void Function(List<SelectItem<V, D>> data)? onDataLoaded;
-  const SelectModalContent({
+  const ModalContent({
     super.key,
     this.title,
     this.subTitle,
-    this.type = SelectModalType.filterable,
+    this.type = SelectType.filter,
     this.items,
     this.onRemoteSearch,
     this.multiple = false,
@@ -118,17 +118,17 @@ class SelectModalContent<V, D> extends StatefulWidget {
     this.onLabelsResolved,
     this.onDataLoaded,
   }) : assert(
-         type == SelectModalType.remote ? onRemoteSearch != null : (items != null && onRemoteSearch == null),
+         type == SelectType.remote ? onRemoteSearch != null : (items != null && onRemoteSearch == null),
          '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)必须传递 items 且不能传递 onRemoteSearch',
        ),
        assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
        assert(maxCount == null || (maxCount > 0 && multiple), 'maxCount 必须大于 0 且仅在多选模式下有效');
 
   @override
-  State<SelectModalContent<V, D>> createState() => _SelectModalContentState<V, D>();
+  State<ModalContent<V, D>> createState() => _SelectModalContentState<V, D>();
 }
 
-class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
+class _SelectModalContentState<V, D> extends State<ModalContent<V, D>> {
   final TextEditingController _searchController = TextEditingController();
 
   /// 当前搜索关键字
@@ -156,7 +156,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   bool _hasSearched = false;
 
   /// 是否为远程搜索模式
-  bool get _isRemote => widget.type == SelectModalType.remote;
+  bool get _isRemote => widget.type == SelectType.remote;
 
   @override
   void initState() {
@@ -258,17 +258,14 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
     return SelectItem<V, D>(value: value, label: value.toString());
   }
 
-  /// 获取已选项的标签信息（用于「查看已选」弹窗）
-  List<SelectedItemLabel<V>> _getSelectedLabels() {
-    return _selectedValues.map((v) {
-      final item = _getSelectedItem(v);
-      return SelectedItemLabel<V>(value: v, label: item.label);
-    }).toList();
+  /// 获取已选项列表（用于「查看已选」弹窗）
+  List<SelectItem<V, D>> _getSelectedLabels() {
+    return _selectedValues.map((v) => _getSelectedItem(v)).toList();
   }
 
   /// 查看已选项弹窗
   void _handleViewSelected() {
-    SelectedItemsDialog.show(
+    LookChosenList.show(
       context: context,
       items: _getSelectedLabels(),
       onRemove: (V value) {
@@ -292,8 +289,8 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
   /// 处理新增按钮点击，传入当前关键字，完成后自动刷新列表
   Future<void> _handleAdd() async {
     if (widget.onAdd == null) return;
-    await widget.onAdd!(_keyword);
-    if (mounted) {
+    final res = await widget.onAdd!(_keyword);
+    if (mounted && res == true) {
       _performSearch(_keyword);
     }
   }
@@ -355,7 +352,7 @@ class _SelectModalContentState<V, D> extends State<SelectModalContent<V, D>> {
           TopTitleInfo(title: '${widget.title}', subTitle: '这是副标题${widget.subTitle ?? ''}', itemCount: _results.length),
           InputSearch(searchHint: widget.searchHint, searchController: _searchController, onSearch: _onSearch, onClear: _onClearSearch, keyword: _keyword, isLoading: _isLoading),
           Expanded(
-            child: SelectModalContentList<V, D>(
+            child: ModalContentList<V, D>(
               isLoading: _isLoading,
               displayItems: _results,
               remote: _isRemote,
