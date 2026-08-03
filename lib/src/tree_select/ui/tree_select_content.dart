@@ -23,6 +23,9 @@ class TreeModalContent<T extends Object> extends StatefulWidget {
   /// 主标题
   final String title;
 
+  /// 副标题
+  final String? subTitle;
+
   /// 搜索框提示文字
   final String searchHint;
 
@@ -78,6 +81,7 @@ class TreeModalContent<T extends Object> extends StatefulWidget {
     super.key,
     required this.treeData,
     this.title = '请选择',
+    this.subTitle,
     this.searchHint = '搜索...',
     this.emptyText = '暂无数据',
     this.showSearch = true,
@@ -109,6 +113,9 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
 
   /// 当前选中的节点列表
   List<TreeNode<T>> get _selectedNodes => TreeUtils.getSelectedNodes(_filteredData, _selectedIds);
+
+  /// 当前过滤后数据的节点总数（含所有嵌套子节点）
+  int get _totalCount => _filteredData.fold(0, (sum, node) => sum + 1 + TreeUtils.countDescendants(node));
 
   @override
   void initState() {
@@ -268,10 +275,17 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
           // 顶部拖拽指示条
           DragIndicator(),
           // 标题栏
-          TopTitleInfo(title: widget.title),
+          TopTitleInfo(title: widget.title, subTitle: widget.subTitle ?? '', itemCount: _totalCount),
 
           // 搜索框
-          if (widget.showSearch) InputSearch(searchHint: widget.searchHint, onSearch: _applyFilter, searchController: _searchController, keyword: _searchController.text, searchButtonColor: widget.searchButtonColor, searchButtonTextColor: widget.searchButtonTextColor),
+          if (widget.showSearch)
+            InputSearch(
+              searchHint: widget.searchHint,
+              onSearch: _applyFilter,
+              searchController: _searchController,
+              searchButtonColor: widget.searchButtonColor,
+              searchButtonTextColor: widget.searchButtonTextColor,
+            ),
 
           // 树形列表
           Expanded(

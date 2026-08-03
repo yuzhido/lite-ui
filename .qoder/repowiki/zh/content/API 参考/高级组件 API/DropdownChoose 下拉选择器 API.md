@@ -9,16 +9,16 @@
 - [lib/src/dropdown_choose/models/index.dart](file://lib/src/dropdown_choose/models/index.dart)
 - [lib/src/wrapper_container/index.dart](file://lib/src/wrapper_container/index.dart)
 - [lib/src/widgets/suffix_icon_label.dart](file://lib/src/widgets/suffix_icon_label.dart)
+- [lib/src/widgets/prefix_icon_label.dart](file://lib/src/widgets/prefix_icon_label.dart)
 - [example/lib/pages/back.dart](file://example/lib/pages/back.dart)
 - [example/lib/pages/select_modal_demo.dart](file://example/lib/pages/select_modal_demo.dart)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- **验证消息标准化**：将错误消息从'是必填项不能为空'统一改为'是必选项不能为空'，提升用户体验一致性
-- **清理注释代码**：移除了表单字段同步相关的冗余注释代码，提高代码可读性
-- **优化验证逻辑**：改进了 `_getValidationValues()` 方法，提供更准确的验证值获取
-- **增强状态管理**：完善了弹窗展开状态和清除状态的同步机制
+- **新增 prefixIconData 属性**：DropdownChoose 组件现在支持直接指定图标数据而无需创建自定义 widget，与其他表单组件保持一致的接口设计
+- **统一图标接口**：与 InputText、TreeSelect 等其他表单组件保持相同的 prefixIconData 属性命名和用法
+- **简化图标配置**：开发者可以直接传入 IconData 类型，无需包裹在 Widget 中
 
 ## 目录
 1. [简介](#简介)
@@ -35,7 +35,7 @@
 ## 简介
 DropdownChoose 是一个支持单选与多选的 Flutter 下拉选择器，提供本地过滤与远程搜索两种模式，内置表单校验、值显示模式（文本/标签/紧凑）、禁用项、占位提示、新增按钮、查看已选弹窗等能力。通过统一的 show 静态方法可快速弹出底部选择面板，适用于表单字段与独立弹窗场景。
 
-**最新更新**：组件进行了验证消息标准化处理，将错误提示统一为"是必选项不能为空"，提升了用户体验的一致性。同时清理了冗余的注释代码，优化了代码结构和可维护性。
+**最新更新**：组件新增了 `prefixIconData` 属性，允许开发者直接指定图标数据而无需创建自定义widget，与其他表单组件保持一致的接口设计。这一改进简化了图标的配置方式，提升了开发体验的一致性。
 
 ## 项目结构
 - 组件入口与状态管理：lib/src/dropdown_choose/dropdown_choose.dart
@@ -43,6 +43,7 @@ DropdownChoose 是一个支持单选与多选的 Flutter 下拉选择器，提�
 - 数据模型与回调类型：lib/src/models/select_item.dart、lib/src/models/callbacks.dart
 - 枚举定义（布局、显示模式等）：lib/src/dropdown_choose/models/index.dart
 - 包装容器与动态图标：lib/src/wrapper_container/index.dart、lib/src/widgets/suffix_icon_label.dart
+- 前置图标标签组件：lib/src/widgets/prefix_icon_label.dart
 - 已选项查看弹窗：lib/src/dropdown_choose/ui/widgets/look_chosen_list.dart
 - 示例用法：example/lib/pages/back.dart、example/lib/pages/select_modal_demo.dart
 
@@ -55,6 +56,7 @@ B --> E["LookChosenList<br/>lib/src/dropdown_choose/ui/widgets/look_chosen_list.
 A --> F["SelectItem / Callbacks / Enums<br/>lib/src/models/*"]
 A --> G["WrapperContainer(表单包装)<br/>lib/src/wrapper_container/index.dart"]
 G --> H["SuffixIconLabel(动态后缀图标)<br/>lib/src/widgets/suffix_icon_label.dart"]
+G --> I["PrefixIconLabel(前置图标标签)<br/>lib/src/widgets/prefix_icon_label.dart"]
 ```
 
 **图表来源**
@@ -62,6 +64,7 @@ G --> H["SuffixIconLabel(动态后缀图标)<br/>lib/src/widgets/suffix_icon_lab
 - [lib/src/dropdown_choose/ui/modal_content.dart:22-133](file://lib/src/dropdown_choose/ui/modal_content.dart#L22-L133)
 - [lib/src/wrapper_container/index.dart:14-77](file://lib/src/wrapper_container/index.dart#L14-L77)
 - [lib/src/widgets/suffix_icon_label.dart:3-10](file://lib/src/widgets/suffix_icon_label.dart#L3-L10)
+- [lib/src/widgets/prefix_icon_label.dart:3-10](file://lib/src/widgets/prefix_icon_label.dart#L3-L10)
 
 ## 核心组件与参数总览
 - 组件类：DropdownChoose<V, D>
@@ -88,11 +91,12 @@ G --> H["SuffixIconLabel(动态后缀图标)<br/>lib/src/widgets/suffix_icon_lab
 - FormField 状态同步：确保表单验证和回显正常工作
 - 增强验证支持：validator 参数支持自定义验证逻辑
 - **描述文本：subTitle 属性支持在表单标签下方显示描述信息**
+- **前置图标：prefixIconData 属性支持直接指定图标数据，与其他表单组件保持一致**
 
 ## 架构概览
 DropdownChoose 作为表单字段封装，点击后调用 show 打开底部弹窗 ModalContent，内部根据 type 决定本地过滤或远程搜索，并通过 ModalContentList 渲染列表，结合 InputSearch 完成搜索交互。
 
-**更新**：组件现在维护 `_isExpanded` 和 `_cleared` 状态变量，在弹窗打开时设置为 true，关闭时重置为 false。API 已重构，移除了 value 属性，统一使用 selectedItems 作为已选项数据源。onConfirm 回调的参数顺序已更新为 (values, items, datas)。新增的 `subTitle` 属性支持在弹窗中显示描述性文本。
+**更新**：组件现在支持 `prefixIconData` 属性，允许直接传入 IconData 类型来设置前置图标，无需创建自定义 Widget。这一改进与 InputText、TreeSelect 等其他表单组件保持了统一的接口设计。
 
 ```mermaid
 sequenceDiagram
@@ -102,9 +106,11 @@ participant MC as "ModalContent"
 participant L as "ModalContentList"
 participant S as "InputSearch"
 participant W as "WrapperContainer"
+participant P as "PrefixIconLabel"
 participant I as "SuffixIconLabel"
 U->>DC : 点击触发
 DC->>W : setState(_isExpanded = true)
+W->>P : 使用 prefixIconData 显示前置图标
 W->>I : 根据 isExpanded 和 selectItems 切换图标
 DC->>MC : showModalBottomSheet(传入 items/onRemoteSearch/multiple/_modalSelectedItems/subTitle...)
 MC->>S : 初始化搜索框(searchHint/keyword)
@@ -132,7 +138,8 @@ W->>I : 恢复默认图标状态
 - [lib/src/dropdown_choose/dropdown_choose.dart:308-325](file://lib/src/dropdown_choose/dropdown_choose.dart#L308-L325)
 - [lib/src/dropdown_choose/ui/modal_content.dart:166-237](file://lib/src/dropdown_choose/ui/modal_content.dart#L166-L237)
 - [lib/src/wrapper_container/index.dart:121](file://lib/src/wrapper_container/index.dart#L121)
-- [lib/src/widgets/suffix_icon_label.dart:30-32](file://lib/src/widgets/suffix_icon_label.dart#L30-32)
+- [lib/src/widgets/suffix_icon_label.dart:30-32](file://lib/src/widgets/suffix_icon_label.dart#L30-L32)
+- [lib/src/widgets/prefix_icon_label.dart:25-26](file://lib/src/widgets/prefix_icon_label.dart#L25-L26)
 
 ## 详细组件分析
 
@@ -148,29 +155,15 @@ W->>I : 恢复默认图标状态
 - FormField 状态同步：通过 `didUpdateWidget` 统一处理所有状态变更，确保表单验证和回显正常工作
 - 增强验证支持：validator 参数支持自定义验证逻辑，清除状态验证逻辑优化
 - **描述文本：subTitle 属性支持在表单标签下方显示描述性文本**
+- **前置图标：prefixIconData 属性支持直接指定 IconData 类型，简化图标配置**
 
-**更新**：组件已完成 API 重构，移除了 value 属性，统一使用 selectedItems 作为已选项数据源。onConfirm 回调的参数顺序已更新为 (values, items, datas)。组件现在维护弹窗展开状态和清除状态，并在 WrapperContainer 中传递相关参数以实现动态后缀图标显示和清除功能。**新增了 subTitle 属性，支持在表单标签下方显示描述性文本**。
+**更新**：组件新增了 `prefixIconData` 属性，允许开发者直接传入 IconData 类型来设置前置图标，无需创建自定义 Widget。这一改进与 InputText、TreeSelect 等其他表单组件保持了统一的接口设计，提升了开发体验的一致性。
 
 **章节来源**
 - [lib/src/dropdown_choose/dropdown_choose.dart:11-160](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L160)
 - [lib/src/dropdown_choose/dropdown_choose.dart:308-325](file://lib/src/dropdown_choose/dropdown_choose.dart#L308-L325)
 - [lib/src/dropdown_choose/dropdown_choose.dart:430-477](file://lib/src/dropdown_choose/dropdown_choose.dart#L430-L477)
 - [lib/src/dropdown_choose/dropdown_choose.dart:453-472](file://lib/src/dropdown_choose/dropdown_choose.dart#L453-L472)
-
-### ModalContent 弹窗内容
-- 模式切换：type=filter 本地过滤；type=remote 远程搜索
-- 搜索流程：_performSearch 统一入口，远程模式设置 isLoading，本地模式直接过滤 label/subtitle
-- 选中状态：selectedValues 集合维护，多选达到 maxCount 限制不再新增
-- 已选项回显：selectedItems 优先使用，否则从搜索结果中匹配并缓存到 _selectedItemMap
-- 新增按钮：search 无结果时展示，点击后 onAdd(keyword) 完成后自动刷新列表
-- 查看已选：弹窗内展示已选 label，支持移除
-- **描述文本：subTitle 属性支持在弹窗顶部显示描述性文本**
-
-**更新**：弹窗现在通过 `_modalSelectedItems()` 方法接收正确的选中项，确保清除后弹窗能正确显示空状态。onConfirm 回调的参数顺序已更新为 (values, items, datas)。**新增了 subTitle 属性的支持，可以在弹窗顶部显示描述性文本**。
-
-**章节来源**
-- [lib/src/dropdown_choose/ui/modal_content.dart:136-237](file://lib/src/dropdown_choose/ui/modal_content.dart#L136-L237)
-- [lib/src/dropdown_choose/ui/modal_content.dart:324-332](file://lib/src/dropdown_choose/ui/modal_content.dart#L324-L332)
 
 ### WrapperContainer 包装容器
 - 表单布局：统一包装表单标签、值显示区域和后缀图标
@@ -179,12 +172,28 @@ W->>I : 恢复默认图标状态
 - 错误处理：支持错误文本显示和样式应用
 - 响应式布局：支持 row/column 两种布局方式
 - 强类型泛型支持：重构为 WrapperContainer<V, D>，提供更好的类型安全
+- **前置图标支持：新增 `prefixIconData` 属性，支持直接传入 IconData 类型**
 
-**更新**：WrapperContainer 现在是强类型的泛型类 WrapperContainer<V, D>，新增了对弹窗展开状态和选择状态的监听，动态切换右侧图标样式并支持清除操作。
+**更新**：WrapperContainer 现在支持 `prefixIconData` 属性，可以接收 IconData 类型并传递给 PrefixIconLabel 组件进行显示。这与 InputText、TreeSelect 等其他表单组件保持了统一的接口设计。
 
 **章节来源**
 - [lib/src/wrapper_container/index.dart:14-77](file://lib/src/wrapper_container/index.dart#L14-L77)
 - [lib/src/wrapper_container/index.dart:121](file://lib/src/wrapper_container/index.dart#L121)
+
+### PrefixIconLabel 前置图标标签组件
+- 智能图标切换：支持同时接收 `prefixIcon` 和 `prefixIconData` 两个参数
+- 互斥验证：通过断言确保 `prefixIcon` 和 `prefixIconData` 只能传递其中一个
+- 图标渲染：优先使用 `prefixIcon`，如果为空则使用 `prefixIconData` 创建 Icon Widget
+- 样式支持：支持自定义图标颜色 `prefixIconColor` 和标签宽度 `labelWidth`
+- 必填标识：支持显示红色星号标识必填字段
+- 布局适配：在不同表单布局下都能正确显示图标和标签
+
+**新增功能**：这是本次更新的核心特性之一，为 DropdownChoose 组件提供了统一的前置图标配置方式。
+
+**章节来源**
+- [lib/src/widgets/prefix_icon_label.dart:3-10](file://lib/src/widgets/prefix_icon_label.dart#L3-L10)
+- [lib/src/widgets/prefix_icon_label.dart:25-26](file://lib/src/widgets/prefix_icon_label.dart#L25-L26)
+- [lib/src/widgets/prefix_icon_label.dart:11-12](file://lib/src/widgets/prefix_icon_label.dart#L11-L12)
 
 ### SuffixIconLabel 动态后缀图标
 - 智能图标切换：根据选择状态和弹窗展开状态显示不同图标
@@ -226,7 +235,7 @@ W->>I : 恢复默认图标状态
 - onLabelsResolved：远程模式下解析出已选项 label 的映射回调
 - onDataLoaded：首次加载成功且非空时的数据回调，便于外部缓存
 - **onClear**：点击清除图标时触发，用于清空当前选中值
-- **onAdd**：**新增**，使用新的 OnAddCallback 类型，支持异步新增操作
+- **onAdd**：**新增**，使用新的 OnAddCallback 类型，用于新增功能的异步回调
 
 **更新**：新增了 onClear 回调，支持点击关闭图标时的清除操作，提升了用户的操作体验。**最重要的是，onSelect 和 onConfirm 的回调签名已经增强，现在可以访问完整的数据项信息**。新增了 onAdd 回调，使用新的 OnAddCallback 类型来处理新增功能。
 
@@ -313,14 +322,30 @@ W->>I : 恢复默认图标状态
 - [lib/src/dropdown_choose/dropdown_choose.dart:52-53](file://lib/src/dropdown_choose/dropdown_choose.dart#L52-L53)
 - [lib/src/dropdown_choose/ui/modal_content.dart:26-27](file://lib/src/dropdown_choose/ui/modal_content.dart#L26-L27)
 
+### 前置图标功能详解
+- **prefixIconData 属性**：支持直接传入 IconData 类型来设置前置图标
+- **与 prefixIcon 互斥**：通过断言确保 prefixIcon 和 prefixIconData 只能传递其中一个
+- **统一接口设计**：与 InputText、TreeSelect 等其他表单组件保持一致的图标配置方式
+- **样式支持**：支持自定义图标颜色 prefixIconColor 和标签宽度 labelWidth
+- **必填标识**：支持显示红色星号标识必填字段
+- **布局适配**：在不同表单布局下都能正确显示图标和标签
+
+**新增功能**：这是本次更新的核心特性，为 DropdownChoose 组件提供了统一的前置图标配置方式，简化了开发者的使用体验。
+
+**章节来源**
+- [lib/src/dropdown_choose/dropdown_choose.dart:62-63](file://lib/src/dropdown_choose/dropdown_choose.dart#L62-L63)
+- [lib/src/wrapper_container/index.dart:50-51](file://lib/src/wrapper_container/index.dart#L50-L51)
+- [lib/src/widgets/prefix_icon_label.dart:11-12](file://lib/src/widgets/prefix_icon_label.dart#L11-L12)
+
 ## 依赖关系分析
 - DropdownChoose 依赖 ModalContent 进行弹窗内容组织
 - ModalContent 依赖 ModalContentList 渲染列表与空态
 - 搜索交互依赖 InputSearch
 - **WrapperContainer 依赖 SuffixIconLabel 实现动态图标和清除功能**
+- **WrapperContainer 依赖 PrefixIconLabel 实现前置图标显示**
 - 数据模型与回调类型集中定义于 models 目录
 
-**更新**：新增了 WrapperContainer 与 SuffixIconLabel 的依赖关系，形成完整的动态图标显示和清除功能链路。**WrapperContainer 现在是一个强类型的泛型类，提供了更好的类型安全性**。
+**更新**：新增了 WrapperContainer 与 PrefixIconLabel 的依赖关系，形成了完整的前置图标显示功能链路。**WrapperContainer 现在是一个强类型的泛型类，提供了更好的类型安全性**。
 
 ```mermaid
 classDiagram
@@ -345,6 +370,8 @@ class DropdownChoose~V,D~ {
 +onDataLoaded
 +forceRefresh
 +onClear
++prefixIcon
++prefixIconData
 +_isExpanded
 +_cleared
 +_modalSelectedItems()
@@ -385,6 +412,7 @@ class WrapperContainer~V,D~ {
 +required
 +formLayout
 +prefixIcon
++prefixIconData
 +isExpanded
 +selectItems
 +onClear
@@ -394,6 +422,14 @@ class SuffixIconLabel {
 +selectedValues
 +isExpanded
 +onClear
+}
+class PrefixIconLabel {
++label
++required
++labelWidth
++prefixIcon
++prefixIconData
++prefixIconColor
 }
 class SelectItem~V,D~ {
 +label
@@ -420,6 +456,7 @@ DropdownChoose~V,D~ --> ModalContent~V,D~ : "构建弹窗内容"
 ModalContent~V,D~ --> ModalContentList~V,D~ : "渲染列表"
 DropdownChoose~V,D~ --> WrapperContainer~V,D~ : "表单包装"
 WrapperContainer~V,D~ --> SuffixIconLabel : "动态后缀图标和清除功能"
+WrapperContainer~V,D~ --> PrefixIconLabel : "前置图标显示功能"
 ModalContentList~V,D~ --> SelectItem~V,D~ : "使用数据项"
 OnSelectChange~V,D~ --> SelectItem~V,D~ : "包含完整数据项"
 OnMultiSelectConfirm~V,D~ --> SelectItem~V,D~ : "包含完整数据项"
@@ -431,6 +468,7 @@ OnAddCallback --> String : "关键字参数"
 - [lib/src/dropdown_choose/ui/modal_content.dart:22-133](file://lib/src/dropdown_choose/ui/modal_content.dart#L22-L133)
 - [lib/src/wrapper_container/index.dart:14-77](file://lib/src/wrapper_container/index.dart#L14-L77)
 - [lib/src/widgets/suffix_icon_label.dart:3-10](file://lib/src/widgets/suffix_icon_label.dart#L3-L10)
+- [lib/src/widgets/prefix_icon_label.dart:3-10](file://lib/src/widgets/prefix_icon_label.dart#L3-L10)
 - [lib/src/models/select_item.dart:9-51](file://lib/src/models/select_item.dart#L9-L51)
 - [lib/src/models/callbacks.dart:3-16](file://lib/src/models/callbacks.dart#L3-L16)
 
@@ -445,6 +483,7 @@ OnAddCallback --> String : "关键字参数"
 - **验证性能优化**：validator 函数应避免执行耗时操作，必要时使用防抖或异步验证
 - **回调性能优化**：新的回调签名虽然提供了更多数据，但要注意避免在回调中进行大量计算，必要时使用防抖或异步处理
 - **描述文本优化**：subTitle 属性不影响核心渲染性能，仅在需要时显示
+- **前置图标优化**：prefixIconData 属性避免了创建额外的 Icon Widget，减少了内存占用和重建开销
 
 ## 故障排查指南
 - 远程模式必须传 onRemoteSearch，本地模式必须传 items：组件构造与 show 均有断言校验
@@ -459,17 +498,20 @@ OnAddCallback --> String : "关键字参数"
 - **自动验证不触发**：确认 autovalidateMode 参数设置正确，检查 FormField 的验证逻辑
 - **回调签名不兼容**：如果升级后出现编译错误，需要更新 onSelect 和 onConfirm 回调的签名以匹配新的参数格式
 - **描述文本不显示**：确认 subTitle 属性是否正确传递，检查表单布局是否支持描述文本显示
+- **前置图标冲突**：确认 prefixIcon 和 prefixIconData 只传递其中一个，否则会触发断言错误
+- **前置图标不显示**：检查 prefixIconData 是否为有效的 IconData 类型，确认 WrapperContainer 正确传递了该参数
 
-**更新**：新增了对清除功能、弹窗状态同步、验证功能和回调签名相关的故障排查指导，以及新增的描述文本功能的故障排查。特别需要注意的是，验证错误消息已统一为"是必选项不能为空"。
+**更新**：新增了对前置图标功能相关的故障排查指导，特别需要注意的是 prefixIcon 和 prefixIconData 参数的互斥性。
 
 **章节来源**
 - [lib/src/dropdown_choose/dropdown_choose.dart:40-48](file://lib/src/dropdown_choose/dropdown_choose.dart#L40-L48)
-- [lib/src/dropdown_choose/ui/modal_content.dart:120-125](file://lib/src/dropdown_choose/ui/modal_content.dart#L120-L125)
+- [lib/src/dropdown_choose/ui/modal_content.dart:120-125](file://lib/src/dropdown_choose/ui/modal_content.dart#L120-125)
+- [lib/src/widgets/prefix_icon_label.dart:11-12](file://lib/src/widgets/prefix_icon_label.dart#L11-L12)
 
 ## 结论
-DropdownChoose 提供了完善的下拉选择能力，覆盖表单集成、本地/远程搜索、多选限制、值显示定制、禁用项与占位提示、新增与查看已选等功能。**最新版本进行了验证消息标准化处理，将错误提示统一为"是必选项不能为空"，提升了用户体验的一致性**。同时清理了冗余的注释代码，优化了代码结构和可维护性。**最重要的改进是回调签名的增强**，现在 OnSelectChange 和 OnMultiSelectConfirm 都提供了完整的数据项支持，让开发者能够更方便地访问选中项的详细信息。通过合理的缓存与搜索策略，可在大列表与远程数据场景下获得良好性能与用户体验。
+DropdownChoose 提供了完善的下拉选择能力，覆盖表单集成、本地/远程搜索、多选限制、值显示定制、禁用项与占位提示、新增与查看已选等功能。**最新版本新增了 prefixIconData 属性，允许开发者直接指定图标数据而无需创建自定义widget，与其他表单组件保持一致的接口设计**。这一改进简化了图标的配置方式，提升了开发体验的一致性。同时清理了冗余的注释代码，优化了代码结构和可维护性。**最重要的改进是回调签名的增强**，现在 OnSelectChange 和 OnMultiSelectConfirm 都提供了完整的数据项支持，让开发者能够更方便地访问选中项的详细信息。通过合理的缓存与搜索策略，可在大列表与远程数据场景下获得良好性能与用户体验。
 
-**更新总结**：验证消息的标准化使组件的用户体验更加一致。**最重要的是，统一的 selectedItems 数据和优化的回调签名使组件更加易于使用和扩展**。
+**更新总结**：prefixIconData 属性的添加使组件的图标配置更加简洁统一。**最重要的是，统一的 selectedItems 数据和优化的回调签名使组件更加易于使用和扩展**。
 
 ## 附录：API 参考
 
@@ -478,7 +520,8 @@ DropdownChoose 提供了完善的下拉选择能力，覆盖表单集成、本�
 - **subTitle**：**新增**，表单副标题/描述文本，显示在表单标签下方
 - **selectedItems**：**已更新**，已选中项的完整数据（单选/多选统一使用），替代原来的 value 和 selectedValues
 - items：选项列表（本地模式必填）
-- prefixIcon：前置图标
+- prefixIcon：前置图标（Widget）
+- **prefixIconData**：**新增**，前置图标数据（IconData），与 prefixIcon 互斥
 - hintText：占位提示文字
 - required：是否必填
 - multiple：是否多选
@@ -498,33 +541,42 @@ DropdownChoose 提供了完善的下拉选择能力，覆盖表单集成、本�
 - **autovalidateMode**：自动验证模式，控制验证触发时机
 - onSaved/formLayout/prefixIcon：表单相关
 
-**更新**：新增了 subTitle 属性，支持在表单标签下方显示描述性文本。**最重要的是，value 属性已被移除，统一使用 selectedItems**，onSelect 和 onConfirm 的回调签名已经增强。**type 参数现在使用 SelectType 枚举**。
+**更新**：新增了 subTitle 属性和 prefixIconData 属性，支持在表单标签下方显示描述性文本和直接指定图标数据。**最重要的是，value 属性已被移除，统一使用 selectedItems**，onSelect 和 onConfirm 的回调签名已经增强。**type 参数现在使用 SelectType 枚举**。
 
 **章节来源**
 - [lib/src/dropdown_choose/dropdown_choose.dart:11-160](file://lib/src/dropdown_choose/dropdown_choose.dart#L11-L160)
 - [lib/src/dropdown_choose/dropdown_choose.dart:181-255](file://lib/src/dropdown_choose/dropdown_choose.dart#L181-L255)
 
-### ModalContent 主要参数
-- title/subTitle：标题与副标题
-- type/items/onRemoteSearch：模式与数据源
-- multiple/selectedItems：多选与已选项（已更新，移除了 selectedValues）
-- **onSelect/onConfirm/maxCount**：**已更新**，回调签名增强，支持完整数据项
-- searchHint/cancelLabel/confirmLabel/emptyText：搜索与按钮文案
-- showAdd/addLabel/**onAdd**：新增按钮，onAdd 使用新的 OnAddCallback 类型
-- onLabelsResolved/onDataLoaded：远程解析与数据加载回调
-
-**章节来源**
-- [lib/src/dropdown_choose/ui/modal_content.dart:22-133](file://lib/src/dropdown_choose/ui/modal_content.dart#L22-L133)
-
 ### WrapperContainer 新增参数
 - **isExpanded**：弹窗展开状态，控制后缀图标显示
 - **selectItems**：选中的项目列表，用于显示值（替代原来的 selectedValue/selectedValues）
 - **onClear**：清除回调，点击关闭图标时触发
+- **prefixIconData**：**新增**，直接传递图标数据（IconData 类型）
 
-**新增功能**：这些参数用于实现动态后缀图标显示和清除功能，根据用户交互状态智能切换图标并支持清除操作。**WrapperContainer 现在是强类型的泛型类 WrapperContainer<V, D>**。
+**新增功能**：这些参数用于实现动态后缀图标显示和清除功能，根据用户交互状态智能切换图标并支持清除操作。**WrapperContainer 现在是强类型的泛型类 WrapperContainer<V, D>**，新增了对 prefixIconData 的支持。
 
 **章节来源**
 - [lib/src/wrapper_container/index.dart:50-77](file://lib/src/wrapper_container/index.dart#L50-L77)
+
+### PrefixIconLabel 组件
+- **label**：标签文本
+- **required**：是否必填
+- **labelWidth**：标签宽度
+- **prefixIcon**：前置图标（Widget）
+- **prefixIconData**：前置图标数据（IconData）
+- **prefixIconColor**：图标颜色
+
+**图标显示逻辑**：
+- 优先使用 prefixIcon，如果为空则使用 prefixIconData
+- 通过断言确保 prefixIcon 和 prefixIconData 只能传递其中一个
+- 支持自定义图标颜色和标签宽度
+
+**新增组件**：专门用于实现前置图标和标签的统一显示逻辑。
+
+**章节来源**
+- [lib/src/widgets/prefix_icon_label.dart:3-10](file://lib/src/widgets/prefix_icon_label.dart#L3-L10)
+- [lib/src/widgets/prefix_icon_label.dart:25-26](file://lib/src/widgets/prefix_icon_label.dart#L25-L26)
+- [lib/src/widgets/prefix_icon_label.dart:11-12](file://lib/src/widgets/prefix_icon_label.dart#L11-L12)
 
 ### SuffixIconLabel 组件
 - **hasValue**：是否有选中值
@@ -578,6 +630,7 @@ DropdownChoose 提供了完善的下拉选择能力，覆盖表单集成、本�
 DropdownChoose<String, int>(
   formLabel: '选择城市',
   subTitle: '请选择您所在的城市', // 新增描述文本
+  prefixIconData: Icons.location_on, // 新增前置图标数据
   selectedItems: const [
     SelectItem(label: '北京', value: 'bj', data: 1),
   ],
@@ -602,6 +655,7 @@ DropdownChoose<String, int>(
 DropdownChoose<String, int>(
   formLabel: '选择城市',
   subTitle: '请选择多个城市',
+  prefixIconData: Icons.location_city, // 新增前置图标数据
   multiple: true,
   selectedItems: const [
     SelectItem(label: '北京', value: 'bj', data: 1),
@@ -627,6 +681,7 @@ DropdownChoose<String, int>(
 DropdownChoose<String, int>(
   formLabel: '选择城市',
   subTitle: '支持新增城市',
+  prefixIconData: Icons.add_circle, // 新增前置图标数据
   showAdd: true,
   addLabel: '新增城市',
   onAdd: (keyword) async {
@@ -637,4 +692,4 @@ DropdownChoose<String, int>(
 ),
 ```
 
-**新增示例**：展示了如何使用增强的回调签名来访问完整的数据项信息，以及如何使用新的 OnAddCallback 类型来实现新增功能。**新增了 subTitle 属性的使用示例，展示了如何在表单中添加描述性文本**。
+**新增示例**：展示了如何使用增强的回调签名来访问完整的数据项信息，以及如何使用新的 OnAddCallback 类型来实现新增功能。**新增了 subTitle 和 prefixIconData 属性的使用示例，展示了如何在表单中添加描述性文本和前置图标数据**。

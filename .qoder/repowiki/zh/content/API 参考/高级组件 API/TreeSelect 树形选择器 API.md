@@ -10,16 +10,17 @@
 - [utils/index.dart](file://lib/src/tree_select/utils/index.dart)
 - [bottom_action_bar.dart](file://lib/src/widgets/bottom_action_bar.dart)
 - [keyword_highlight.dart](file://lib/src/widgets/keyword_highlight.dart)
+- [prefix_icon_label.dart](file://lib/src/widgets/prefix_icon_label.dart)
+- [wrapper_container/index.dart](file://lib/src/wrapper_container/index.dart)
+- [dropdown_choose.dart](file://lib/src/dropdown_choose/dropdown_choose.dart)
 - [tree_select_example.dart](file://example/lib/pages/tree_select_example.dart)
 </cite>
 
 ## 更新摘要
 **变更内容**   
-- 新增 TreeSelectField 表单组件，集成 FormField 和 WrapperContainer
-- 重构 TreeSelect 为 TreeModalContent 弹窗内容组件
-- 统一 show<T>() 方法替代原有的 show() 和 showMultiple()
-- 底部按钮区域复用 BottomActionBar 通用组件
-- 简化 API 架构，对齐 DropdownChoose 设计模式
+- 新增 `prefixIconData` 属性，与 DropdownChoose 保持一致的前缀图标处理方式
+- 支持直接传递 IconData 数据作为前缀图标，简化图标配置
+- 提升开发体验的一致性，与 DropdownChoose 组件保持统一的 API 设计
 
 ## 目录
 1. [简介](#简介)
@@ -36,6 +37,8 @@
 ## 简介
 TreeSelect 是一个支持单选/多选、搜索过滤、关键字高亮、懒加载与父节点联动选择的树形选择器。经过重大重构后，现在提供统一的 `show<T>()` 便捷方法和全新的 `TreeSelectField` 表单组件，完美集成 Flutter 表单系统。组件采用"表单字段组件 + 弹窗内容"的现代化架构，既支持快速集成，也满足深度定制需求。
 
+**最新更新**：新增了 `prefixIconData` 属性，与 DropdownChoose 组件保持一致的前缀图标处理方式，开发者可以直接传递 IconData 数据来设置前缀图标，提升了开发体验的一致性和便捷性。
+
 ## 项目结构
 TreeSelect 相关代码位于 lib/src/tree_select 目录下，采用清晰的模块化设计：
 - `tree_select.dart`: 新的表单字段组件 TreeSelectField
@@ -44,6 +47,8 @@ TreeSelect 相关代码位于 lib/src/tree_select 目录下，采用清晰的模
 - `ui/tree_list.dart`: 树形列表渲染组件
 - `models/index.dart`: 数据模型和配置类
 - `utils/index.dart`: 树操作工具类
+- `widgets/prefix_icon_label.dart`: 前缀图标标签组件
+- `wrapper_container/index.dart`: 包装容器组件
 
 ```mermaid
 graph TB
@@ -56,6 +61,8 @@ C --> F["数据模型<br/>models/index.dart"]
 D --> G["关键词高亮<br/>keyword_highlight.dart"]
 H["表单组件<br/>tree_select.dart"] --> C
 H --> I["底部操作栏<br/>bottom_action_bar.dart"]
+H --> J["包装容器<br/>wrapper_container/index.dart"]
+J --> K["前缀图标标签<br/>prefix_icon_label.dart"]
 ```
 
 **图表来源**
@@ -65,8 +72,10 @@ H --> I["底部操作栏<br/>bottom_action_bar.dart"]
 - [ui/tree_list.dart:1-291](file://lib/src/tree_select/ui/tree_list.dart#L1-L291)
 - [utils/index.dart:1-243](file://lib/src/tree_select/utils/index.dart#L1-L243)
 - [models/index.dart:1-123](file://lib/src/tree_select/models/index.dart#L1-L123)
-- [tree_select.dart:1-423](file://lib/src/tree_select/tree_select.dart#L1-L423)
+- [tree_select.dart:1-428](file://lib/src/tree_select/tree_select.dart#L1-L428)
 - [bottom_action_bar.dart:1-135](file://lib/src/widgets/bottom_action_bar.dart#L1-L135)
+- [prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
+- [wrapper_container/index.dart:1-134](file://lib/src/wrapper_container/index.dart#L1-L134)
 
 ## 核心组件
 - **TreeNode<T>**: 树节点数据模型，包含 id、label、parentId、children、isExpanded、isLeaf、isLoading、data 等字段
@@ -77,15 +86,17 @@ H --> I["底部操作栏<br/>bottom_action_bar.dart"]
 - **TreeUtils**: 静态工具类，提供树操作的无状态方法集合
 - **TreeSelectHelper**: 统一的便捷入口，提供单一的 show<T>() 方法
 - **BottomActionBar**: 通用的底部操作栏组件，支持已选数量展示和空选禁用
+- **PrefixIconLabel**: 前缀图标标签组件，支持 prefixIcon 和 prefixIconData 两种方式
 
 **章节来源**
 - [models/index.dart:1-123](file://lib/src/tree_select/models/index.dart#L1-L123)
-- [tree_select.dart:1-423](file://lib/src/tree_select/tree_select.dart#L1-L423)
+- [tree_select.dart:1-428](file://lib/src/tree_select/tree_select.dart#L1-L428)
 - [ui/tree_select_content.dart:1-311](file://lib/src/tree_select/ui/tree_select_content.dart#L1-L311)
 - [ui/tree_list.dart:1-291](file://lib/src/tree_select/ui/tree_list.dart#L1-L291)
 - [utils/index.dart:1-243](file://lib/src/tree_select/utils/index.dart#L1-L243)
 - [tree_select_helper.dart:1-79](file://lib/src/tree_select/tree_select_helper.dart#L1-L79)
 - [bottom_action_bar.dart:1-135](file://lib/src/widgets/bottom_action_bar.dart#L1-L135)
+- [prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
 
 ## 架构总览
 TreeSelect 采用现代化的"表单字段 + 弹窗内容"分层架构，完全对齐 DropdownChoose 的设计模式：
@@ -138,6 +149,7 @@ class TreeSelectField~T~ {
 +onSaved : Function?
 +formLayout : FormLayout
 +prefixIcon : Widget?
++prefixIconData : IconData?
 +displayMode : DisplayMode
 +maxShowTags : int?
 +valueBuilder : Function?
@@ -174,6 +186,29 @@ class TreeList~T~ {
 +parentSelectable : bool
 +onParentIndicatorTap : Function?
 +onParentExpandForSelect : Function?
+}
+class PrefixIconLabel {
++label : String?
++required : bool
++labelWidth : double?
++prefixIcon : Widget?
++prefixIconData : IconData?
++prefixIconColor : Color?
+}
+class WrapperContainer~V,D~ {
++selectItems : SelectItem[]V,D~~
++formLayout : FormLayout
++errorText : String?
++required : bool
++prefixIcon : Widget?
++prefixIconData : IconData?
++formLabel : String?
++displayMode : DisplayMode
++maxShowTags : int
++valueBuilder : Function?
++hintText : String?
++isExpanded : bool
++onClear : VoidCallback?
 }
 class TreeUtils {
 <<static>>
@@ -219,16 +254,20 @@ TreeList~T~ --> TreeUtils : "调用"
 TreeModalContent~T~ --> TreeUtils : "调用"
 TreeSelectHelper --> TreeModalContent~T~ : "构建"
 TreeList~T~ --> KeywordHighlightStyle : "高亮"
+TreeSelectField~T~ --> WrapperContainer~V,D~ : "使用"
+WrapperContainer~V,D~ --> PrefixIconLabel : "显示前缀图标"
 ```
 
 **图表来源**
 - [models/index.dart:1-123](file://lib/src/tree_select/models/index.dart#L1-L123)
-- [tree_select.dart:1-423](file://lib/src/tree_select/tree_select.dart#L1-L423)
+- [tree_select.dart:1-428](file://lib/src/tree_select/tree_select.dart#L1-L428)
 - [ui/tree_select_content.dart:1-311](file://lib/src/tree_select/ui/tree_select_content.dart#L1-L311)
 - [ui/tree_list.dart:1-291](file://lib/src/tree_select/ui/tree_list.dart#L1-L291)
 - [utils/index.dart:1-243](file://lib/src/tree_select/utils/index.dart#L1-L243)
 - [tree_select_helper.dart:1-79](file://lib/src/tree_select/tree_select_helper.dart#L1-L79)
 - [bottom_action_bar.dart:1-135](file://lib/src/widgets/bottom_action_bar.dart#L1-L135)
+- [prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
+- [wrapper_container/index.dart:1-134](file://lib/src/wrapper_container/index.dart#L1-L134)
 
 ## 详细组件分析
 
@@ -263,8 +302,41 @@ TreeList~T~ --> KeywordHighlightStyle : "高亮"
   - 处理清除状态和验证逻辑
   - 弹窗展开/折叠状态管理
 
+**最新更新**：新增了 `prefixIconData` 属性，允许直接传递 IconData 数据作为前缀图标，与 DropdownChoose 组件保持一致的 API 设计。
+
 **章节来源**
-- [tree_select.dart:1-423](file://lib/src/tree_select/tree_select.dart#L1-L423)
+- [tree_select.dart:1-428](file://lib/src/tree_select/tree_select.dart#L1-428)
+
+### 前缀图标标签组件（PrefixIconLabel）
+- **PrefixIconLabel**: 专门处理前缀图标和标签显示的组件
+- 核心特性：
+  - 支持两种图标方式：`prefixIcon`（Widget）和 `prefixIconData`（IconData）
+  - 互斥验证：确保只能传递其中一个图标方式
+  - 支持必填标记显示
+  - 可配置的图标颜色和大小
+  - 响应式布局适配
+
+**新增功能**：支持 `prefixIconData` 属性，当传递 IconData 时自动创建 Icon 组件，大小为 20，颜色可通过 `prefixIconColor` 配置。
+
+**章节来源**
+- [prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
+
+### 包装容器组件（WrapperContainer）
+- **WrapperContainer<V, D>**: 统一的表单字段包装容器
+- 核心特性：
+  - 集成 PrefixIconLabel 显示前缀图标和标签
+  - 支持多种值显示模式
+  - 错误状态处理和边框样式
+  - 后缀图标区域独立于点击区域
+- 图标支持：
+  - 同时支持 `prefixIcon` 和 `prefixIconData` 属性
+  - 优先使用 Widget 类型的 prefixIcon
+  - 回退到 IconData 类型的 prefixIconData
+
+**更新**：新增了对 `prefixIconData` 属性的支持，在构建 PrefixIconLabel 时传递该属性。
+
+**章节来源**
+- [wrapper_container/index.dart:1-134](file://lib/src/wrapper_container/index.dart#L1-L134)
 
 ### 弹窗内容组件（TreeModalContent）
 - **TreeModalContent<T>**: 重构后的纯弹窗内容组件，移除动画相关代码
@@ -333,6 +405,8 @@ TreeList~T~ --> KeywordHighlightStyle : "高亮"
 - **TreeModalContent** 依赖 TreeList、TreeUtils、models 与 keyword_highlight
 - **TreeList** 依赖 TreeUtils 与 keyword_highlight
 - **TreeUtils** 仅依赖 models 中的 TreeNode
+- **WrapperContainer** 依赖 PrefixIconLabel 和 ShowContent
+- **PrefixIconLabel** 是独立的 UI 组件，无外部依赖
 
 ```mermaid
 graph LR
@@ -345,16 +419,21 @@ Modal --> Model["model(TreeNode/Config)"]
 List --> Highlight["keyword_highlight"]
 Utils --> Model
 Modal --> BottomBar["BottomActionBar"]
+Field --> Wrapper["WrapperContainer"]
+Wrapper --> PrefixLabel["PrefixIconLabel"]
+Wrapper --> ShowContent["ShowContent"]
 ```
 
 **图表来源**
 - [tree_select_helper.dart:1-79](file://lib/src/tree_select/tree_select_helper.dart#L1-L79)
-- [tree_select.dart:1-423](file://lib/src/tree_select/tree_select.dart#L1-L423)
+- [tree_select.dart:1-428](file://lib/src/tree_select/tree_select.dart#L1-L428)
 - [ui/tree_select_content.dart:1-311](file://lib/src/tree_select/ui/tree_select_content.dart#L1-L311)
 - [ui/tree_list.dart:1-291](file://lib/src/tree_select/ui/tree_list.dart#L1-L291)
 - [utils/index.dart:1-243](file://lib/src/tree_select/utils/index.dart#L1-L243)
 - [models/index.dart:1-123](file://lib/src/tree_select/models/index.dart#L1-L123)
 - [bottom_action_bar.dart:1-135](file://lib/src/widgets/bottom_action_bar.dart#L1-L135)
+- [prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
+- [wrapper_container/index.dart:1-134](file://lib/src/wrapper_container/index.dart#L1-L134)
 
 ## 性能与大数据优化
 - **数据克隆与过滤**：每次搜索都会 cloneTree + filterTree，建议在大数据集上结合分页或虚拟滚动策略，减少一次性渲染量
@@ -374,16 +453,20 @@ Modal --> BottomBar["BottomActionBar"]
 - **高亮不生效**：检查 highlightStyle.enabled 是否为 true；确认 keyword 非空；验证 buildHighlightedText 参数传递
 - **表单验证问题**：检查 validator 函数返回值；确认 required 属性设置；验证 onSaved 回调是否正常触发
 - **BottomActionBar 按钮禁用**：确认 selectedCount > 0 或 disableWhenEmpty = false；检查 onConfirm 回调是否正确绑定
+- **前缀图标不显示**：确认 prefixIcon 和 prefixIconData 只传递其中一个；检查 IconData 是否正确导入；验证 prefixIconColor 配置
 
 **章节来源**
 - [ui/tree_select_content.dart:1-311](file://lib/src/tree_select/ui/tree_select_content.dart#L1-L311)
 - [ui/tree_list.dart:1-291](file://lib/src/tree_select/ui/tree_list.dart#L1-L291)
 - [utils/index.dart:1-243](file://lib/src/tree_select/utils/index.dart#L1-L243)
-- [tree_select.dart:1-423](file://lib/src/tree_select/tree_select.dart#L1-L423)
+- [tree_select.dart:1-428](file://lib/src/tree_select/tree_select.dart#L1-L428)
 - [bottom_action_bar.dart:1-135](file://lib/src/widgets/bottom_action_bar.dart#L1-L135)
+- [prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
 
 ## 结论
 TreeSelect 经过重大重构后，提供了更加现代化和一致的 API 设计。新的架构完全对齐 DropdownChoose 的使用模式，通过 TreeSelectField 表单组件和统一的 show<T>() 方法，既简化了使用方式，又增强了表单集成能力。BottomActionBar 的复用进一步提升了组件的一致性和可维护性。针对大数据场景，推荐结合懒加载与分页策略，以获得更优的性能体验。
+
+**最新改进**：新增的 `prefixIconData` 属性使 TreeSelect 与 DropdownChoose 组件保持了统一的 API 设计，开发者可以更方便地配置前缀图标，提升了整体开发体验的一致性。
 
 ## 附录：API 参考与示例
 
@@ -399,11 +482,34 @@ TreeSelect 经过重大重构后，提供了更加现代化和一致的 API 设�
 ### TreeSelectField 表单组件参数
 - **基础参数**：formLabel、subTitle、hintText、required、multiple、treeData、selectedIds
 - **显示配置**：parentSelectable、showSearch、searchHint、emptyText、highlightStyle、title、各种按钮文字和颜色
-- **表单集成**：validator、autovalidateMode、onSaved、formLayout、prefixIcon、displayMode、maxShowTags、valueBuilder
+- **表单集成**：validator、autovalidateMode、onSaved、formLayout、prefixIcon、prefixIconData、displayMode、maxShowTags、valueBuilder
 - **回调函数**：onSelect（单选）、onConfirm（多选）、onClear
 
+**最新更新**：新增 `prefixIconData` 参数，支持直接传递 IconData 数据作为前缀图标。
+
 **章节来源**
-- [tree_select.dart:1-423](file://lib/src/tree_select/tree_select.dart#L1-L423)
+- [tree_select.dart:1-428](file://lib/src/tree_select/tree_select.dart#L1-L428)
+
+### PrefixIconLabel 前缀图标标签参数
+- **基础参数**：label、required、labelWidth
+- **图标配置**：prefixIcon（Widget）、prefixIconData（IconData）、prefixIconColor（Color）
+- **验证规则**：prefixIcon 和 prefixIconData 只能传递其中一个
+
+**新增功能**：支持 `prefixIconData` 属性，当传递 IconData 时自动创建 Icon 组件。
+
+**章节来源**
+- [prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
+
+### WrapperContainer 包装容器参数
+- **数据参数**：selectItems、valueText、hintText、errorText
+- **显示配置**：displayMode、maxShowTags、valueBuilder、formLayout
+- **图标配置**：prefixIcon、prefixIconData、required
+- **交互配置**：onTap、isExpanded、onClear
+
+**更新**：新增对 `prefixIconData` 属性的支持。
+
+**章节来源**
+- [wrapper_container/index.dart:1-134](file://lib/src/wrapper_container/index.dart#L1-L134)
 
 ### TreeModalContent 弹窗组件参数
 - **数据配置**：treeData、selectedIds、onLoadChildren
@@ -437,6 +543,36 @@ TreeSelect 经过重大重构后，提供了更加现代化和一致的 API 设�
 - **搜索过滤**：实时过滤并高亮匹配文本，自动展开匹配路径
 - **父子联动**：根据 parentSelectable 配置灵活控制父节点选择行为
 - **大数据优化**：结合懒加载与分页策略，避免一次性加载过多数据
+- **前缀图标配置**：推荐使用 `prefixIconData` 属性直接传递 IconData，与 DropdownChoose 保持一致的 API 设计
 
 **章节来源**
 - [tree_select_example.dart:1-369](file://example/lib/pages/tree_select_example.dart#L1-L369)
+
+### prefixIconData 属性使用示例
+```dart
+// 使用 prefixIconData 直接传递 IconData
+TreeSelect<String>(
+  formLabel: '部门',
+  treeData: treeData,
+  prefixIconData: Icons.business, // 直接传递图标数据
+  multiple: false,
+  onSelect: (node) => print(node.label),
+)
+
+// 与 prefixIcon 互斥使用
+TreeSelect<String>(
+  formLabel: '人员',
+  treeData: treeData,
+  prefixIcon: Container(
+    width: 20,
+    height: 20,
+    child: Image.asset('assets/icon.png'),
+  ),
+  // prefixIconData 不能同时使用
+  multiple: false,
+)
+```
+
+**章节来源**
+- [tree_select.dart:109-110](file://lib/src/tree_select/tree_select.dart#L109-L110)
+- [prefix_icon_label.dart:11-12](file://lib/src/widgets/prefix_icon_label.dart#L11-L12)

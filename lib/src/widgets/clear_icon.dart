@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/enum.dart';
+import '../input_text/models/enum.dart';
 
 class ClearIcon extends StatelessWidget {
   final Widget? suffixIcon;
@@ -10,7 +10,7 @@ class ClearIcon extends StatelessWidget {
   final bool password;
   final bool isShowPassword;
 
-  const ClearIcon({super.key, this.onTap, this.hasValue = false, this.suffixIcon, this.suffixIconData, required this.password, required this.isShowPassword})
+  const ClearIcon({super.key, this.onTap, this.hasValue = false, this.suffixIcon, this.suffixIconData, this.password = false, this.isShowPassword = false})
     : assert(suffixIcon == null || suffixIconData == null, 'suffixIcon 和 suffixIconData 不能同时传递！');
   @override
   Widget build(BuildContext context) {

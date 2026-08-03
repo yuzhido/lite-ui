@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'suffix_icon_label.dart';
+import 'clear_icon.dart';
 
 /// 搜索输入框
 ///
@@ -11,7 +11,7 @@ class InputSearch extends StatefulWidget {
   final String? searchHint;
 
   /// 搜索控制器
-  final TextEditingController searchController;
+  final TextEditingController? searchController;
 
   /// 搜索按钮点击回调（点击搜索按钮时触发）
   final void Function(String keyword)? onSearch;
@@ -24,9 +24,6 @@ class InputSearch extends StatefulWidget {
   /// 是否显示清除按钮，默认 true
   final bool showClearButton;
 
-  /// 当前搜索关键字，用于控制清除按钮的显示
-  final String? keyword;
-
   /// 是否正在加载中（加载时禁用搜索按钮）
   final bool isLoading;
 
@@ -38,11 +35,10 @@ class InputSearch extends StatefulWidget {
 
   const InputSearch({
     this.searchHint,
-    required this.searchController,
+    this.searchController,
     this.onSearch,
     this.onClear,
     this.showClearButton = true,
-    this.keyword,
     this.isLoading = false,
     this.searchButtonColor,
     this.searchButtonTextColor,
@@ -54,21 +50,37 @@ class InputSearch extends StatefulWidget {
 }
 
 class _InputSearchState extends State<InputSearch> {
+  late TextEditingController _searchController;
+  bool hasValue = false;
+  @override
+  void initState() {
+    super.initState();
+    _searchController = widget.searchController ?? TextEditingController();
+    _searchController.addListener(() {
+      if (_searchController.text.trim().isNotEmpty) {
+        hasValue = true;
+      } else {
+        hasValue = false;
+      }
+      setState(() {});
+    });
+  }
+
   /// 搜索按钮点击处理
   void _handleSearch() {
     if (widget.isLoading) return;
-    widget.onSearch?.call(widget.searchController.text);
+    widget.onSearch?.call(_searchController.text);
   }
 
   /// 清除按钮点击处理
   void _handleClear() {
-    widget.searchController.clear();
+    _searchController.clear();
+    hasValue = false;
     widget.onClear?.call();
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasKeyword = (widget.keyword ?? '').isNotEmpty;
     final searchBg = widget.searchButtonColor ?? const Color(0xFF007AFF);
     final searchFg = widget.searchButtonTextColor ?? Colors.white;
     return Container(
@@ -82,7 +94,7 @@ class _InputSearchState extends State<InputSearch> {
             child: Container(
               decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(5)),
               child: TextField(
-                controller: widget.searchController,
+                controller: _searchController,
                 onSubmitted: (_) => _handleSearch(),
                 decoration: InputDecoration(
                   hintText: widget.searchHint ?? '请输入关键字',
@@ -91,9 +103,9 @@ class _InputSearchState extends State<InputSearch> {
                     padding: EdgeInsetsGeometry.only(left: 10),
                     child: Icon(Icons.search_rounded, size: 20, color: Colors.grey.shade500),
                   ),
-                  prefixIconConstraints: BoxConstraints(maxHeight: 30, maxWidth: 50),
-                  suffixIcon: SuffixIconLabel(hasValue: hasKeyword, onClear: () => _handleClear()),
-                  suffixIconConstraints: BoxConstraints(maxHeight: 30, maxWidth: 50),
+                  prefixIconConstraints: BoxConstraints(minHeight: 30, minWidth: 30),
+                  suffixIcon: ClearIcon(hasValue: hasValue, onTap: (_) => _handleClear()),
+                  suffixIconConstraints: BoxConstraints(minHeight: 30, minWidth: 30),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(5),
                     borderSide: BorderSide(color: Color(0xfff6f6f6), width: 1),

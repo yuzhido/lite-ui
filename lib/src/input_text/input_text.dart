@@ -6,7 +6,7 @@ import '../theme/index.dart';
 import '../widgets/border_builder.dart';
 import '../widgets/prefix_icon_label.dart';
 import 'models/enum.dart';
-import 'ui/clear_icon.dart';
+import '../widgets/clear_icon.dart';
 import 'utils/input_format.dart';
 import 'utils/valid_rules.dart';
 

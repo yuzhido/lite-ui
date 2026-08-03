@@ -21,6 +21,7 @@ class TreeSelectHelper {
     required BuildContext context,
     required List<TreeNode<T>> treeData,
     String title = '请选择',
+    String? subTitle,
     String searchHint = '搜索...',
     String emptyText = '暂无数据',
     bool showSearch = true,
@@ -52,6 +53,7 @@ class TreeSelectHelper {
             child: TreeModalContent<T>(
               treeData: treeData,
               title: title,
+              subTitle: subTitle,
               searchHint: searchHint,
               emptyText: emptyText,
               showSearch: showSearch,

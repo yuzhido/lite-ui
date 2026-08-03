@@ -17,9 +17,10 @@
 
 ## 更新摘要
 **所做更改**
+- 优化了前缀图标处理逻辑，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel
 - 改进了错误显示逻辑，现在只在输入框包含文本时显示错误消息
 - 优化了浮动标签行为，当控制器文本为空时使用 FloatingLabelBehavior.never
-- 更新了相关的使用说明和最佳实践
+- 提升了性能并减少了不必要的widget渲染
 
 ## 目录
 1. [简介](#简介)
@@ -36,7 +37,7 @@
 ## 简介
 InputText 是 LiteUI 的文本输入框组件，提供基础输入、实时格式化、内置与自定义验证规则、图标与前缀后缀支持、主题化样式等能力。它基于 Flutter 的 FormField 与 TextFormField 构建，结合统一的边框构建器与主题系统，实现一致的视觉与交互体验。
 
-**最新更新**：组件改进了错误显示逻辑，现在只在输入框包含文本时显示错误消息，并优化了浮动标签行为，当控制器文本为空时使用 FloatingLabelBehavior.never，提供更好的用户体验。
+**最新更新**：组件优化了前缀图标处理逻辑，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel，提升了性能并减少了不必要的widget渲染。同时改进了错误显示逻辑和浮动标签行为，提供更好的用户体验。
 
 ## 项目结构
 InputText 模块采用"组件 + 模型枚举 + 工具类 + UI 子组件"的分层组织方式：
@@ -67,13 +68,13 @@ D --> J
 ```
 
 **图表来源**
-- [lib/src/input_text/input_text.dart:1-367](file://lib/src/input_text/input_text.dart#L1-L367)
+- [lib/src/input_text/input_text.dart:1-369](file://lib/src/input_text/input_text.dart#L1-L369)
 - [lib/src/input_text/models/enum.dart:1-82](file://lib/src/input_text/models/enum.dart#L1-L82)
 - [lib/src/input_text/utils/input_format.dart:1-88](file://lib/src/input_text/utils/input_format.dart#L1-L88)
 - [lib/src/input_text/utils/valid_rules.dart:1-245](file://lib/src/input_text/utils/valid_rules.dart#L1-L245)
 - [lib/src/input_text/ui/clear_icon.dart:1-45](file://lib/src/input_text/ui/clear_icon.dart#L1-L45)
-- [lib/src/widgets/prefix_icon_label.dart:1-54](file://lib/src/widgets/prefix_icon_label.dart#L1-L54)
-- [lib/src/widgets/border_builder.dart:1-35](file://lib/src/widgets/border_builder.dart#L1-L35)
+- [lib/src/widgets/prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
+- [lib/src/widgets/border_builder.dart:1-38](file://lib/src/widgets/border_builder.dart#L1-L38)
 - [lib/src/theme/index.dart:1-77](file://lib/src/theme/index.dart#L1-L77)
 - [lib/src/models/enum.dart:1-29](file://lib/src/models/enum.dart#L1-L29)
 - [lib/src/utils/input_regex.dart:1-46](file://lib/src/utils/input_regex.dart#L1-L46)
@@ -89,11 +90,11 @@ InputText 是一个 StatefulWidget，内部封装了 FormField 与 TextFormField
 - 浮动标签与错误提示：根据状态动态展示 label/hint/error，支持主题色与自定义颜色
 - 表单集成：onSaved、validator、onChange、autoValidate、keyboardType、inputFormatters 等
 
-**更新**：错误提示现在仅在输入框包含文本时显示，避免空输入时的误导性错误信息。
+**更新**：前缀图标处理得到优化，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel，提升了性能并减少了不必要的widget渲染。错误提示现在仅在输入框包含文本时显示，避免空输入时的误导性错误信息。
 
 章节来源
 - [lib/src/input_text/input_text.dart:15-168](file://lib/src/input_text/input_text.dart#L15-L168)
-- [lib/src/input_text/input_text.dart:170-367](file://lib/src/input_text/input_text.dart#L170-L367)
+- [lib/src/input_text/input_text.dart:170-369](file://lib/src/input_text/input_text.dart#L170-L369)
 
 ## 架构总览
 InputText 的运行时流程如下：
@@ -130,7 +131,7 @@ IT->>IT : clear()/togglePassword()
 ```
 
 **图表来源**
-- [lib/src/input_text/input_text.dart:170-367](file://lib/src/input_text/input_text.dart#L170-L367)
+- [lib/src/input_text/input_text.dart:170-369](file://lib/src/input_text/input_text.dart#L170-L369)
 - [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-L87)
 - [lib/src/input_text/utils/valid_rules.dart:173-245](file://lib/src/input_text/utils/valid_rules.dart#L173-L245)
 - [lib/src/theme/index.dart:54-77](file://lib/src/theme/index.dart#L54-L77)
@@ -165,11 +166,11 @@ IT->>IT : clear()/togglePassword()
   - borderColor/focusBorderColor/errorColor/inputRadius：边框与圆角
   - 所有颜色优先使用 LiteUITheme，未设置则回退到默认或系统主题
 
-**更新**：浮动标签行为已优化，当控制器文本为空时自动使用 FloatingLabelBehavior.never，提供更好的视觉体验。
+**更新**：前缀图标处理已优化，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel，提升了性能。浮动标签行为已优化，当控制器文本为空时自动使用 FloatingLabelBehavior.never，提供更好的视觉体验。
 
 章节来源
 - [lib/src/input_text/input_text.dart:15-168](file://lib/src/input_text/input_text.dart#L15-L168)
-- [lib/src/input_text/input_text.dart:236-352](file://lib/src/input_text/input_text.dart#L236-L352)
+- [lib/src/input_text/input_text.dart:236-369](file://lib/src/input_text/input_text.dart#L236-L369)
 - [lib/src/input_text/models/enum.dart:23-82](file://lib/src/input_text/models/enum.dart#L23-L82)
 - [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-L87)
 - [lib/src/input_text/utils/valid_rules.dart:191-245](file://lib/src/input_text/utils/valid_rules.dart#L191-L245)
@@ -285,15 +286,17 @@ end
 - 支持自定义前缀图标与固定宽度标签
 - 必填时显示红色星号标记
 
+**更新**：前缀图标处理得到优化，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel，提升了性能并减少了不必要的widget渲染。
+
 章节来源
-- [lib/src/widgets/prefix_icon_label.dart:1-54](file://lib/src/widgets/prefix_icon_label.dart#L1-L54)
+- [lib/src/widgets/prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
 
 ### 边框构建（buildInputOutlineBorder）
 - 统一 OutlineInputBorder 构建，支持默认/启用/聚焦三种状态
 - 颜色优先级：hasError > focusBorderColor > theme.focusBorderColor > 系统主题色；默认边框颜色优先 theme.borderColor
 
 章节来源
-- [lib/src/widgets/border_builder.dart:1-35](file://lib/src/widgets/border_builder.dart#L1-L35)
+- [lib/src/widgets/border_builder.dart:1-38](file://lib/src/widgets/border_builder.dart#L1-L38)
 
 ### 主题系统（LiteUITheme）
 - LiteUIThemeData：定义默认边框颜色、错误颜色、聚焦边框颜色、圆角半径、提示颜色、文字颜色
@@ -321,7 +324,19 @@ end
 - 在 column 布局且没有 formLabel 时，使用 `FloatingLabelBehavior.always` 确保标签始终可见
 
 章节来源
-- [lib/src/input_text/input_text.dart:355-365](file://lib/src/input_text/input_text.dart#L355-L365)
+- [lib/src/input_text/input_text.dart:356-367](file://lib/src/input_text/input_text.dart#L356-L367)
+
+### 前缀图标处理优化
+**新增功能**：前缀图标处理得到显著优化，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel。
+
+关键实现：
+- 在 InputDecoration 的 prefixIcon 属性中，使用条件判断 `(widget.prefixIcon != null || widget.prefixIconData != null || widget.formLabel != null)`
+- 当满足条件时渲染完整的 PrefixIconLabel 组件
+- 当不满足条件时，直接返回 `SizedBox(width: 5)` 作为最小化的占位符
+- 这种优化减少了不必要的widget渲染，提升了整体性能
+
+章节来源
+- [lib/src/input_text/input_text.dart:298-307](file://lib/src/input_text/input_text.dart#L298-L307)
 
 ## 依赖关系分析
 InputText 对以下模块存在直接依赖：
@@ -345,13 +360,13 @@ VR --> IR
 ```
 
 **图表来源**
-- [lib/src/input_text/input_text.dart:1-367](file://lib/src/input_text/input_text.dart#L1-L367)
+- [lib/src/input_text/input_text.dart:1-369](file://lib/src/input_text/input_text.dart#L1-L369)
 - [lib/src/input_text/utils/input_format.dart:1-88](file://lib/src/input_text/utils/input_format.dart#L1-L88)
 - [lib/src/input_text/utils/valid_rules.dart:1-245](file://lib/src/input_text/utils/valid_rules.dart#L1-L245)
 - [lib/src/utils/input_regex.dart:1-46](file://lib/src/utils/input_regex.dart#L1-L46)
 
 章节来源
-- [lib/src/input_text/input_text.dart:1-367](file://lib/src/input_text/input_text.dart#L1-L367)
+- [lib/src/input_text/input_text.dart:1-369](file://lib/src/input_text/input_text.dart#L1-L369)
 
 ## 性能与体验优化
 - 输入格式化器
@@ -368,6 +383,7 @@ VR --> IR
   - 浮动标签与错误提示即时更新，提升可读性
   - **新增**：智能错误显示，避免空输入时的误导性错误提示
   - **新增**：优化的浮动标签行为，提升视觉一致性
+  - **新增**：条件性渲染 PrefixIconLabel，减少不必要的widget渲染，提升性能
 
 [本节为通用指导，不直接分析具体文件]
 
@@ -382,7 +398,7 @@ VR --> IR
   - 检查 onSuffixIconTap 是否注册
   - 密码模式下需确保 hasValue 与 isShowPassword 状态正确
 - 主题颜色不生效
-  - 确认 LiteUITheme 包裹层级覆盖到 InputText
+  - 确认 LiteUITTheme 包裹层级覆盖到 InputText
   - 检查 borderColor/focusBorderColor/errorColor 是否被覆盖
 - **新增**：错误提示显示问题
   - 确认输入框包含实际文本内容，空输入时不会显示错误提示
@@ -390,18 +406,22 @@ VR --> IR
 - **新增**：浮动标签行为异常
   - 检查 controller.text 是否为空，影响 FloatingLabelBehavior 的设置
   - 确认 formLayout 和 showFloatingLabel 配置是否符合预期
+- **新增**：前缀图标显示问题
+  - 确认 prefixIcon、prefixIconData 或 formLabel 至少有一个值
+  - 当没有前缀内容时，会显示5像素的最小化间距而不是完整的前缀组件
 
 章节来源
 - [lib/src/input_text/input_text.dart:196-217](file://lib/src/input_text/input_text.dart#L196-L217)
 - [lib/src/input_text/input_text.dart:225-233](file://lib/src/input_text/input_text.dart#L225-L233)
 - [lib/src/input_text/input_text.dart:256](file://lib/src/input_text/input_text.dart#L256)
-- [lib/src/input_text/input_text.dart:355-365](file://lib/src/input_text/input_text.dart#L355-L365)
+- [lib/src/input_text/input_text.dart:298-307](file://lib/src/input_text/input_text.dart#L298-L307)
+- [lib/src/input_text/input_text.dart:356-367](file://lib/src/input_text/input_text.dart#L356-L367)
 - [lib/src/theme/index.dart:54-77](file://lib/src/theme/index.dart#L54-L77)
 
 ## 结论
 InputText 以简洁的 API 提供了丰富的输入控制能力，涵盖输入类型限制、内置与自定义校验、图标与前缀后缀、主题化样式等。其模块化设计使扩展与维护更加便捷，适合在各类表单场景中复用。
 
-**最新更新**：通过改进错误显示逻辑和优化浮动标签行为，组件提供了更好的用户体验，避免了空输入时的误导性错误提示，并确保了更一致的视觉表现。
+**最新更新**：通过优化前缀图标处理逻辑、改进错误显示逻辑和优化浮动标签行为，组件提供了更好的性能和用户体验。条件性渲染 PrefixIconLabel 组件减少了不必要的widget渲染，智能错误显示避免了空输入时的误导性错误提示，优化的浮动标签行为确保了更一致的视觉表现。
 
 [本节为总结，不直接分析具体文件]
 
@@ -435,6 +455,7 @@ InputText 以简洁的 API 提供了丰富的输入控制能力，涵盖输入�
 **新增特性**：
 - 智能错误显示：仅在输入框包含文本时显示错误消息
 - 优化的浮动标签：当控制器文本为空时自动使用 FloatingLabelBehavior.never
+- 条件性前缀渲染：当没有前缀内容时显示最小化的5像素间距，提升性能
 
 章节来源
 - [lib/src/input_text/input_text.dart:15-168](file://lib/src/input_text/input_text.dart#L15-L168)

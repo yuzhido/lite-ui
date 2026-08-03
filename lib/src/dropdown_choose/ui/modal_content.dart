@@ -350,7 +350,7 @@ class _SelectModalContentState<V, D> extends State<ModalContent<V, D>> {
         children: [
           const DragIndicator(),
           TopTitleInfo(title: '${widget.title}', subTitle: widget.subTitle ?? '', itemCount: _results.length),
-          InputSearch(searchHint: widget.searchHint, searchController: _searchController, onSearch: _onSearch, onClear: _onClearSearch, keyword: _keyword, isLoading: _isLoading),
+          InputSearch(searchHint: widget.searchHint, searchController: _searchController, onSearch: _onSearch, onClear: _onClearSearch, isLoading: _isLoading),
           Expanded(
             child: ModalContentList<V, D>(
               isLoading: _isLoading,

@@ -27,7 +27,7 @@ class TreeSelect<T extends Object> extends StatefulWidget {
   /// 表单标签
   final String formLabel;
 
-  /// 表单副标题
+  /// 弹窗副标题
   final String? subTitle;
 
   /// 占位提示文字
@@ -351,6 +351,7 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
               child: TreeModalContent<T>(
                 treeData: widget.treeData,
                 title: widget.title ?? '请选择${widget.formLabel}',
+                subTitle: widget.subTitle,
                 searchHint: widget.searchHint,
                 emptyText: widget.emptyText,
                 showSearch: widget.showSearch,
@@ -392,6 +393,7 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
               child: TreeModalContent<T>(
                 treeData: widget.treeData,
                 title: widget.title ?? '请选择${widget.formLabel}',
+                subTitle: widget.subTitle,
                 searchHint: widget.searchHint,
                 emptyText: widget.emptyText,
                 showSearch: widget.showSearch,
