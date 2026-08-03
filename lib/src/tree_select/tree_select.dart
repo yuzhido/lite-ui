@@ -16,14 +16,14 @@ import 'ui/tree_select_content.dart';
 /// 支持单选和多选模式，集成 FormField 实现表单校验与保存。
 ///
 /// ```dart
-/// TreeSelect<String>(
+/// TreeSelect<String, dynamic>(
 ///   formLabel: '部门',
 ///   treeData: treeData,
 ///   multiple: false,
 ///   onSelect: (node) => print(node.label),
 /// )
 /// ```
-class TreeSelect<T extends Object> extends StatefulWidget {
+class TreeSelect<V extends Object, D> extends StatefulWidget {
   /// 表单标签
   final String formLabel;
 
@@ -40,10 +40,10 @@ class TreeSelect<T extends Object> extends StatefulWidget {
   final bool multiple;
 
   /// 树形数据源
-  final List<TreeNode<T>> treeData;
+  final List<TreeNode<V, D>> treeData;
 
   /// 初始/外部选中的节点ID集合
-  final Set<T> selectedIds;
+  final Set<V> selectedIds;
 
   /// 是否允许选中父节点，默认 false
   final bool parentSelectable;
@@ -58,7 +58,7 @@ class TreeSelect<T extends Object> extends StatefulWidget {
   final String emptyText;
 
   /// 懒加载子节点回调
-  final TreeNodeLoadChildrenCallback<T>? onLoadChildren;
+  final TreeNodeLoadChild<V, D>? onLoadChildren;
 
   /// 关键字高亮样式配置
   final KeywordHighlightStyle? highlightStyle;
@@ -119,15 +119,15 @@ class TreeSelect<T extends Object> extends StatefulWidget {
   ///
   /// 传入后优先使用此构建器，忽略 [displayMode] 的默认逻辑。
   /// 参数为当前选中的节点列表。
-  final Widget Function(List<TreeNode<T>> nodes)? valueBuilder;
+  final Widget Function(List<TreeNode<V, D>> nodes)? valueBuilder;
 
   // ── 回调 ──
 
   /// 选中回调（单选模式下点击项时触发，弹窗自动关闭）
-  final TreeNodeTapCallback<T>? onSelect;
+  final TreeNodeSelect<V, D>? onSelect;
 
   /// 多选确认回调（多选模式下点击「确定」时触发）
-  final TreeNodeSelectCallback<T>? onConfirm;
+  final TreeNodeConfirm<V, D>? onConfirm;
 
   /// 点击清除图标回调
   final VoidCallback? onClear;
@@ -143,7 +143,7 @@ class TreeSelect<T extends Object> extends StatefulWidget {
     this.selectedIds = const {},
     this.parentSelectable = false,
     this.showSearch = true,
-    this.searchHint = '搜索...',
+    this.searchHint = '输入关键字搜索...',
     this.emptyText = '暂无数据',
     this.onLoadChildren,
     this.highlightStyle,
@@ -172,17 +172,17 @@ class TreeSelect<T extends Object> extends StatefulWidget {
        assert(displayMode != DisplayMode.compact || multiple, 'compact 模式仅支持多选');
 
   @override
-  State<TreeSelect<T>> createState() => _TreeSelectFieldState<T>();
+  State<TreeSelect<V, D>> createState() => _TreeSelectFieldState<V, D>();
 }
 
-class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
+class _TreeSelectFieldState<V extends Object, D> extends State<TreeSelect<V, D>> {
   final _formFieldKey = GlobalKey<FormFieldState<String>>();
 
   /// 单选模式下缓存的选中节点
-  TreeNode<T>? _selectedNode;
+  TreeNode<V, D>? _selectedNode;
 
   /// 多选模式下缓存的选中节点列表
-  List<TreeNode<T>> _selectedNodes = [];
+  List<TreeNode<V, D>> _selectedNodes = [];
 
   /// 弹窗是否展开
   bool _isExpanded = false;
@@ -197,7 +197,7 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
   }
 
   @override
-  void didUpdateWidget(covariant TreeSelect<T> oldWidget) {
+  void didUpdateWidget(covariant TreeSelect<V, D> oldWidget) {
     super.didUpdateWidget(oldWidget);
     final idsChanged = widget.selectedIds != oldWidget.selectedIds;
     final dataChanged = !identical(widget.treeData, oldWidget.treeData);
@@ -241,16 +241,16 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
   }
 
   /// 将选中节点转为 SelectItem 列表供 WrapperContainer 显示
-  List<SelectItem<T, TreeNode<T>>> _toSelectItems() {
+  List<SelectItem<V, TreeNode<V, D>>> _toSelectItems() {
     if (_cleared) return [];
     if (widget.multiple) {
-      return _selectedNodes.map((node) => SelectItem<T, TreeNode<T>>(value: node.id, label: node.label, data: node)).toList();
+      return _selectedNodes.map((node) => SelectItem<V, TreeNode<V, D>>(value: node.id, label: node.label, data: node)).toList();
     }
-    return _selectedNode != null ? [SelectItem<T, TreeNode<T>>(value: _selectedNode!.id, label: _selectedNode!.label, data: _selectedNode)] : [];
+    return _selectedNode != null ? [SelectItem<V, TreeNode<V, D>>(value: _selectedNode!.id, label: _selectedNode!.label, data: _selectedNode)] : [];
   }
 
   /// 弹窗打开时应使用的选中ID集合
-  Set<T> _modalSelectedIds() {
+  Set<V> _modalSelectedIds() {
     if (_cleared) return {};
     if (widget.multiple) {
       return _selectedNodes.map((e) => e.id).toSet();
@@ -300,7 +300,7 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
                   ],
                 ),
               ),
-            WrapperContainer<T, TreeNode<T>>(
+            WrapperContainer<V, TreeNode<V, D>>(
               selectItems: _toSelectItems(),
               formLayout: widget.formLayout,
               errorText: state.errorText,
@@ -335,95 +335,65 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
   }
 
   /// 打开树形选择弹窗
+  ///
+  /// 统一以 [Object] 接收返回值：单选模式返回 [TreeNode]，
+  /// 多选模式返回 `List<TreeNode>`，关闭后按类型统一处理状态。
   Future<void> _openModal() async {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    if (widget.multiple) {
-      // 多选模式
-      final result = await showModalBottomSheet<List<TreeNode<T>>>(
-        context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (ctx) {
-          return SafeArea(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: screenHeight * 0.75, minHeight: screenHeight * 0.5),
-              child: TreeModalContent<T>(
-                treeData: widget.treeData,
-                title: widget.title ?? '请选择${widget.formLabel}',
-                subTitle: widget.subTitle,
-                searchHint: widget.searchHint,
-                emptyText: widget.emptyText,
-                showSearch: widget.showSearch,
-                multiple: true,
-                parentSelectable: widget.parentSelectable,
-                selectedIds: _modalSelectedIds(),
-                onLoadChildren: widget.onLoadChildren,
-                cancelLabel: widget.cancelLabel,
-                confirmLabel: widget.confirmLabel,
-                highlightStyle: widget.highlightStyle,
-                searchButtonColor: widget.searchButtonColor,
-                searchButtonTextColor: widget.searchButtonTextColor,
-                confirmButtonColor: widget.confirmButtonColor,
-                confirmButtonTextColor: widget.confirmButtonTextColor,
-                cancelButtonColor: widget.cancelButtonColor,
-                onConfirm: (nodes) {
-                  _selectedNodes = nodes;
-                  widget.onConfirm?.call(nodes);
-                },
-              ),
+    final result = await showModalBottomSheet<Object?>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: screenHeight * 0.75, minHeight: screenHeight * 0.5),
+            child: TreeModalContent<V, D>(
+              treeData: widget.treeData,
+              title: widget.title ?? '请选择${widget.formLabel}',
+              subTitle: widget.subTitle,
+              searchHint: widget.searchHint,
+              emptyText: widget.emptyText,
+              showSearch: widget.showSearch,
+              multiple: widget.multiple,
+              parentSelectable: widget.parentSelectable,
+              selectedIds: _modalSelectedIds(),
+              onLoadChildren: widget.onLoadChildren,
+              cancelLabel: widget.cancelLabel,
+              confirmLabel: widget.confirmLabel,
+              highlightStyle: widget.highlightStyle,
+              searchButtonColor: widget.searchButtonColor,
+              searchButtonTextColor: widget.searchButtonTextColor,
+              confirmButtonColor: widget.confirmButtonColor,
+              confirmButtonTextColor: widget.confirmButtonTextColor,
+              cancelButtonColor: widget.cancelButtonColor,
+              // 单选,多选模式都可传 onSelect，多选模式仅传 onConfirm
+              onSelect: (node) {
+                _selectedNode = node;
+                widget.onSelect?.call(node);
+              },
+              onConfirm: widget.multiple
+                  ? (nodes) {
+                      _selectedNodes = nodes;
+                      widget.onConfirm?.call(nodes);
+                    }
+                  : null,
             ),
-          );
-        },
-      );
-      // 弹窗关闭后，有返回值说明用户点击了确定
-      if (result != null && mounted) {
-        setState(() => _cleared = false);
+          ),
+        );
+      },
+    );
+
+    // 弹窗关闭后：返回值为 null 表示用户取消，否则按类型更新内部状态
+    if (result == null || !mounted) return;
+    setState(() {
+      _cleared = false;
+      if (result is TreeNode<V, D>) {
+        _selectedNode = result;
+      } else if (result is List<TreeNode<V, D>>) {
+        _selectedNodes = result;
       }
-    } else {
-      // 单选模式
-      final selectedNode = await showModalBottomSheet<TreeNode<T>>(
-        context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (ctx) {
-          return SafeArea(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: screenHeight * 0.75, minHeight: screenHeight * 0.5),
-              child: TreeModalContent<T>(
-                treeData: widget.treeData,
-                title: widget.title ?? '请选择${widget.formLabel}',
-                subTitle: widget.subTitle,
-                searchHint: widget.searchHint,
-                emptyText: widget.emptyText,
-                showSearch: widget.showSearch,
-                multiple: false,
-                parentSelectable: widget.parentSelectable,
-                selectedIds: _modalSelectedIds(),
-                onLoadChildren: widget.onLoadChildren,
-                cancelLabel: widget.cancelLabel,
-                confirmLabel: widget.confirmLabel,
-                highlightStyle: widget.highlightStyle,
-                searchButtonColor: widget.searchButtonColor,
-                searchButtonTextColor: widget.searchButtonTextColor,
-                confirmButtonColor: widget.confirmButtonColor,
-                confirmButtonTextColor: widget.confirmButtonTextColor,
-                cancelButtonColor: widget.cancelButtonColor,
-                onSelect: (node) {
-                  widget.onSelect?.call(node);
-                },
-              ),
-            ),
-          );
-        },
-      );
-      // 弹窗关闭后统一更新状态
-      if (selectedNode != null && mounted) {
-        setState(() {
-          _selectedNode = selectedNode;
-          _cleared = false;
-        });
-      }
-    }
+    });
   }
 }

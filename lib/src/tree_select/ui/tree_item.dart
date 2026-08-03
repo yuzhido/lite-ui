@@ -11,15 +11,15 @@ import 'select_indicator.dart';
 /// 不持有任何业务状态，展开/选中/懒加载等交互全部通过回调交由外部处理。
 ///
 /// 由 [TreeList] 递归使用，一般不直接调用。
-class TreeItem<T extends Object> extends StatelessWidget {
+class TreeItem<V extends Object, D> extends StatelessWidget {
   /// 当前节点
-  final TreeNode<T> node;
+  final TreeNode<V, D> node;
 
   /// 节点层级（决定缩进与连接线位置）
   final int level;
 
   /// 当前选中的节点 ID 集合
-  final Set<T> selectedIds;
+  final Set<V> selectedIds;
 
   /// 是否多选模式（影响三态选择器与 badge 显示）
   final bool multiple;
@@ -37,16 +37,16 @@ class TreeItem<T extends Object> extends StatelessWidget {
   final KeywordHighlightStyle? highlightStyle;
 
   /// 展开/折叠回调（箭头或父节点行点击时触发）
-  final ValueChanged<T> onToggleExpand;
+  final ValueChanged<V> onToggleExpand;
 
   /// 节点点击回调
-  final TreeNodeTapCallback<T>? onNodeTap;
+  final TreeNodeSelect<V, D>? onNodeTap;
 
   /// 父节点圆圈点击回调（仅多选 + parentSelectable 时有效）
-  final void Function(TreeNode<T> node)? onParentIndicatorTap;
+  final void Function(TreeNode<V, D> node)? onParentIndicatorTap;
 
   /// 父节点文本点击时需要展开（懒加载场景），由外部处理加载后再选中
-  final void Function(TreeNode<T> node)? onParentExpandForSelect;
+  final void Function(TreeNode<V, D> node)? onParentExpandForSelect;
 
   const TreeItem({
     super.key,
@@ -107,8 +107,10 @@ class TreeItem<T extends Object> extends StatelessWidget {
                 GestureDetector(
                   onTap: () => onToggleExpand(node.id),
                   behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
+                  child: Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(999)),
+                    padding: const EdgeInsets.all(0),
                     child: node.isLoading
                         ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade500)))
                         : AnimatedRotation(
@@ -207,7 +209,7 @@ class TreeItem<T extends Object> extends StatelessWidget {
                       height: 1,
                       child: Container(color: Colors.grey.shade300),
                     ),
-                    TreeItem<T>(
+                    TreeItem<V, D>(
                       node: node.children[i],
                       level: level + 1,
                       selectedIds: selectedIds,

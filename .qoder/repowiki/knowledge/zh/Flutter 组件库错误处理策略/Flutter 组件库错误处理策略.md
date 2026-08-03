@@ -6,61 +6,64 @@ scope:
     - '**'
 source_files:
     - lib/src/file_upload/model/upload_config.dart
+    - lib/src/file_upload/service/upload_service.dart
     - lib/src/empty_data/models/index.dart
-    - lib/src/dialog_action/models/index.dart
     - lib/src/input_text/utils/valid_rules.dart
-    - lib/src/dropdown_choose/ui/select_modal_content.dart
+    - lib/src/action_button/action_button.dart
+    - lib/src/dropdown_choose/ui/modal_content.dart
 ---
 
-该 Flutter 轻量级 UI 组件库采用**结果对象模式**和**枚举状态**相结合的方式处理错误，没有统一的异常体系或全局错误中间件。具体策略如下：
+LiteUI 组件库采用**结果对象 + 枚举状态 + 回调通知**的轻量级错误处理模式，未定义全局异常类型或统一的错误码体系。核心设计思想是将错误作为正常返回值的一部分，而非通过抛出异常来中断流程。
 
-## 核心模式
+## 主要错误处理方式
 
-### 1. 上传结果对象（UploadResult）
-在 `lib/src/file_upload/model/upload_config.dart` 中定义了 `UploadResult` 类，通过 `success` 布尔字段和可选的 `error` 字符串来区分成功与失败：
-- `UploadResult.success(data: ...)` - 成功结果
-- `UploadResult.failure(error: ...)` - 失败结果
-- `UploadResult.successFromRaw(rawBody)` - 从原始响应解析
+### 1. 上传模块：UploadResult 结果对象
+`lib/src/file_upload/model/upload_config.dart` 中的 `UploadResult` 类是典型的结果对象模式：
+- 使用 `success` 布尔值标识成功/失败
+- 成功时携带 `data`（解析后的 JSON Map）
+- 失败时携带 `error`（字符串错误消息）
+- 提供 `UploadResult.success()` 和 `UploadResult.failure(error: ...)` 工厂方法
 
-### 2. 空状态枚举（EmptyDataType）
-在 `lib/src/empty_data/models/index.dart` 中定义了多种空状态类型：
-- `empty` - 默认空状态
-- `search` - 搜索无结果
-- `noNetwork` - 网络异常
-- `error` - 加载失败/错误
-- `noPermission` - 无访问权限
-- `maintenance` - 系统维护
+`lib/src/file_upload/service/upload_service.dart` 中所有网络异常都被捕获并转换为 `UploadResult.failure`：
+```dart
+} on SocketException catch (e) {
+  return UploadResult.failure(error: '网络连接失败: ${e.message}');
+} on HttpException catch (e) {
+  return UploadResult.failure(error: 'HTTP 请求异常: ${e.message}');
+} catch (e) {
+  return UploadResult.failure(error: e.toString());
+}```
 
-每种状态都有对应的 `EmptyConfig` 配置，包含标题、描述、图标、颜色等。
+### 2. 空状态展示：EmptyDataType 枚举
+`lib/src/empty_data/models/index.dart` 定义了完整的空状态类型枚举：
+- `empty`、`search`、`noNetwork`、`error`、`noPermission`、`noMessage`、`noOrder`、`maintenance`
+- 每种类型都有对应的默认配置（标题、描述、图标、颜色等）
+- 通过 `EmptyConfig` 类和 `emptyDataDefaults` 映射表统一管理
 
-### 3. 弹窗预设图标（DialogPresetIcon）
-在 `lib/src/dialog_action/models/index.dart` 中定义了四种预设图标：
-- `success` - 成功（绿色勾选）
-- `warning` - 警告（橙色三角感叹号）
-- `error` - 错误（红色叉号）
-- `info` - 信息（蓝色圆圈 i）
+### 3. 输入验证：ValidRules 工具类
+`lib/src/input_text/utils/valid_rules.dart` 提供了一套完整的表单验证规则：
+- 每个验证函数返回 `String?`（null 表示验证通过，非 null 为错误消息）
+- 支持组合验证：`ValidRules.compose()` 依次执行多个规则
+- 内置常见验证：手机号、邮箱、身份证号、URL、密码等
+- 提供 `buildRules()` 工厂方法根据 `ValidRuleType` 自动生成验证规则列表
 
-## 错误传播方式
+### 4. UI 层错误反馈
+- **Action Button**：通过 `_isLoading` 状态和 `try-finally` 块管理异步操作状态，确保无论成功失败都恢复按钮状态
+- **Dropdown Choose**：远程搜索时使用 `try-catch` 包裹，失败时清空结果并设置加载状态为 false
+- **Input Text**：校验失败时通过 `state.errorText` 显示错误信息，配合主题系统的 `errorColor`
 
-### 1. try-catch 局部处理
-在 `select_modal_content.dart` 中使用 try-catch 捕获远程搜索异常，将错误状态转换为空列表显示。
+## 架构约定
 
-### 2. 回调参数传递
-表单验证规则（`ValidRules`）返回 `String?` 类型的错误消息，通过回调传递给 UI 层展示。
+1. **不抛异常原则**：业务逻辑层避免抛出异常，而是返回明确的结果对象
+2. **错误消息本地化**：所有错误消息都是硬编码的中文文本，便于直接展示给用户
+3. **状态驱动 UI**：通过组件内部状态（如 `_isLoading`、`_hasError`）控制 UI 表现
+4. **渐进式错误处理**：从输入验证 → 业务逻辑 → 网络请求 → UI 展示，逐层处理错误
+5. **无全局错误处理器**：没有统一的全局异常捕获或错误上报机制
 
-### 3. 状态字段
-组件内部使用状态字段（如 `hasError`、`errorText`）来管理错误状态，UI 根据这些状态渲染相应的错误提示。
+## 开发者规范
 
-## 设计特点
-
-- **无抛出异常**：组件库避免使用 throw 抛出异常，而是通过返回值和状态字段传递错误信息
-- **用户友好**：所有错误都转换为可理解的中文提示信息
-- **渐进降级**：当数据获取失败时，提供空状态页面而非崩溃
-- **类型安全**：使用枚举和泛型确保错误处理的类型安全
-
-## 开发者约定
-
-1. 组件内部错误应转换为状态字段，不向外抛出异常
-2. 网络请求错误统一包装为 `UploadResult.failure()`
-3. 用户输入验证返回错误消息字符串
-4. 空状态使用预定义的枚举类型保持一致性
+- 自定义组件应遵循 `UploadResult` 模式，使用结果对象而非异常
+- 表单验证应返回 `String?` 类型的错误消息
+- 网络请求应使用 try-catch 包裹，将异常转换为友好的错误消息
+- 利用 `EmptyDataType` 枚举统一处理各种空状态场景
+- 避免使用 `throw` 和 `panic`，保持 Flutter 组件的稳定性

@@ -17,9 +17,9 @@ class TreeSelectHelper {
   /// 多选模式（[multiple] = true）：通过 [onConfirm] 回调返回选中节点列表。
   ///
   /// [selectedIds] 预选中的节点ID集合。
-  static Future<TreeNode<T>?> show<T extends Object>({
+  static Future<TreeNode<V, D>?> show<V extends Object, D>({
     required BuildContext context,
-    required List<TreeNode<T>> treeData,
+    required List<TreeNode<V, D>> treeData,
     String title = '请选择',
     String? subTitle,
     String searchHint = '搜索...',
@@ -27,10 +27,10 @@ class TreeSelectHelper {
     bool showSearch = true,
     bool multiple = false,
     bool parentSelectable = false,
-    Set<T> selectedIds = const {},
-    TreeNodeTapCallback<T>? onSelect,
-    TreeNodeSelectCallback<T>? onConfirm,
-    TreeNodeLoadChildrenCallback<T>? onLoadChildren,
+    Set<V> selectedIds = const {},
+    TreeNodeSelect<V, D>? onSelect,
+    TreeNodeConfirm<V, D>? onConfirm,
+    TreeNodeLoadChild<V, D>? onLoadChildren,
     String cancelLabel = '取消',
     String confirmLabel = '确定',
     KeywordHighlightStyle? highlightStyle,
@@ -41,7 +41,7 @@ class TreeSelectHelper {
     Color? cancelButtonColor,
   }) {
     assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
-    return showModalBottomSheet<TreeNode<T>>(
+    return showModalBottomSheet<TreeNode<V, D>>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -50,7 +50,7 @@ class TreeSelectHelper {
         return SafeArea(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: screenHeight * 0.75, minHeight: screenHeight * 0.5),
-            child: TreeModalContent<T>(
+            child: TreeModalContent<V, D>(
               treeData: treeData,
               title: title,
               subTitle: subTitle,

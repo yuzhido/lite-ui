@@ -12,19 +12,19 @@ import 'tree_item.dart';
 ///
 /// 使用示例：
 /// ```dart
-/// TreeList<String>(
+/// TreeList<String, dynamic>(
 ///   nodes: myTreeNodes,
 ///   selectedIds: {'node_1', 'node_2'},
 ///   multiple: true,
 ///   onNodeTap: (node) => print('点击: ${node.label}'),
 /// )
 /// ```
-class TreeList<T extends Object> extends StatefulWidget {
+class TreeList<V extends Object, D> extends StatefulWidget {
   /// 树形数据源（根节点列表）
-  final List<TreeNode<T>> nodes;
+  final List<TreeNode<V, D>> nodes;
 
   /// 当前选中的节点 ID 集合
-  final Set<T> selectedIds;
+  final Set<V> selectedIds;
 
   /// 是否多选模式（影响三态选择器与 badge 显示）
   final bool multiple;
@@ -34,14 +34,14 @@ class TreeList<T extends Object> extends StatefulWidget {
 
   /// 懒加载子节点回调
   /// 当节点 isLeaf=false 且 children 为空时，展开会触发此回调
-  final TreeNodeLoadChildrenCallback<T>? onLoadChildren;
+  final TreeNodeLoadChild<V, D>? onLoadChildren;
 
   /// 懒加载完成后的通知回调
   /// 用于让父组件同步原始数据（如更新非克隆树）
-  final void Function(T nodeId, List<TreeNode<T>> children)? onChildrenLoaded;
+  final void Function(V nodeId, List<TreeNode<V, D>> children)? onChildrenLoaded;
 
   /// 节点点击回调
-  final TreeNodeTapCallback<T>? onNodeTap;
+  final TreeNodeSelect<V, D>? onNodeTap;
 
   /// 当前搜索关键字，用于高亮匹配文本
   final String keyword;
@@ -53,10 +53,10 @@ class TreeList<T extends Object> extends StatefulWidget {
   final bool parentSelectable;
 
   /// 父节点圆圈点击回调（仅多选 + parentSelectable 时有效）
-  final void Function(TreeNode<T> node)? onParentIndicatorTap;
+  final void Function(TreeNode<V, D> node)? onParentIndicatorTap;
 
   /// 父节点文本点击时需要展开（懒加载场景），由外部处理加载后再选中
-  final void Function(TreeNode<T> node)? onParentExpandForSelect;
+  final void Function(TreeNode<V, D> node)? onParentExpandForSelect;
 
   const TreeList({
     super.key,
@@ -75,11 +75,11 @@ class TreeList<T extends Object> extends StatefulWidget {
   });
 
   @override
-  State<TreeList<T>> createState() => _TreeListState<T>();
+  State<TreeList<V, D>> createState() => _TreeListState<V, D>();
 }
 
-class _TreeListState<T extends Object> extends State<TreeList<T>> {
-  late List<TreeNode<T>> _nodes;
+class _TreeListState<V extends Object, D> extends State<TreeList<V, D>> {
+  late List<TreeNode<V, D>> _nodes;
 
   @override
   void initState() {
@@ -88,7 +88,7 @@ class _TreeListState<T extends Object> extends State<TreeList<T>> {
   }
 
   @override
-  void didUpdateWidget(covariant TreeList<T> oldWidget) {
+  void didUpdateWidget(covariant TreeList<V, D> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(widget.nodes, oldWidget.nodes)) {
       _nodes = widget.nodes;
@@ -106,7 +106,7 @@ class _TreeListState<T extends Object> extends State<TreeList<T>> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _nodes.length,
       itemBuilder: (context, index) {
-        return TreeItem<T>(
+        return TreeItem<V, D>(
           node: _nodes[index],
           selectedIds: widget.selectedIds,
           multiple: widget.multiple,
@@ -125,7 +125,7 @@ class _TreeListState<T extends Object> extends State<TreeList<T>> {
 
   // ── 展开/折叠（含懒加载） ──
 
-  void _toggleNodeExpansion(T nodeId) async {
+  void _toggleNodeExpansion(V nodeId) async {
     final node = TreeUtils.findNode(_nodes, nodeId);
     if (node == null) return;
 

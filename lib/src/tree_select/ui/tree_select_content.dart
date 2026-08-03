@@ -7,6 +7,7 @@ import '../../widgets/keyword_highlight.dart';
 import '../models/index.dart';
 import '../utils/index.dart';
 import '../../widgets/bottom_action_bar.dart';
+import 'look_chosen_tree.dart';
 import 'tree_list.dart';
 
 /// 树形选择器弹窗内容组件
@@ -16,9 +17,9 @@ import 'tree_list.dart';
 ///
 /// 推荐使用 [TreeSelectHelper.show] 便捷方法，
 /// 或通过 [TreeSelect] 表单组件集成使用。
-class TreeModalContent<T extends Object> extends StatefulWidget {
+class TreeModalContent<V extends Object, D> extends StatefulWidget {
   /// 树形数据源
-  final List<TreeNode<T>> treeData;
+  final List<TreeNode<V, D>> treeData;
 
   /// 主标题
   final String title;
@@ -39,19 +40,19 @@ class TreeModalContent<T extends Object> extends StatefulWidget {
   final bool multiple;
 
   /// 初始选中的节点ID列表
-  final Set<T> selectedIds;
+  final Set<V> selectedIds;
 
   /// 是否允许选中父节点
   final bool parentSelectable;
 
   /// 选中回调（单选）
-  final TreeNodeTapCallback<T>? onSelect;
+  final TreeNodeSelect<V, D>? onSelect;
 
   /// 确认回调（多选）
-  final TreeNodeSelectCallback<T>? onConfirm;
+  final TreeNodeConfirm<V, D>? onConfirm;
 
   /// 懒加载子节点回调
-  final TreeNodeLoadChildrenCallback<T>? onLoadChildren;
+  final TreeNodeLoadChild<V, D>? onLoadChildren;
 
   /// 取消按钮文字
   final String cancelLabel;
@@ -102,17 +103,17 @@ class TreeModalContent<T extends Object> extends StatefulWidget {
   });
 
   @override
-  State<TreeModalContent<T>> createState() => _TreeModalContentState<T>();
+  State<TreeModalContent<V, D>> createState() => _TreeModalContentState<V, D>();
 }
 
-class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>> {
+class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent<V, D>> {
   late TextEditingController _searchController;
 
-  Set<T> _selectedIds = {};
-  List<TreeNode<T>> _filteredData = [];
+  Set<V> _selectedIds = {};
+  List<TreeNode<V, D>> _filteredData = [];
 
   /// 当前选中的节点列表
-  List<TreeNode<T>> get _selectedNodes => TreeUtils.getSelectedNodes(_filteredData, _selectedIds);
+  List<TreeNode<V, D>> get _selectedNodes => TreeUtils.getSelectedNodes(_filteredData, _selectedIds);
 
   /// 当前过滤后数据的节点总数（含所有嵌套子节点）
   int get _totalCount => _filteredData.fold(0, (sum, node) => sum + 1 + TreeUtils.countDescendants(node));
@@ -130,7 +131,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
   }
 
   @override
-  void didUpdateWidget(covariant TreeModalContent<T> oldWidget) {
+  void didUpdateWidget(covariant TreeModalContent<V, D> oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     // treeData 变化时：重新克隆 + 应用当前搜索词
@@ -170,7 +171,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
 
   // ── 选择逻辑 ──
 
-  void _selectNode(TreeNode<T> node) {
+  void _selectNode(TreeNode<V, D> node) {
     if (!widget.multiple) {
       _onNodeTap(node); // 单选：选中并关闭
       return;
@@ -181,7 +182,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
     });
   }
 
-  void _toggleSelectWithChildren(TreeNode<T> node) {
+  void _toggleSelectWithChildren(TreeNode<V, D> node) {
     final isCurrentlySelected = TreeUtils.isNodeFullySelected(node, _selectedIds);
     if (isCurrentlySelected) {
       TreeUtils.removeNodeAndDescendants(node, _selectedIds);
@@ -200,7 +201,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
   ///
   /// - parentSelectable=false（默认）：联动选中/取消所有子节点
   /// - parentSelectable=true：仅选中/取消父节点自身
-  void _onParentIndicatorTap(TreeNode<T> node) {
+  void _onParentIndicatorTap(TreeNode<V, D> node) {
     setState(() {
       if (widget.parentSelectable) {
         // 仅选中/取消父节点自身，不联动子节点，不展开
@@ -217,7 +218,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
   }
 
   /// 多选 + parentSelectable 模式下，点击父节点文本但子节点未加载时，先懒加载再全选
-  void _onParentExpandForSelect(TreeNode<T> node) async {
+  void _onParentExpandForSelect(TreeNode<V, D> node) async {
     final clonedNode = TreeUtils.findNode(_filteredData, node.id);
     if (clonedNode == null || clonedNode.isChildrenLoaded) return;
 
@@ -243,7 +244,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
     }
   }
 
-  void _onNodeTap(TreeNode<T> node) {
+  void _onNodeTap(TreeNode<V, D> node) {
     widget.onSelect?.call(node);
     Navigator.of(context).pop(node);
   }
@@ -254,9 +255,43 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
     Navigator.of(context).pop(selectedNodes);
   }
 
+  // ── 查看已选项 ──
+
+  /// 构建已选项剪枝树：仅保留选中节点及其祖先路径（基于完整原始数据）
+  List<TreeNode<V, D>> _buildSelectedTree() {
+    List<TreeNode<V, D>>? prune(List<TreeNode<V, D>> nodes) {
+      final result = <TreeNode<V, D>>[];
+      for (final node in nodes) {
+        final children = prune(node.children);
+        final keep = _selectedIds.contains(node.id) || (children != null && children.isNotEmpty);
+        if (keep) {
+          result.add(TreeNode<V, D>(id: node.id, label: node.label, parentId: node.parentId, children: children ?? const [], data: node.data));
+        }
+      }
+      return result.isEmpty ? null : result;
+    }
+
+    return prune(widget.treeData) ?? [];
+  }
+
+  void _handleViewSelected() {
+    final selectedTree = _buildSelectedTree();
+    if (selectedTree.isEmpty) return;
+    LookChosenTree.show<V, D>(
+      context: context,
+      tree: selectedTree,
+      selectedIds: _selectedIds,
+      onRemove: (removedIds) {
+        setState(() {
+          _selectedIds.removeAll(removedIds);
+        });
+      },
+    );
+  }
+
   // ── 懒加载同步 ──
 
-  void _onChildrenLoaded(T nodeId, List<TreeNode<T>> children) {
+  void _onChildrenLoaded(V nodeId, List<TreeNode<V, D>> children) {
     TreeUtils.setNodeChildren(widget.treeData, nodeId, children);
   }
 
@@ -289,7 +324,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
 
           // 树形列表
           Expanded(
-            child: TreeList<T>(
+            child: TreeList<V, D>(
               nodes: _filteredData,
               selectedIds: _selectedIds,
               multiple: widget.multiple,
@@ -313,6 +348,7 @@ class _TreeModalContentState<T extends Object> extends State<TreeModalContent<T>
               confirmLabel: widget.confirmLabel,
               onCancel: () => Navigator.of(context).pop(),
               onConfirm: _onConfirm,
+              onViewSelected: _handleViewSelected,
               confirmButtonColor: widget.confirmButtonColor,
               confirmButtonTextColor: widget.confirmButtonTextColor,
               cancelButtonColor: widget.cancelButtonColor,

@@ -1,4 +1,4 @@
-import '../models/index.dart';
+import '../models/tree_node.dart';
 
 /// 树形结构操作工具类
 ///
@@ -10,9 +10,9 @@ class TreeUtils {
   // ── 树结构操作 ──
 
   /// 深拷贝整棵树，避免修改原始数据
-  static List<TreeNode<T>> cloneTree<T extends Object>(List<TreeNode<T>> nodes) {
+  static List<TreeNode<V, D>> cloneTree<V extends Object, D>(List<TreeNode<V, D>> nodes) {
     return nodes.map((node) {
-      return TreeNode<T>(
+      return TreeNode<V, D>(
         id: node.id,
         label: node.label,
         parentId: node.parentId,
@@ -26,14 +26,14 @@ class TreeUtils {
   }
 
   /// 按关键词过滤树，匹配的节点及其祖先保留，搜索时自动展开
-  static List<TreeNode<T>> filterTree<T extends Object>(List<TreeNode<T>> nodes, String keyword) {
-    final List<TreeNode<T>> result = [];
+  static List<TreeNode<V, D>> filterTree<V extends Object, D>(List<TreeNode<V, D>> nodes, String keyword) {
+    final List<TreeNode<V, D>> result = [];
     for (final node in nodes) {
       final matchesLabel = node.label.toLowerCase().contains(keyword);
       final filteredChildren = filterTree(node.children, keyword);
       if (matchesLabel || filteredChildren.isNotEmpty) {
         result.add(
-          TreeNode<T>(
+          TreeNode<V, D>(
             id: node.id,
             label: node.label,
             parentId: node.parentId,
@@ -50,7 +50,7 @@ class TreeUtils {
   }
 
   /// 在树中按 id 查找节点
-  static TreeNode<T>? findNode<T extends Object>(List<TreeNode<T>> nodes, T nodeId) {
+  static TreeNode<V, D>? findNode<V extends Object, D>(List<TreeNode<V, D>> nodes, V nodeId) {
     for (final node in nodes) {
       if (node.id == nodeId) return node;
       final found = findNode(node.children, nodeId);
@@ -60,7 +60,7 @@ class TreeUtils {
   }
 
   /// 设置指定节点的子节点
-  static void setNodeChildren<T extends Object>(List<TreeNode<T>> nodes, T nodeId, List<TreeNode<T>> children) {
+  static void setNodeChildren<V extends Object, D>(List<TreeNode<V, D>> nodes, V nodeId, List<TreeNode<V, D>> children) {
     for (final node in nodes) {
       if (node.id == nodeId) {
         node.children = children;
@@ -71,7 +71,7 @@ class TreeUtils {
   }
 
   /// 切换指定节点的展开/折叠状态，返回是否找到
-  static bool toggleNodeInTree<T extends Object>(List<TreeNode<T>> nodes, T nodeId) {
+  static bool toggleNodeInTree<V extends Object, D>(List<TreeNode<V, D>> nodes, V nodeId) {
     for (final node in nodes) {
       if (node.id == nodeId) {
         node.isExpanded = !node.isExpanded;
@@ -87,7 +87,7 @@ class TreeUtils {
   // ── 统计 ──
 
   /// 统计节点的全部后代数量（递归）
-  static int countDescendants<T extends Object>(TreeNode<T> node) {
+  static int countDescendants<V extends Object, D>(TreeNode<V, D> node) {
     int count = node.children.length;
     for (final child in node.children) {
       count += countDescendants(child);
@@ -96,7 +96,7 @@ class TreeUtils {
   }
 
   /// 统计节点已选中的后代数量
-  static int countSelectedDescendants<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+  static int countSelectedDescendants<V extends Object, D>(TreeNode<V, D> node, Set<V> selectedIds) {
     int count = 0;
     for (final child in node.children) {
       if (selectedIds.contains(child.id)) count++;
@@ -106,8 +106,8 @@ class TreeUtils {
   }
 
   /// 获取树中所有选中的节点
-  static List<TreeNode<T>> getSelectedNodes<T extends Object>(List<TreeNode<T>> nodes, Set<T> selectedIds) {
-    final List<TreeNode<T>> result = [];
+  static List<TreeNode<V, D>> getSelectedNodes<V extends Object, D>(List<TreeNode<V, D>> nodes, Set<V> selectedIds) {
+    final List<TreeNode<V, D>> result = [];
     for (final node in nodes) {
       if (selectedIds.contains(node.id)) {
         result.add(node);
@@ -120,7 +120,7 @@ class TreeUtils {
   // ── 选中状态判断 ──
 
   /// 节点是否完全选中（自身 + 所有后代都在 selectedIds 中）
-  static bool isNodeFullySelected<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+  static bool isNodeFullySelected<V extends Object, D>(TreeNode<V, D> node, Set<V> selectedIds) {
     if (!selectedIds.contains(node.id)) return false;
     for (final child in node.children) {
       if (!isNodeFullySelected(child, selectedIds)) return false;
@@ -129,14 +129,14 @@ class TreeUtils {
   }
 
   /// 节点是否半选（部分后代被选中，但非全选）
-  static bool isNodeHalfSelected<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+  static bool isNodeHalfSelected<V extends Object, D>(TreeNode<V, D> node, Set<V> selectedIds) {
     if (node.children.isEmpty) return false;
     if (isNodeFullySelected(node, selectedIds)) return false;
     return hasAnyDescendantSelected(node, selectedIds);
   }
 
   /// 是否有任何后代被选中
-  static bool hasAnyDescendantSelected<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+  static bool hasAnyDescendantSelected<V extends Object, D>(TreeNode<V, D> node, Set<V> selectedIds) {
     for (final child in node.children) {
       if (selectedIds.contains(child.id)) return true;
       if (hasAnyDescendantSelected(child, selectedIds)) return true;
@@ -147,7 +147,7 @@ class TreeUtils {
   // ── 批量选中/取消 ──
 
   /// 递归添加节点及所有后代到选中集合
-  static void addNodeAndDescendants<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+  static void addNodeAndDescendants<V extends Object, D>(TreeNode<V, D> node, Set<V> selectedIds) {
     selectedIds.add(node.id);
     for (final child in node.children) {
       addNodeAndDescendants(child, selectedIds);
@@ -155,7 +155,7 @@ class TreeUtils {
   }
 
   /// 递归移除节点及所有后代从选中集合
-  static void removeNodeAndDescendants<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+  static void removeNodeAndDescendants<V extends Object, D>(TreeNode<V, D> node, Set<V> selectedIds) {
     selectedIds.remove(node.id);
     for (final child in node.children) {
       removeNodeAndDescendants(child, selectedIds);
@@ -168,7 +168,7 @@ class TreeUtils {
   ///
   /// 遍历树结构，找到所有在 selectedIds 中的节点，并将其所有祖先节点的 isExpanded 设为 true。
   /// 这样当弹窗打开时，已选中的项会自动展开其父节点，方便用户查看当前选中状态。
-  static void expandSelectedNodeAncestors<T extends Object>(List<TreeNode<T>> nodes, Set<T> selectedIds) {
+  static void expandSelectedNodeAncestors<V extends Object, D>(List<TreeNode<V, D>> nodes, Set<V> selectedIds) {
     for (final node in nodes) {
       final hasSelectedDescendant = _hasSelectedDescendant(node, selectedIds);
       if (hasSelectedDescendant) {
@@ -179,7 +179,7 @@ class TreeUtils {
   }
 
   /// 检查节点或其子树中是否有选中节点
-  static bool _hasSelectedDescendant<T extends Object>(TreeNode<T> node, Set<T> selectedIds) {
+  static bool _hasSelectedDescendant<V extends Object, D>(TreeNode<V, D> node, Set<V> selectedIds) {
     if (selectedIds.contains(node.id)) return true;
     for (final child in node.children) {
       if (_hasSelectedDescendant(child, selectedIds)) return true;
@@ -190,7 +190,7 @@ class TreeUtils {
   // ── 自动联动父节点链 ──
 
   /// 在树中查找指定节点的父节点（通过搜索树结构，不依赖 parentId 字段）
-  static TreeNode<T>? findParentNode<T extends Object>(List<TreeNode<T>> roots, T nodeId) {
+  static TreeNode<V, D>? findParentNode<V extends Object, D>(List<TreeNode<V, D>> roots, V nodeId) {
     for (final node in roots) {
       for (final child in node.children) {
         if (child.id == nodeId) return node;
@@ -205,8 +205,8 @@ class TreeUtils {
   ///
   /// 从 [node] 的父节点开始向上逐级检查，通过搜索树结构定位父节点，
   /// 不依赖 parentId 字段（兼容未设置 parentId 的场景）。
-  static void autoSelectParentChain<T extends Object>(List<TreeNode<T>> roots, TreeNode<T> node, Set<T> selectedIds) {
-    TreeNode<T>? current = node;
+  static void autoSelectParentChain<V extends Object, D>(List<TreeNode<V, D>> roots, TreeNode<V, D> node, Set<V> selectedIds) {
+    TreeNode<V, D>? current = node;
     while (current != null) {
       final parent = findParentNode(roots, current.id);
       if (parent == null) break;
@@ -226,8 +226,8 @@ class TreeUtils {
   /// 取消节点后向上联动：若祖先不再完全选中，自动将祖先从 selectedIds 移除
   ///
   /// 从 [node] 的父节点开始向上逐级检查，通过搜索树结构定位父节点。
-  static void autoDeselectParentChain<T extends Object>(List<TreeNode<T>> roots, TreeNode<T> node, Set<T> selectedIds) {
-    TreeNode<T>? current = node;
+  static void autoDeselectParentChain<V extends Object, D>(List<TreeNode<V, D>> roots, TreeNode<V, D> node, Set<V> selectedIds) {
+    TreeNode<V, D>? current = node;
     while (current != null) {
       final parent = findParentNode(roots, current.id);
       if (parent == null) break;

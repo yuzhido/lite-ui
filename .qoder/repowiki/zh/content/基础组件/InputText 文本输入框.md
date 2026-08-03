@@ -7,16 +7,18 @@
 - [lib/src/input_text/models/enum.dart](file://lib/src/input_text/models/enum.dart)
 - [lib/src/input_text/utils/input_format.dart](file://lib/src/input_text/utils/input_format.dart)
 - [lib/src/input_text/utils/valid_rules.dart](file://lib/src/input_text/utils/valid_rules.dart)
-- [lib/src/input_text/ui/clear_icon.dart](file://lib/src/input_text/ui/clear_icon.dart)
+- [lib/src/widgets/clear_icon.dart](file://lib/src/widgets/clear_icon.dart)
 - [lib/src/widgets/prefix_icon_label.dart](file://lib/src/widgets/prefix_icon_label.dart)
 - [lib/src/widgets/border_builder.dart](file://lib/src/widgets/border_builder.dart)
 - [lib/src/theme/index.dart](file://lib/src/theme/index.dart)
 - [lib/src/models/enum.dart](file://lib/src/models/enum.dart)
 - [lib/src/utils/input_regex.dart](file://lib/src/utils/input_regex.dart)
+- [lib/src/widgets/input_search.dart](file://lib/src/widgets/input_search.dart)
 </cite>
 
 ## 更新摘要
 **所做更改**
+- **重要架构重构**：ClearIcon 组件已从 `lib/src/input_text/ui/clear_icon.dart` 移动到 `lib/src/widgets/clear_icon.dart`，作为共享组件被多个模块复用
 - 优化了前缀图标处理逻辑，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel
 - 改进了错误显示逻辑，现在只在输入框包含文本时显示错误消息
 - 优化了浮动标签行为，当控制器文本为空时使用 FloatingLabelBehavior.never
@@ -37,7 +39,7 @@
 ## 简介
 InputText 是 LiteUI 的文本输入框组件，提供基础输入、实时格式化、内置与自定义验证规则、图标与前缀后缀支持、主题化样式等能力。它基于 Flutter 的 FormField 与 TextFormField 构建，结合统一的边框构建器与主题系统，实现一致的视觉与交互体验。
 
-**最新更新**：组件优化了前缀图标处理逻辑，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel，提升了性能并减少了不必要的widget渲染。同时改进了错误显示逻辑和浮动标签行为，提供更好的用户体验。
+**最新更新**：组件进行了重要的架构重构，ClearIcon 组件已迁移到共享位置 `lib/src/widgets/clear_icon.dart`，提高了代码的可重用性和维护性。同时优化了前缀图标处理逻辑，现在条件性渲染 PrefixIconLabel 组件，当没有前缀内容时显示最小化的5像素间距而不是强制渲染空的 PrefixIconLabel，提升了性能并减少了不必要的widget渲染。
 
 ## 项目结构
 InputText 模块采用"组件 + 模型枚举 + 工具类 + UI 子组件"的分层组织方式：
@@ -46,7 +48,7 @@ InputText 模块采用"组件 + 模型枚举 + 工具类 + UI 子组件"的分�
 - 类型与事件枚举：models/enum.dart
 - 输入格式化器：utils/input_format.dart（工厂与路由）
 - 校验规则：utils/valid_rules.dart（内置规则与组合器）
-- 后置图标与清空逻辑：ui/clear_icon.dart
+- **共享后置图标与清空逻辑**：**widgets/clear_icon.dart**（已从 input_text/ui 迁移）
 - 前置标签与图标：widgets/prefix_icon_label.dart
 - 统一边框构建：widgets/border_builder.dart
 - 主题数据与 Inherited：theme/index.dart
@@ -58,13 +60,14 @@ graph TB
 A["input_text.dart<br/>主组件"] --> B["models/enum.dart<br/>输入类型/校验类型/事件"]
 A --> C["utils/input_format.dart<br/>输入格式化器工厂"]
 A --> D["utils/valid_rules.dart<br/>校验规则与组合"]
-A --> E["ui/clear_icon.dart<br/>后置图标/密码切换"]
+A --> E["widgets/clear_icon.dart<br/>共享后置图标/密码切换"]
 A --> F["widgets/prefix_icon_label.dart<br/>前缀标签与图标"]
 A --> G["widgets/border_builder.dart<br/>统一边框构建"]
 A --> H["theme/index.dart<br/>LiteUITheme 主题"]
 A --> I["models/enum.dart<br/>FormLayout/BorderType"]
 C --> J["utils/input_regex.dart<br/>正则常量"]
 D --> J
+E --> K["其他使用 ClearIcon 的组件<br/>如 input_search.dart"]
 ```
 
 **图表来源**
@@ -72,12 +75,13 @@ D --> J
 - [lib/src/input_text/models/enum.dart:1-82](file://lib/src/input_text/models/enum.dart#L1-L82)
 - [lib/src/input_text/utils/input_format.dart:1-88](file://lib/src/input_text/utils/input_format.dart#L1-L88)
 - [lib/src/input_text/utils/valid_rules.dart:1-245](file://lib/src/input_text/utils/valid_rules.dart#L1-L245)
-- [lib/src/input_text/ui/clear_icon.dart:1-45](file://lib/src/input_text/ui/clear_icon.dart#L1-L45)
+- [lib/src/widgets/clear_icon.dart:1-45](file://lib/src/widgets/clear_icon.dart#L1-L45)
 - [lib/src/widgets/prefix_icon_label.dart:1-51](file://lib/src/widgets/prefix_icon_label.dart#L1-L51)
 - [lib/src/widgets/border_builder.dart:1-38](file://lib/src/widgets/border_builder.dart#L1-L38)
 - [lib/src/theme/index.dart:1-77](file://lib/src/theme/index.dart#L1-L77)
 - [lib/src/models/enum.dart:1-29](file://lib/src/models/enum.dart#L1-L29)
 - [lib/src/utils/input_regex.dart:1-46](file://lib/src/utils/input_regex.dart#L1-L46)
+- [lib/src/widgets/input_search.dart:100-120](file://lib/src/widgets/input_search.dart#L100-L120)
 
 章节来源
 - [lib/src/input_text/index.dart:1-4](file://lib/src/input_text/index.dart#L1-L4)
@@ -113,10 +117,12 @@ participant TT as "TextFormField"
 participant IF as "InputFormat"
 participant VR as "ValidRules"
 participant TH as "LiteUITheme"
+participant CI as "ClearIcon (共享)"
 U->>IT : 渲染组件
 IT->>IF : getFormatters(inputType)
 IF-->>IT : List<TextInputFormatter>
 IT->>TT : 设置 controller/formatters/decoration
+IT->>CI : 使用共享 ClearIcon 组件
 U->>TT : 输入/聚焦/点击
 TT-->>IT : onChanged/onTapUpOutside
 IT->>IT : onInputChange()
@@ -132,9 +138,10 @@ IT->>IT : clear()/togglePassword()
 
 **图表来源**
 - [lib/src/input_text/input_text.dart:170-369](file://lib/src/input_text/input_text.dart#L170-L369)
-- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-L87)
+- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-87)
 - [lib/src/input_text/utils/valid_rules.dart:173-245](file://lib/src/input_text/utils/valid_rules.dart#L173-L245)
 - [lib/src/theme/index.dart:54-77](file://lib/src/theme/index.dart#L54-L77)
+- [lib/src/widgets/clear_icon.dart:1-45](file://lib/src/widgets/clear_icon.dart#L1-L45)
 
 ## 详细组件分析
 
@@ -172,7 +179,7 @@ IT->>IT : clear()/togglePassword()
 - [lib/src/input_text/input_text.dart:15-168](file://lib/src/input_text/input_text.dart#L15-L168)
 - [lib/src/input_text/input_text.dart:236-369](file://lib/src/input_text/input_text.dart#L236-L369)
 - [lib/src/input_text/models/enum.dart:23-82](file://lib/src/input_text/models/enum.dart#L23-L82)
-- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-L87)
+- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-87)
 - [lib/src/input_text/utils/valid_rules.dart:191-245](file://lib/src/input_text/utils/valid_rules.dart#L191-L245)
 - [lib/src/theme/index.dart:6-38](file://lib/src/theme/index.dart#L6-L38)
 
@@ -206,7 +213,7 @@ X --> End
 
 **图表来源**
 - [lib/src/input_text/utils/input_format.dart:10-62](file://lib/src/input_text/utils/input_format.dart#L10-L62)
-- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-L87)
+- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-87)
 - [lib/src/utils/input_regex.dart:1-46](file://lib/src/utils/input_regex.dart#L1-L46)
 
 章节来源
@@ -253,34 +260,42 @@ class ValidRules {
 章节来源
 - [lib/src/input_text/utils/valid_rules.dart:1-245](file://lib/src/input_text/utils/valid_rules.dart#L1-L245)
 
-### 后置图标与清空逻辑（ClearIcon）
+### 共享后置图标与清空逻辑（ClearIcon）
+**重要更新**：ClearIcon 组件已从 `lib/src/input_text/ui/clear_icon.dart` 迁移到 `lib/src/widgets/clear_icon.dart`，作为共享组件被多个模块复用，显著提高了代码的可重用性和维护性。
+
 - 密码模式：显示可见性切换图标，点击触发 showPassword 事件
 - 自定义后置图标：suffixIcon 或 suffixIconData，点击触发 onTap 事件
 - 默认清空：当有值时显示清空按钮，点击触发 clear 事件
+- **跨组件复用**：被 InputText 和 InputSearch 等多个组件共同使用
 
 ```mermaid
 sequenceDiagram
 participant U as "用户"
-participant CI as "ClearIcon"
+participant CI as "ClearIcon (共享)"
 participant IT as "InputText"
+participant IS as "InputSearch"
 U->>CI : 点击后置区域
 alt 密码模式
 CI-->>IT : SuffixIconEvent.showPassword
 IT->>IT : toggle isShowPassword
 else 自定义图标
 CI-->>IT : SuffixIconEvent.onTap
+CI-->>IS : SuffixIconEvent.onTap
 else 有值且无自定义图标
 CI-->>IT : SuffixIconEvent.clear
+CI-->>IS : SuffixIconEvent.clear
 IT->>IT : controller.clear()
+IS->>IS : _handleClear()
 end
 ```
 
 **图表来源**
-- [lib/src/input_text/ui/clear_icon.dart:1-45](file://lib/src/input_text/ui/clear_icon.dart#L1-L45)
+- [lib/src/widgets/clear_icon.dart:1-45](file://lib/src/widgets/clear_icon.dart#L1-L45)
 - [lib/src/input_text/input_text.dart:225-233](file://lib/src/input_text/input_text.dart#L225-L233)
+- [lib/src/widgets/input_search.dart:100-120](file://lib/src/widgets/input_search.dart#L100-L120)
 
 章节来源
-- [lib/src/input_text/ui/clear_icon.dart:1-45](file://lib/src/input_text/ui/clear_icon.dart#L1-L45)
+- [lib/src/widgets/clear_icon.dart:1-45](file://lib/src/widgets/clear_icon.dart#L1-L45)
 
 ### 前置标签与图标（PrefixIconLabel）
 - 支持自定义前缀图标与固定宽度标签
@@ -342,7 +357,7 @@ end
 InputText 对以下模块存在直接依赖：
 - 输入格式化器：InputFormat（基于 InputRegex）
 - 校验规则：ValidRules（基于 InputRegex）
-- UI 子组件：ClearIcon、PrefixIconLabel
+- **共享 UI 子组件**：**ClearIcon**（已从 input_text/ui 迁移到 widgets）、PrefixIconLabel
 - 边框构建：buildInputOutlineBorder
 - 主题：LiteUITheme
 - 枚举：InputType、ValidRuleType、SuffixIconEvent、FormLayout、BorderType
@@ -351,12 +366,13 @@ InputText 对以下模块存在直接依赖：
 graph LR
 IT["InputText"] --> IF["InputFormat"]
 IT --> VR["ValidRules"]
-IT --> CI["ClearIcon"]
+IT --> CI["ClearIcon (共享)"]
 IT --> PIL["PrefixIconLabel"]
 IT --> BB["buildInputOutlineBorder"]
 IT --> TH["LiteUITheme"]
 IF --> IR["InputRegex"]
 VR --> IR
+CI --> K["其他复用组件<br/>如 InputSearch"]
 ```
 
 **图表来源**
@@ -364,6 +380,8 @@ VR --> IR
 - [lib/src/input_text/utils/input_format.dart:1-88](file://lib/src/input_text/utils/input_format.dart#L1-L88)
 - [lib/src/input_text/utils/valid_rules.dart:1-245](file://lib/src/input_text/utils/valid_rules.dart#L1-L245)
 - [lib/src/utils/input_regex.dart:1-46](file://lib/src/utils/input_regex.dart#L1-L46)
+- [lib/src/widgets/clear_icon.dart:1-45](file://lib/src/widgets/clear_icon.dart#L1-L45)
+- [lib/src/widgets/input_search.dart:100-120](file://lib/src/widgets/input_search.dart#L100-L120)
 
 章节来源
 - [lib/src/input_text/input_text.dart:1-369](file://lib/src/input_text/input_text.dart#L1-L369)
@@ -383,7 +401,8 @@ VR --> IR
   - 浮动标签与错误提示即时更新，提升可读性
   - **新增**：智能错误显示，避免空输入时的误导性错误提示
   - **新增**：优化的浮动标签行为，提升视觉一致性
-  - **新增**：条件性渲染 PrefixIconLabel，减少不必要的widget渲染，提升性能
+  - **新增**：条件性前缀渲染，减少不必要的widget渲染，提升性能
+  - **新增**：ClearIcon 组件共享化，提高代码复用率和维护性
 
 [本节为通用指导，不直接分析具体文件]
 
@@ -409,6 +428,9 @@ VR --> IR
 - **新增**：前缀图标显示问题
   - 确认 prefixIcon、prefixIconData 或 formLabel 至少有一个值
   - 当没有前缀内容时，会显示5像素的最小化间距而不是完整的前缀组件
+- **新增**：ClearIcon 组件引用问题
+  - 确认导入路径为 `../widgets/clear_icon.dart`
+  - 检查 ClearIcon 组件参数是否正确传递
 
 章节来源
 - [lib/src/input_text/input_text.dart:196-217](file://lib/src/input_text/input_text.dart#L196-L217)
@@ -417,11 +439,12 @@ VR --> IR
 - [lib/src/input_text/input_text.dart:298-307](file://lib/src/input_text/input_text.dart#L298-L307)
 - [lib/src/input_text/input_text.dart:356-367](file://lib/src/input_text/input_text.dart#L356-L367)
 - [lib/src/theme/index.dart:54-77](file://lib/src/theme/index.dart#L54-L77)
+- [lib/src/widgets/clear_icon.dart:1-45](file://lib/src/widgets/clear_icon.dart#L1-L45)
 
 ## 结论
 InputText 以简洁的 API 提供了丰富的输入控制能力，涵盖输入类型限制、内置与自定义校验、图标与前缀后缀、主题化样式等。其模块化设计使扩展与维护更加便捷，适合在各类表单场景中复用。
 
-**最新更新**：通过优化前缀图标处理逻辑、改进错误显示逻辑和优化浮动标签行为，组件提供了更好的性能和用户体验。条件性渲染 PrefixIconLabel 组件减少了不必要的widget渲染，智能错误显示避免了空输入时的误导性错误提示，优化的浮动标签行为确保了更一致的视觉表现。
+**最新更新**：通过 ClearIcon 组件的共享化重构、优化前缀图标处理逻辑、改进错误显示逻辑和优化浮动标签行为，组件提供了更好的性能和用户体验。ClearIcon 组件迁移到共享位置后，被多个组件复用，显著提高了代码的可重用性和维护性。条件性渲染 PrefixIconLabel 组件减少了不必要的widget渲染，智能错误显示避免了空输入时的误导性错误提示，优化的浮动标签行为确保了更一致的视觉表现。
 
 [本节为总结，不直接分析具体文件]
 
@@ -456,10 +479,12 @@ InputText 以简洁的 API 提供了丰富的输入控制能力，涵盖输入�
 - 智能错误显示：仅在输入框包含文本时显示错误消息
 - 优化的浮动标签：当控制器文本为空时自动使用 FloatingLabelBehavior.never
 - 条件性前缀渲染：当没有前缀内容时显示最小化的5像素间距，提升性能
+- **共享 ClearIcon 组件**：从 input_text/ui 迁移到 widgets，支持多组件复用
 
 章节来源
 - [lib/src/input_text/input_text.dart:15-168](file://lib/src/input_text/input_text.dart#L15-L168)
 - [lib/src/input_text/models/enum.dart:23-82](file://lib/src/input_text/models/enum.dart#L23-L82)
-- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-L87)
+- [lib/src/input_text/utils/input_format.dart:67-87](file://lib/src/input_text/utils/input_format.dart#L67-87)
 - [lib/src/input_text/utils/valid_rules.dart:191-245](file://lib/src/input_text/utils/valid_rules.dart#L191-L245)
 - [lib/src/theme/index.dart:6-38](file://lib/src/theme/index.dart#L6-L38)
+- [lib/src/widgets/clear_icon.dart:1-45](file://lib/src/widgets/clear_icon.dart#L1-L45)
