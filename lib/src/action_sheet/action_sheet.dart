@@ -3,7 +3,6 @@ import 'package:lite_ui/src/models/index.dart';
 import 'package:lite_ui/src/theme/index.dart';
 
 import '../wrapper_container/index.dart';
-import 'models/index.dart';
 import 'ui/action_sheet_content.dart';
 
 /// 底部弹窗显示数据操作
@@ -43,13 +42,16 @@ class ActionSheet<V, D> extends StatefulWidget {
   final List<SelectItem<V, D>>? items;
 
   /// 分组数据（优先于 items）
-  final List<ActionSheetSection<V, D>>? sections;
+  final List<SheetSection<V, D>>? sections;
 
   /// 取消按钮文字，默认为「取消」
   final String cancelLabel;
 
   /// 是否显示禁用项标签，默认 false
   final bool showDisabledBadge;
+
+  /// 是否显示选中状态标记，默认 true
+  final bool showCheckMark;
 
   /// 自定义最大高度（覆盖默认的 75%）
   final double? maxHeight;
@@ -79,6 +81,12 @@ class ActionSheet<V, D> extends StatefulWidget {
   /// 表单布局方式
   final FormLayout formLayout;
 
+  /// 前置图标
+  final Widget? prefixIcon;
+
+  /// 直接显示默认图标数据
+  final IconData? prefixIconData;
+
   const ActionSheet({
     super.key,
     this.child,
@@ -90,6 +98,7 @@ class ActionSheet<V, D> extends StatefulWidget {
     this.sections,
     this.cancelLabel = '取消',
     this.showDisabledBadge = false,
+    this.showCheckMark = true,
     this.maxHeight,
     this.hintText,
     this.onSelect,
@@ -98,6 +107,8 @@ class ActionSheet<V, D> extends StatefulWidget {
     this.validator,
     this.autovalidateMode = AutovalidateMode.disabled,
     this.formLayout = FormLayout.row,
+    this.prefixIcon,
+    this.prefixIconData,
   });
 
   /// 显示一个从底部向上弹出的 ActionSheet
@@ -108,6 +119,7 @@ class ActionSheet<V, D> extends StatefulWidget {
   /// [sections] 分组数据（优先于 items）
   /// [cancelLabel] 取消按钮文字，默认为「取消」
   /// [showDisabledBadge] 是否显示禁用项标签，默认 false
+  /// [showCheckMark] 是否显示选中状态标记，默认 true
   /// [maxHeight] 自定义最大高度（覆盖默认的 75%）
   /// [isDismissible] 点击遮罩是否可关闭，默认 true
   /// [barrierColor] 遮罩颜色
@@ -116,9 +128,11 @@ class ActionSheet<V, D> extends StatefulWidget {
     String? title,
     String? description,
     List<SelectItem<V, D>>? items,
-    List<ActionSheetSection<V, D>>? sections,
+    List<SheetSection<V, D>>? sections,
     String cancelLabel = '取消',
     bool showDisabledBadge = false,
+    bool showCheckMark = true,
+    V? selectedValue,
     double? maxHeight,
     OnSelectChange<V, D>? onSelect,
     bool isDismissible = true,
@@ -137,6 +151,8 @@ class ActionSheet<V, D> extends StatefulWidget {
           sections: sections,
           items: items,
           showDisabledBadge: showDisabledBadge,
+          showCheckMark: showCheckMark,
+          selectedValue: selectedValue,
           maxHeight: maxHeight,
           onSelect: (value, item, data) {
             onSelect?.call(value, item, data);
@@ -155,6 +171,49 @@ class ActionSheet<V, D> extends StatefulWidget {
 class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
   final _formFieldKey = GlobalKey<FormFieldState<String>>();
 
+  /// 内部选中值（统一由组件内部管理，widget.value 仅作为初始值和外部同步参考）
+  V? _internalValue;
+
+  /// 内部选中的完整 SelectItem（用于 WrapperContainer 的 selectItems 显示）
+  SelectItem<V, D>? _selectItem;
+
+  /// 获取当前生效的选中值
+  V? get _effectiveValue => _internalValue;
+
+  /// 从 items 或 sections 中根据 value 查找对应的 SelectItem
+  SelectItem<V, D>? _findItem(V? value) {
+    if (value == null) return null;
+    if (widget.sections != null) {
+      for (final section in widget.sections!) {
+        for (final item in section.items) {
+          if (item.value == value) return item;
+        }
+      }
+    }
+    if (widget.items != null) {
+      for (final item in widget.items!) {
+        if (item.value == value) return item;
+      }
+    }
+    return null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _internalValue = widget.value;
+    _selectItem = _findItem(widget.value);
+  }
+
+  @override
+  void didUpdateWidget(covariant ActionSheet<V, D> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _internalValue = widget.value;
+      _selectItem = _findItem(widget.value);
+    }
+  }
+
   void _showSheet(BuildContext context) {
     ActionSheet.show<V, D>(
       context: context,
@@ -164,9 +223,15 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
       sections: widget.sections,
       cancelLabel: widget.cancelLabel,
       showDisabledBadge: widget.showDisabledBadge,
+      showCheckMark: widget.showCheckMark,
+      selectedValue: _effectiveValue,
       maxHeight: widget.maxHeight,
       onSelect: (value, item, data) {
         widget.onSelect?.call(value, item, data);
+        setState(() {
+          _internalValue = value;
+          _selectItem = item;
+        });
         // 同步选中值到 FormField
         _formFieldKey.currentState?.didChange(value?.toString() ?? '');
       },
@@ -175,19 +240,20 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
 
   /// 从 items 或 sections 中匹配 value 对应的 label
   String? _matchLabel() {
-    if (widget.value == null) return null;
+    final effectiveVal = _effectiveValue;
+    if (effectiveVal == null) return null;
     // 优先从 sections 匹配
     if (widget.sections != null) {
       for (final section in widget.sections!) {
         for (final item in section.items) {
-          if (item.value == widget.value) return item.label;
+          if (item.value == effectiveVal) return item.label;
         }
       }
     }
     // 从 items 匹配
     if (widget.items != null) {
       for (final item in widget.items!) {
-        if (item.value == widget.value) return item.label;
+        if (item.value == effectiveVal) return item.label;
       }
     }
     return null;
@@ -198,12 +264,12 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
     if (widget.required != true) return null;
     // 优先使用自定义 validator
     if (widget.validator != null) {
-      return widget.validator!(widget.value?.toString());
+      return widget.validator!(_effectiveValue?.toString());
     }
-    // 直接检查 widget.value 是否有值（和 InputText 读 controller.text 同理）
-    if (widget.value == null) {
-      if (widget.formLabel != null) return '${widget.formLabel}是必填项不能为空';
-      return '这个字段是必填项';
+    // 直接检查当前生效值是否有值（和 InputText 读 controller.text 同理）
+    if (_effectiveValue == null) {
+      if (widget.formLabel != null) return '${widget.formLabel}是必选项不能为空';
+      return '这个字段是必选项';
     }
     return null;
   }
@@ -214,9 +280,9 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
       key: _formFieldKey,
       validator: widget.required ? defaultValid : null,
       autovalidateMode: widget.autovalidateMode,
-      initialValue: widget.value?.toString() ?? '',
+      initialValue: _effectiveValue?.toString() ?? '',
       onSaved: (value) {
-        widget.onSaved?.call(widget.value?.toString() ?? '');
+        widget.onSaved?.call(_effectiveValue?.toString() ?? '');
       },
       builder: (FormFieldState<String> state) {
         return Column(
@@ -233,19 +299,24 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
                   ],
                 ),
               ),
-            GestureDetector(
+            WrapperContainer(
+              selectItems: _selectItem != null ? [_selectItem!] : [],
+              formLayout: widget.formLayout,
+              errorText: state.errorText,
+              required: widget.required,
+              prefixIcon: widget.prefixIcon,
+              prefixIconData: widget.prefixIconData,
+              formLabel: widget.formLabel,
+              valueText: _matchLabel(),
+              hintText: widget.hintText,
               onTap: () => _showSheet(context),
-              child:
-                  widget.child ??
-                  WrapperContainer(
-                    selectItems: [],
-                    formLayout: widget.formLayout,
-                    errorText: state.errorText,
-                    required: widget.required,
-                    formLabel: widget.formLabel,
-                    valueText: _matchLabel(),
-                    hintText: widget.hintText,
-                  ),
+              onClear: () {
+                setState(() {
+                  _internalValue = null;
+                  _selectItem = null;
+                });
+                _formFieldKey.currentState?.didChange('');
+              },
             ),
           ],
         );

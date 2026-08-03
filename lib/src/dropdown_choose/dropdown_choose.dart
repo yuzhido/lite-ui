@@ -37,6 +37,7 @@ class DropdownChoose<V, D> extends StatefulWidget {
     this.formLayout = FormLayout.row,
     this.prefixIcon,
     this.subTitle,
+    this.prefixIconData,
   }) : assert(type == SelectType.remote ? items == null : items != null, '本地过滤模式(type: filterable)必须传递 items，远程搜索模式(type: remote)不能传递 items'),
        assert(type == SelectType.remote ? onRemoteSearch != null : onRemoteSearch == null, '远程搜索模式(type: remote)必须传递 onRemoteSearch，本地过滤模式(type: filterable)不能传递 onRemoteSearch'),
        assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
@@ -57,6 +58,9 @@ class DropdownChoose<V, D> extends StatefulWidget {
 
   /// 前置图标
   final Widget? prefixIcon;
+
+  /// 直接显示默认图标数据
+  final IconData? prefixIconData;
 
   /// 已选中项的完整数据（单选/多选统一使用）
   ///
@@ -365,7 +369,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
     // 感知内部清除状态：清除后视为空值，确保验证能正确触发失败
     if (_cleared) {
       if (widget.validator != null) return widget.validator?.call(null);
-      return '${widget.formLabel}是必填项不能为空';
+      return '${widget.formLabel}是必选项不能为空';
     }
     final validationValues = _getValidationValues();
     final validatorValue = (validationValues?.isEmpty ?? true) ? null : validationValues!.join(',');
@@ -373,7 +377,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
       return widget.validator!(validatorValue);
     }
     if (validationValues == null || validationValues.isEmpty) {
-      return '${widget.formLabel}是必填项不能为空';
+      return '${widget.formLabel}是必选项不能为空';
     }
     return null;
   }
@@ -413,6 +417,7 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
               errorText: state.errorText,
               required: widget.required,
               prefixIcon: widget.prefixIcon,
+              prefixIconData: widget.prefixIconData,
               formLabel: widget.formLabel,
               displayMode: widget.displayMode,
               maxShowTags: widget.maxShowTags ?? 1,
@@ -426,10 +431,6 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                   chooseItems = [];
                 });
                 widget.onClear?.call();
-                // 同步 FormField 内部值为空，使验证能正确触发失败
-                // WidgetsBinding.instance.addPostFrameCallback((_) {
-                //   if (mounted) _formFieldKey.currentState?.didChange('');
-                // });
               },
               onTap: () {
                 setState(() => _isExpanded = true);
@@ -459,7 +460,6 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                     chooseItem = item;
                     setState(() => _cleared = false);
                     widget.onSelect?.call(value, item, data);
-                    // 不再在此处调用 didChange，由 didUpdateWidget 统一处理
                   },
 
                   /// 这样写的目的是为了单选的时候提示不要传递 onConfirm
@@ -468,11 +468,6 @@ class _DropdownChooseState<V, D> extends State<DropdownChoose<V, D>> {
                           chooseItems = datas;
                           setState(() => _cleared = false);
                           widget.onConfirm?.call(values, datas, items);
-                          // 自动缓存已选项完整数据（含 label），使表单字段能正确显示
-                          // setState(() {
-                          //   _resolvedItems = items;
-                          // });
-                          // 不再在此处调用 didChange，由 didUpdateWidget 统一处理
                         }
                       : null,
                   maxCount: widget.maxCount,

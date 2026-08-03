@@ -15,10 +15,10 @@
 
 ## 更新摘要
 **所做更改**
-- **新增 subTitle 属性**：为 DropdownChoose 组件添加了副标题/描述文本支持，提升表单用户体验
-- **增强状态管理**：改进了 `_modalSelectedItems()` 方法，提供更精确的选中项处理逻辑
-- **优化验证逻辑**：通过 `_getValidationValues()` 方法实现更准确的验证值获取
-- **改进表单集成**：增强了与 Flutter FormField 的集成，支持描述性文本和更好的状态同步
+- **验证消息标准化**：将错误消息从'是必填项不能为空'统一改为'是必选项不能为空'，提升用户体验一致性
+- **清理注释代码**：移除了表单字段同步相关的冗余注释代码，提高代码可读性
+- **优化验证逻辑**：改进了 `_getValidationValues()` 方法，提供更准确的验证值获取
+- **增强状态管理**：完善了弹窗展开状态和清除状态的同步机制
 
 ## 目录
 1. [简介](#简介)
@@ -35,7 +35,7 @@
 ## 简介
 DropdownChoose 是一个支持单选与多选的 Flutter 下拉选择器，提供本地过滤与远程搜索两种模式，内置表单校验、值显示模式（文本/标签/紧凑）、禁用项、占位提示、新增按钮、查看已选弹窗等能力。通过统一的 show 静态方法可快速弹出底部选择面板，适用于表单字段与独立弹窗场景。
 
-**最新更新**：组件新增了 `subTitle` 属性，支持在表单标签下方显示描述性文本，提升了表单的用户体验和信息密度。同时改进了状态管理和验证逻辑，使组件更加稳定和易用。
+**最新更新**：组件进行了验证消息标准化处理，将错误提示统一为"是必选项不能为空"，提升了用户体验的一致性。同时清理了冗余的注释代码，优化了代码结构和可维护性。
 
 ## 项目结构
 - 组件入口与状态管理：lib/src/dropdown_choose/dropdown_choose.dart
@@ -87,7 +87,7 @@ G --> H["SuffixIconLabel(动态后缀图标)<br/>lib/src/widgets/suffix_icon_lab
 - 动态图标显示：根据选择状态和弹窗展开状态智能切换右侧图标
 - FormField 状态同步：确保表单验证和回显正常工作
 - 增强验证支持：validator 参数支持自定义验证逻辑
-- **新增描述文本：subTitle 属性支持在表单标签下方显示描述信息**
+- **描述文本：subTitle 属性支持在表单标签下方显示描述信息**
 
 ## 架构概览
 DropdownChoose 作为表单字段封装，点击后调用 show 打开底部弹窗 ModalContent，内部根据 type 决定本地过滤或远程搜索，并通过 ModalContentList 渲染列表，结合 InputSearch 完成搜索交互。
@@ -132,7 +132,7 @@ W->>I : 恢复默认图标状态
 - [lib/src/dropdown_choose/dropdown_choose.dart:308-325](file://lib/src/dropdown_choose/dropdown_choose.dart#L308-L325)
 - [lib/src/dropdown_choose/ui/modal_content.dart:166-237](file://lib/src/dropdown_choose/ui/modal_content.dart#L166-L237)
 - [lib/src/wrapper_container/index.dart:121](file://lib/src/wrapper_container/index.dart#L121)
-- [lib/src/widgets/suffix_icon_label.dart:30-32](file://lib/src/widgets/suffix_icon_label.dart#L30-L32)
+- [lib/src/widgets/suffix_icon_label.dart:30-32](file://lib/src/widgets/suffix_icon_label.dart#L30-32)
 
 ## 详细组件分析
 
@@ -147,7 +147,7 @@ W->>I : 恢复默认图标状态
 - 动态图标支持：通过 WrapperContainer 的 `isExpanded`、`selectItems` 参数传递状态
 - FormField 状态同步：通过 `didUpdateWidget` 统一处理所有状态变更，确保表单验证和回显正常工作
 - 增强验证支持：validator 参数支持自定义验证逻辑，清除状态验证逻辑优化
-- **新增描述文本：subTitle 属性支持在表单标签下方显示描述性文本**
+- **描述文本：subTitle 属性支持在表单标签下方显示描述性文本**
 
 **更新**：组件已完成 API 重构，移除了 value 属性，统一使用 selectedItems 作为已选项数据源。onConfirm 回调的参数顺序已更新为 (values, items, datas)。组件现在维护弹窗展开状态和清除状态，并在 WrapperContainer 中传递相关参数以实现动态后缀图标显示和清除功能。**新增了 subTitle 属性，支持在表单标签下方显示描述性文本**。
 
@@ -164,13 +164,13 @@ W->>I : 恢复默认图标状态
 - 已选项回显：selectedItems 优先使用，否则从搜索结果中匹配并缓存到 _selectedItemMap
 - 新增按钮：search 无结果时展示，点击后 onAdd(keyword) 完成后自动刷新列表
 - 查看已选：弹窗内展示已选 label，支持移除
-- **新增描述文本：subTitle 属性支持在弹窗顶部显示描述性文本**
+- **描述文本：subTitle 属性支持在弹窗顶部显示描述性文本**
 
 **更新**：弹窗现在通过 `_modalSelectedItems()` 方法接收正确的选中项，确保清除后弹窗能正确显示空状态。onConfirm 回调的参数顺序已更新为 (values, items, datas)。**新增了 subTitle 属性的支持，可以在弹窗顶部显示描述性文本**。
 
 **章节来源**
-- [lib/src/dropdown_choose/ui/modal_content.dart:136-237](file://lib/src/dropdown_choose/ui/modal_content.dart#L136-237)
-- [lib/src/dropdown_choose/ui/modal_content.dart:324-332](file://lib/src/dropdown_choose/ui/modal_content.dart#L324-332)
+- [lib/src/dropdown_choose/ui/modal_content.dart:136-237](file://lib/src/dropdown_choose/ui/modal_content.dart#L136-L237)
+- [lib/src/dropdown_choose/ui/modal_content.dart:324-332](file://lib/src/dropdown_choose/ui/modal_content.dart#L324-L332)
 
 ### WrapperContainer 包装容器
 - 表单布局：统一包装表单标签、值显示区域和后缀图标
@@ -237,7 +237,7 @@ W->>I : 恢复默认图标状态
 **章节来源**
 - [lib/src/models/callbacks.dart:3-16](file://lib/src/models/callbacks.dart#L3-L16)
 - [lib/src/dropdown_choose/dropdown_choose.dart:453-472](file://lib/src/dropdown_choose/dropdown_choose.dart#L453-L472)
-- [lib/src/dropdown_choose/ui/modal_content.dart:324-332](file://lib/src/dropdown_choose/ui/modal_content.dart#L324-332)
+- [lib/src/dropdown_choose/ui/modal_content.dart:324-332](file://lib/src/dropdown_choose/ui/modal_content.dart#L324-L332)
 - [example/lib/pages/back.dart:176-269](file://example/lib/pages/back.dart#L176-L269)
 - [example/lib/pages/select_modal_demo.dart:134-153](file://example/lib/pages/select_modal_demo.dart#L134-L153)
 
@@ -257,7 +257,7 @@ W->>I : 恢复默认图标状态
 - 查看已选：弹窗内展示已选 label 列表，支持移除操作
 
 **章节来源**
-- [lib/src/dropdown_choose/ui/modal_content.dart:288-295](file://lib/src/dropdown_choose/ui/modal_content.dart#L288-295)
+- [lib/src/dropdown_choose/ui/modal_content.dart:288-295](file://lib/src/dropdown_choose/ui/modal_content.dart#L288-L295)
 
 ### 清除功能详解
 - **触发条件**：当组件有选中值时，后缀图标显示为红色的关闭图标 (Icons.close)
@@ -291,7 +291,7 @@ W->>I : 恢复默认图标状态
 - **清除状态验证**：当 `_cleared` 为 true 时，验证函数会收到 null 值，确保清除操作后验证能正确触发失败
 - **单选模式验证**：validator 接收 widget.selectedItems?.firstOrNull?.value.toString() 作为参数
 - **多选模式验证**：validator 接收 effectiveValues.join(',') 作为参数，空集合时传递 null
-- **默认验证规则**：required 为 true 时，未选择任何值会显示"是必填项不能为空"的错误提示
+- **默认验证规则**：required 为 true 时，未选择任何值会显示"是必选项不能为空"的错误提示
 - **自动验证模式**：通过 autovalidateMode 控制验证触发的时机
 - **改进的验证值获取**：通过 `_getValidationValues()` 方法提供更准确的验证值
 
@@ -455,21 +455,21 @@ OnAddCallback --> String : "关键字参数"
 - **弹窗状态不同步**：确认 DropdownChoose 的 _isExpanded 状态在弹窗打开和关闭时正确更新
 - **清除功能异常**：检查 onClear 回调是否正确传递，确认 _cleared 状态在外部值变化时正确重置
 - **FormField 状态同步问题**：确认 didUpdateWidget 中的状态同步逻辑正常工作，检查 mounted 状态和 WidgetsBinding 调用
-- **验证功能异常**：检查 validator 函数是否正确处理 null 值和空集合情况
+- **验证功能异常**：检查 validator 函数是否正确处理 null 值和空集合情况，注意错误消息已统一为"是必选项不能为空"
 - **自动验证不触发**：确认 autovalidateMode 参数设置正确，检查 FormField 的验证逻辑
 - **回调签名不兼容**：如果升级后出现编译错误，需要更新 onSelect 和 onConfirm 回调的签名以匹配新的参数格式
 - **描述文本不显示**：确认 subTitle 属性是否正确传递，检查表单布局是否支持描述文本显示
 
-**更新**：新增了对清除功能、弹窗状态同步、验证功能和回调签名相关的故障排查指导，以及新增的描述文本功能的故障排查。
+**更新**：新增了对清除功能、弹窗状态同步、验证功能和回调签名相关的故障排查指导，以及新增的描述文本功能的故障排查。特别需要注意的是，验证错误消息已统一为"是必选项不能为空"。
 
 **章节来源**
 - [lib/src/dropdown_choose/dropdown_choose.dart:40-48](file://lib/src/dropdown_choose/dropdown_choose.dart#L40-L48)
 - [lib/src/dropdown_choose/ui/modal_content.dart:120-125](file://lib/src/dropdown_choose/ui/modal_content.dart#L120-L125)
 
 ## 结论
-DropdownChoose 提供了完善的下拉选择能力，覆盖表单集成、本地/远程搜索、多选限制、值显示定制、禁用项与占位提示、新增与查看已选等功能。**最新版本新增了 subTitle 属性，支持在表单标签下方显示描述性文本，提升了用户体验**。同时改进了状态管理和验证逻辑，使组件更加稳定和易用。**最重要的改进是回调签名的增强**，现在 OnSelectChange 和 OnMultiSelectConfirm 都提供了完整的数据项支持，让开发者能够更方便地访问选中项的详细信息。通过合理的缓存与搜索策略，可在大列表与远程数据场景下获得良好性能与用户体验。
+DropdownChoose 提供了完善的下拉选择能力，覆盖表单集成、本地/远程搜索、多选限制、值显示定制、禁用项与占位提示、新增与查看已选等功能。**最新版本进行了验证消息标准化处理，将错误提示统一为"是必选项不能为空"，提升了用户体验的一致性**。同时清理了冗余的注释代码，优化了代码结构和可维护性。**最重要的改进是回调签名的增强**，现在 OnSelectChange 和 OnMultiSelectConfirm 都提供了完整的数据项支持，让开发者能够更方便地访问选中项的详细信息。通过合理的缓存与搜索策略，可在大列表与远程数据场景下获得良好性能与用户体验。
 
-**更新总结**：新增的 subTitle 属性为表单提供了更好的用户体验和信息传达能力。**最重要的是，统一的 selectedItems 数据和优化的回调签名使组件更加易于使用和扩展**。
+**更新总结**：验证消息的标准化使组件的用户体验更加一致。**最重要的是，统一的 selectedItems 数据和优化的回调签名使组件更加易于使用和扩展**。
 
 ## 附录：API 参考
 

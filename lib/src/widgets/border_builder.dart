@@ -10,6 +10,7 @@ import '../theme/index.dart';
 /// [focusBorderColor] 聚焦时边框颜色，不传时从 [LiteUITheme] 读取，仍为 null 则使用系统主题色
 /// [errorColor] 错误状态边框颜色，不传时从 [LiteUITheme] 读取
 /// [hasError] 是否处于错误状态
+/// [gapPadding] 内容区水平间隙（Material 3 下会作为内容区左右内边距），默认 4.0
 InputBorder buildInputOutlineBorder({
   required BorderType type,
   double? borderRadius,
@@ -18,9 +19,11 @@ InputBorder buildInputOutlineBorder({
   Color? errorColor,
   bool hasError = false,
   required BuildContext context,
+  double gapPadding = 4.0,
 }) {
   final theme = LiteUITheme.of(context);
   return OutlineInputBorder(
+    gapPadding: gapPadding,
     borderRadius: BorderRadius.circular(borderRadius ?? theme.borderRadius),
     borderSide: BorderSide(
       color: hasError

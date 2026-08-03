@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lite_ui/src/models/index.dart';
 
-import '../models/index.dart';
 import 'widgets/list_view.dart';
 
 /// ActionSheetContent 本地固定数据组件
@@ -27,7 +26,7 @@ class ActionSheetContent<V, D> extends StatelessWidget {
   final List<SelectItem<V, D>>? items;
 
   /// 分组数据（优先于 items）
-  final List<ActionSheetSection<V, D>>? sections;
+  final List<SheetSection<V, D>>? sections;
 
   /// 操作项点击回调，返回选中的 value 和 data
   final OnSelectChange<V, D>? onSelect;
@@ -37,6 +36,12 @@ class ActionSheetContent<V, D> extends StatelessWidget {
 
   /// 是否显示禁用项标签
   final bool showDisabledBadge;
+
+  /// 是否显示选中状态标记
+  final bool showCheckMark;
+
+  /// 当前选中的值（用于在列表项上显示勾选标记）
+  final V? selectedValue;
 
   /// 最大高度（覆盖默认的 75% 屏幕高度）
   final double? maxHeight;
@@ -50,6 +55,8 @@ class ActionSheetContent<V, D> extends StatelessWidget {
     this.onSelect,
     this.cancelLabel = '取消',
     this.showDisabledBadge = false,
+    this.showCheckMark = true,
+    this.selectedValue,
     this.maxHeight,
   });
 
@@ -104,7 +111,14 @@ class ActionSheetContent<V, D> extends StatelessWidget {
                       // 操作项列表
                       Flexible(
                         child: SingleChildScrollView(
-                          child: ActionSheetListView<V, D>(sections: sections, items: items, onSelect: onSelect, showDisabledBadge: showDisabledBadge),
+                          child: ActionSheetListView<V, D>(
+                            sections: sections,
+                            items: items,
+                            onSelect: onSelect,
+                            showDisabledBadge: showDisabledBadge,
+                            showCheckMark: showCheckMark,
+                            selectedValue: selectedValue,
+                          ),
                         ),
                       ),
                     ],

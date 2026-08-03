@@ -31,11 +31,10 @@ class ClearIcon extends StatelessWidget {
       return InkWell(
         onTap: () => onTap?.call(SuffixIconEvent.clear),
         child: Container(
-          padding: const EdgeInsets.all(5),
+          padding: const EdgeInsets.all(3),
           margin: EdgeInsets.only(right: 10),
           decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(6)),
-          // decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
-          child: Icon(Icons.close, size: 20),
+          child: Icon(Icons.close, size: 20, color: Colors.red.shade400, weight: 2.5),
         ),
       );
     } else {

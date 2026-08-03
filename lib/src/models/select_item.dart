@@ -75,3 +75,16 @@ class SelectItem<V, D> {
     );
   }
 }
+
+/// ActionSheet 分组数据
+///
+/// 用于将操作项分组显示，每组可选带标题。
+class SheetSection<V, D> {
+  /// 分组标题
+  final String? title;
+
+  /// 该组的操作项列表
+  final List<SelectItem<V, D>> items;
+
+  const SheetSection({this.title, required this.items});
+}

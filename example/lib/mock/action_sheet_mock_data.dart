@@ -28,8 +28,8 @@ class ActionSheetMockData {
   ];
 
   /// 分组数据示例
-  static List<ActionSheetSection<String, void>> get sectionedItems => [
-    ActionSheetSection(
+  static List<SheetSection<String, void>> get sectionedItems => [
+    SheetSection(
       title: '文件操作',
       items: [
         SelectItem(label: '新建文档', value: 'new_doc'),
@@ -37,7 +37,7 @@ class ActionSheetMockData {
         SelectItem(label: '从剪贴板粘贴', value: 'paste'),
       ],
     ),
-    ActionSheetSection(
+    SheetSection(
       title: '分享选项',
       items: [
         SelectItem(label: '微信好友', value: 'wechat'),

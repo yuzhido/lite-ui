@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/index.dart';
-import '../../models/index.dart';
 import 'sheet_item.dart';
 
 /// ActionSheet 操作项列表视图
@@ -11,7 +10,7 @@ import 'sheet_item.dart';
 /// - 普通模式：扁平列表，项之间显示分割线
 class ActionSheetListView<V, D> extends StatelessWidget {
   /// 分组数据（优先于 items）
-  final List<ActionSheetSection<V, D>>? sections;
+  final List<SheetSection<V, D>>? sections;
 
   /// 操作项列表（普通模式）
   final List<SelectItem<V, D>>? items;
@@ -22,7 +21,13 @@ class ActionSheetListView<V, D> extends StatelessWidget {
   /// 是否显示禁用项标签
   final bool showDisabledBadge;
 
-  const ActionSheetListView({super.key, this.sections, this.items, this.onSelect, this.showDisabledBadge = false});
+  /// 是否显示选中状态标记
+  final bool showCheckMark;
+
+  /// 当前选中的值
+  final V? selectedValue;
+
+  const ActionSheetListView({super.key, this.sections, this.items, this.onSelect, this.showDisabledBadge = false, this.showCheckMark = true, this.selectedValue});
 
   bool get _hasSections => sections != null && sections!.isNotEmpty;
 
@@ -56,7 +61,7 @@ class ActionSheetListView<V, D> extends StatelessWidget {
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildItem(theme, entry.value),
+                        _buildItem(theme, entry.value, selectedValue),
                         if (!isLast) Divider(height: 0.5, thickness: 0.5, color: Theme.of(context).dividerColor.withValues(alpha: 0.1), indent: 16, endIndent: 0),
                       ],
                     );
@@ -85,7 +90,7 @@ class ActionSheetListView<V, D> extends StatelessWidget {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildItem(theme, entry.value),
+              _buildItem(theme, entry.value, selectedValue),
               if (!isLast) Divider(height: 0.5, thickness: 0.5, color: theme.dividerColor.withValues(alpha: 0.1), indent: 16, endIndent: 0),
             ],
           );
@@ -95,7 +100,7 @@ class ActionSheetListView<V, D> extends StatelessWidget {
   }
 
   /// 构建单个操作项
-  Widget _buildItem(ThemeData theme, SelectItem<V, D> item) {
+  Widget _buildItem(ThemeData theme, SelectItem<V, D> item, V? currentSelected) {
     return ActionSheetItem(
       label: item.label,
       subtitle: item.subtitle,
@@ -106,6 +111,8 @@ class ActionSheetListView<V, D> extends StatelessWidget {
       isDisabled: item.disabled,
       disabledLabel: item.disabledLabel,
       showDisabledBadge: showDisabledBadge,
+      showCheckMark: showCheckMark,
+      isSelected: currentSelected != null && item.value == currentSelected,
       onTap: () => onSelect?.call(item.value, item, item.data),
     );
   }

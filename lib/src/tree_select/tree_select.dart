@@ -106,6 +106,9 @@ class TreeSelect<T extends Object> extends StatefulWidget {
   /// 前置图标
   final Widget? prefixIcon;
 
+  /// 直接显示默认图标数据
+  final IconData? prefixIconData;
+
   /// 值显示模式，默认 [DisplayMode.text]
   final DisplayMode displayMode;
 
@@ -163,6 +166,7 @@ class TreeSelect<T extends Object> extends StatefulWidget {
     this.onSelect,
     this.onConfirm,
     this.onClear,
+    this.prefixIconData,
   }) : assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效'),
        assert(maxShowTags == null || displayMode == DisplayMode.compact, 'maxShowTags 仅在 displayMode 为 compact 时有效'),
        assert(displayMode != DisplayMode.compact || multiple, 'compact 模式仅支持多选');
@@ -259,14 +263,14 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
     if (!widget.required) return null;
     if (_cleared) {
       if (widget.validator != null) return widget.validator?.call(null);
-      return '${widget.formLabel}是必填项不能为空';
+      return '${widget.formLabel}是必选项不能为空';
     }
     final validationValue = _getValidationValue();
     if (widget.validator != null) {
       return widget.validator!(validationValue.isEmpty ? null : validationValue);
     }
     if (validationValue.isEmpty) {
-      return '${widget.formLabel}是必填项不能为空';
+      return '${widget.formLabel}是必选项不能为空';
     }
     return null;
   }
@@ -302,6 +306,7 @@ class _TreeSelectFieldState<T extends Object> extends State<TreeSelect<T>> {
               errorText: state.errorText,
               required: widget.required,
               prefixIcon: widget.prefixIcon,
+              prefixIconData: widget.prefixIconData,
               formLabel: widget.formLabel,
               displayMode: widget.displayMode,
               maxShowTags: widget.maxShowTags ?? 1,

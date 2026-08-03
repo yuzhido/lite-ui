@@ -12,7 +12,7 @@ class SuffixIconLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final widget = Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(3),
       margin: EdgeInsets.only(right: 10),
       decoration: BoxDecoration(color: hasValue ? Colors.red.shade50 : Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
       child: Icon(

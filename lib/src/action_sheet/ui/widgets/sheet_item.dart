@@ -29,6 +29,12 @@ class ActionSheetItem extends StatelessWidget {
   /// 是否显示禁用标签
   final bool showDisabledBadge;
 
+  /// 是否显示选中状态标记
+  final bool showCheckMark;
+
+  /// 当前项是否被选中
+  final bool isSelected;
+
   /// 点击回调
   final VoidCallback? onTap;
 
@@ -42,6 +48,8 @@ class ActionSheetItem extends StatelessWidget {
     this.isDisabled = false,
     this.disabledLabel,
     this.showDisabledBadge = false,
+    this.showCheckMark = true,
+    this.isSelected = false,
     this.onTap,
     super.key,
   });
@@ -89,6 +97,13 @@ class ActionSheetItem extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // 选中标记
+                if (showCheckMark && isSelected)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Icon(Icons.check_circle_outline_rounded, size: 22, color: Color(0xFF34C759)),
+                  ),
 
                 // 禁用标签
                 if (isDisabled && showDisabledBadge && disabledLabel != null)

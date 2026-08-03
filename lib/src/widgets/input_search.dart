@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'suffix_clear_icon.dart';
+import 'suffix_icon_label.dart';
 
 /// 搜索输入框
 ///
@@ -36,7 +36,18 @@ class InputSearch extends StatefulWidget {
   /// 搜索按钮文字/图标颜色，不传则使用白色
   final Color? searchButtonTextColor;
 
-  const InputSearch({this.searchHint, required this.searchController, this.onSearch, this.onClear, this.showClearButton = true, this.keyword, this.isLoading = false, this.searchButtonColor, this.searchButtonTextColor, super.key});
+  const InputSearch({
+    this.searchHint,
+    required this.searchController,
+    this.onSearch,
+    this.onClear,
+    this.showClearButton = true,
+    this.keyword,
+    this.isLoading = false,
+    this.searchButtonColor,
+    this.searchButtonTextColor,
+    super.key,
+  });
 
   @override
   State<InputSearch> createState() => _InputSearchState();
@@ -81,7 +92,7 @@ class _InputSearchState extends State<InputSearch> {
                     child: Icon(Icons.search_rounded, size: 20, color: Colors.grey.shade500),
                   ),
                   prefixIconConstraints: BoxConstraints(maxHeight: 30, maxWidth: 50),
-                  suffixIcon: SuffixClearIcon(hasValue: hasKeyword, onTap: (_) => _handleClear()),
+                  suffixIcon: SuffixIconLabel(hasValue: hasKeyword, onClear: () => _handleClear()),
                   suffixIconConstraints: BoxConstraints(maxHeight: 30, maxWidth: 50),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(5),
@@ -99,9 +110,7 @@ class _InputSearchState extends State<InputSearch> {
           ),
           SizedBox(
             child: ElevatedButton.icon(
-              icon: widget.isLoading
-                  ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: searchFg))
-                  : Icon(Icons.search_rounded),
+              icon: widget.isLoading ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: searchFg)) : Icon(Icons.search_rounded),
               onPressed: widget.isLoading ? null : _handleSearch,
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),

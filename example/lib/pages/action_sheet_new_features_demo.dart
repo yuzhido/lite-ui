@@ -18,7 +18,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
       title: '文件操作',
       description: '选择一个操作',
       sections: [
-        ActionSheetSection(
+        SheetSection(
           title: '文件操作',
           items: [
             SelectItem(label: '新建文档', value: 'new_doc'),
@@ -26,7 +26,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
             SelectItem(label: '从剪贴板粘贴', value: 'paste'),
           ],
         ),
-        ActionSheetSection(
+        SheetSection(
           title: '分享选项',
           items: [
             SelectItem(label: '微信好友', value: 'wechat'),
@@ -88,7 +88,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
       description: '分组 + 图标 + 禁用状态组合',
       showDisabledBadge: true,
       sections: [
-        ActionSheetSection(
+        SheetSection(
           title: '文件操作',
           items: [
             SelectItem.withIcon(label: '新建文档', value: 'new_doc', iconData: Icons.description, iconColor: Colors.blue),
@@ -96,7 +96,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
             SelectItem.withIcon(label: '从剪贴板粘贴', value: 'paste', iconData: Icons.content_paste, iconColor: Colors.green, disabled: true, disabledLabel: '不可用'),
           ],
         ),
-        ActionSheetSection(
+        SheetSection(
           title: '分享选项',
           items: [
             SelectItem.withIcon(label: '微信好友', value: 'wechat', iconData: Icons.chat_bubble, iconColor: Colors.green),
@@ -149,7 +149,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
                   children: [
                     Text('新功能说明', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
-                    _buildFeatureItem('分组显示', '通过 ActionSheetSection 实现操作项分组，每组有独立标题', Icons.view_list),
+                    _buildFeatureItem('分组显示', '通过 SheetSection 实现操作项分组，每组有独立标题', Icons.view_list),
                     const SizedBox(height: 8),
                     _buildFeatureItem('图标支持', '通过 SelectItem.withIcon() 或 iconData 属性添加图标', Icons.image),
                     const SizedBox(height: 8),
@@ -190,7 +190,7 @@ class _ActionSheetNewFeaturesDemoPageState extends State<ActionSheetNewFeaturesD
   title: '操作菜单',
   showDisabledBadge: true,
   sections: [
-    ActionSheetSection(
+    SheetSection(
       title: '文件操作',
       items: [
         SelectItem.withIcon(

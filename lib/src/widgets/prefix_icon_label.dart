@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 
 class PrefixIconLabel extends StatelessWidget {
-  final String label;
+  final String? label;
   final bool required;
   final double? labelWidth;
   final Widget? prefixIcon;
   final IconData? prefixIconData;
   final Color? prefixIconColor;
 
-  const PrefixIconLabel({required this.label, this.required = false, super.key, this.labelWidth, this.prefixIcon, this.prefixIconData, this.prefixIconColor});
+  const PrefixIconLabel({this.label, this.required = false, super.key, this.labelWidth, this.prefixIcon, this.prefixIconData, this.prefixIconColor})
+    : assert(prefixIcon == null || prefixIconData == null, 'prefixIcon 和 prefixIconData 只能传递其中一个');
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Container(
-          margin: EdgeInsets.only(left: 5),
+          margin: EdgeInsets.only(left: 8),
           child: Container(
             color: Colors.transparent,
             padding: EdgeInsets.symmetric(horizontal: 5),
@@ -22,10 +23,10 @@ class PrefixIconLabel extends StatelessWidget {
               spacing: 5,
               mainAxisSize: MainAxisSize.min,
               children: [
-                prefixIcon ?? Icon(prefixIconData ?? Icons.edit_calendar_rounded, size: 20, color: prefixIconColor),
+                if (prefixIcon != null) prefixIcon! else if (prefixIconData != null) Icon(prefixIconData, size: 20, color: prefixIconColor),
                 SizedBox(
-                  width: labelWidth ?? 65,
-                  child: Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  width: labelWidth ?? ((label != null) ? 65 : null),
+                  child: Text(label ?? '', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                 ),
               ],
             ),
@@ -35,7 +36,7 @@ class PrefixIconLabel extends StatelessWidget {
         // 是否必填
         if (required)
           Positioned(
-            left: 3,
+            left: 4,
             bottom: 0,
             child: Text(
               '*',

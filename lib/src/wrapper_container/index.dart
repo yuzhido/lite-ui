@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lite_ui/src/theme/index.dart';
 import 'package:lite_ui/src/models/enum.dart';
 import 'package:lite_ui/src/models/select_item.dart';
-import 'package:lite_ui/src/theme/index.dart';
 import 'package:lite_ui/src/widgets/border_builder.dart';
 import 'package:lite_ui/src/widgets/prefix_icon_label.dart';
 import 'package:lite_ui/src/widgets/suffix_icon_label.dart';
@@ -47,16 +47,17 @@ class WrapperContainer<V, D> extends StatelessWidget {
   /// 前置图标
   final Widget? prefixIcon;
 
+  /// 直接传递图标数据
+  final IconData? prefixIconData;
+
   /// 是否展开（弹窗打开状态），用于切换后缀图标
   final bool? isExpanded;
 
   /// 有值时点击清除回调（透传给 SuffixIconLabel）
   final VoidCallback? onClear;
 
-  // ===========================-----------====================
+  /// 选中的数据
   final List<SelectItem<V, D>> selectItems;
-
-  // ===========================-----------====================
 
   const WrapperContainer({
     super.key,
@@ -74,6 +75,7 @@ class WrapperContainer<V, D> extends StatelessWidget {
     this.isExpanded,
     this.onClear,
     required this.selectItems,
+    this.prefixIconData,
   });
 
   @override
@@ -92,9 +94,9 @@ class WrapperContainer<V, D> extends StatelessWidget {
                 style: TextStyle(fontSize: 16, color: errorColor, fontWeight: FontWeight.w500),
               )
             : null,
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        border: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
-        enabledBorder: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null),
+        floatingLabelBehavior: selectItems.isEmpty ? FloatingLabelBehavior.never : FloatingLabelBehavior.always,
+        border: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null, gapPadding: 0),
+        enabledBorder: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null, gapPadding: 0),
       ),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -104,7 +106,10 @@ class WrapperContainer<V, D> extends StatelessWidget {
           child: Row(
             spacing: 5,
             children: [
-              PrefixIconLabel(required: required ?? false, prefixIcon: prefixIcon, label: formLabel ?? '表单标签'),
+              if (prefixIcon != null || prefixIconData != null || formLabel != null)
+                PrefixIconLabel(required: required ?? false, prefixIconData: prefixIconData, prefixIcon: prefixIcon, label: formLabel)
+              else
+                SizedBox(width: 5),
               Expanded(
                 child: ShowContent(
                   selectItems: selectItems,

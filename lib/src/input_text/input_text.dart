@@ -253,7 +253,7 @@ class _InputTextState extends State<InputText> {
                   spacing: 5,
                   children: [
                     Text('${widget.formLabel}'),
-                    if (state.hasError) Text('${state.errorText}', style: TextStyle(color: LiteUITheme.of(context).errorColor)),
+                    if (state.hasError && controller.text.trim().isNotEmpty) Text('${state.errorText}', style: TextStyle(color: LiteUITheme.of(context).errorColor)),
                   ],
                 ),
               ),
@@ -295,14 +295,16 @@ class _InputTextState extends State<InputText> {
                       fontSize: widget.hintFontSize,
                     ),
                 // 前置图标
-                prefixIcon: PrefixIconLabel(
-                  label: '${widget.formLabel}',
-                  labelWidth: widget.labelWidth,
-                  prefixIcon: widget.prefixIcon,
-                  prefixIconData: widget.prefixIconData,
-                  prefixIconColor: widget.prefixIconColor,
-                  required: widget.required,
-                ),
+                prefixIcon: (widget.prefixIcon != null || widget.prefixIconData != null || widget.formLabel != null)
+                    ? PrefixIconLabel(
+                        label: widget.formLabel,
+                        labelWidth: widget.labelWidth,
+                        prefixIcon: widget.prefixIcon,
+                        prefixIconData: widget.prefixIconData,
+                        prefixIconColor: widget.prefixIconColor,
+                        required: widget.required,
+                      )
+                    : SizedBox(width: 5),
                 prefixIconConstraints: BoxConstraints(minWidth: 20, minHeight: 20),
                 // 后置图标
                 suffixIcon: ClearIcon(
@@ -354,6 +356,8 @@ class _InputTextState extends State<InputText> {
   // 构建是否显示浮动 label
   FloatingLabelBehavior? handleFloatingLabelBehavior() {
     if (widget.formLayout == FormLayout.column && widget.formLabel?.isNotEmpty == true) {
+      return FloatingLabelBehavior.never;
+    } else if (controller.text.trim().isEmpty) {
       return FloatingLabelBehavior.never;
     } else if (widget.formLayout == FormLayout.column && widget.formLabel?.isEmpty == true) {
       return FloatingLabelBehavior.always;

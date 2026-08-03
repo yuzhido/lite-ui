@@ -111,7 +111,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
       description: '分组 + 图标 + 禁用状态组合',
       showDisabledBadge: true,
       sections: [
-        ActionSheetSection(
+        SheetSection(
           title: '文件操作',
           items: [
             SelectItem.withIcon(
@@ -136,7 +136,7 @@ class _ActionSheetDemoPageState extends State<ActionSheetDemoPage> {
             ),
           ],
         ),
-        ActionSheetSection(
+        SheetSection(
           title: '分享选项',
           items: [
             SelectItem.withIcon(

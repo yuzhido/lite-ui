@@ -78,11 +78,6 @@ class ShowContent<V, D> extends StatelessWidget {
       final tagTextColor = Colors.white;
 
       if (displayMode == DisplayMode.tags) {
-        print(maxShowTags);
-        print(maxShowTags);
-        print(maxShowTags);
-        print(maxShowTags);
-        print(maxShowTags);
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -92,11 +87,6 @@ class ShowContent<V, D> extends StatelessWidget {
       }
 
       if (displayMode == DisplayMode.compact) {
-        print(maxShowTags);
-        print(maxShowTags);
-        print(maxShowTags);
-        print(maxShowTags);
-        print(maxShowTags);
         if (labels.length <= maxShowTags) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
