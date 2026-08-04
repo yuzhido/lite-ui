@@ -115,7 +115,8 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
                       onToggleExpand(node.value);
                     } else {
                       // 正常选中逻辑（包括单选/多选 + parentSelectable、叶子节点等）
-                      onNodeTap?.call(node);
+                      final isNowSelected = multiple ? !selectedIds.contains(node.value) : true;
+                      onNodeTap?.call(node.value, node, isNowSelected);
                     }
                   },
                   borderRadius: BorderRadius.circular(10),

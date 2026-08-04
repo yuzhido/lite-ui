@@ -214,16 +214,16 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
   }
 
   // ── 选择逻辑 ──
-
-  void _selectNode(TreeNode<V, D> node) {
-    if (!widget.multiple) {
-      _onNodeTap(node); // 单选：选中并关闭
-      return;
+  void _selectNode(V value, TreeNode<V, D> node, bool isSelected) {
+    widget.onSelect?.call(value, node, isSelected);
+    if (widget.multiple) {
+      // 多选：联动选中/取消所有后代
+      setState(() {
+        _toggleSelectWithChildren(node);
+      });
+    } else {
+      Navigator.of(context).pop(node);
     }
-    // 多选：联动选中/取消所有后代
-    setState(() {
-      _toggleSelectWithChildren(node);
-    });
   }
 
   void _toggleSelectWithChildren(TreeNode<V, D> node) {
@@ -261,15 +261,9 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
     });
   }
 
-
-  void _onNodeTap(TreeNode<V, D> node) {
-    Navigator.of(context).pop(node);
-    widget.onSelect?.call(node);
-  }
-
   void _onConfirm() {
     final selectedNodes = _selectedNodes;
-    widget.onConfirm?.call(selectedNodes);
+    widget.onConfirm?.call(selectedNodes.map((node) => node.value).toList(), selectedNodes, selectedNodes.map((node) => node.data).toList());
     Navigator.of(context).pop(selectedNodes);
   }
 

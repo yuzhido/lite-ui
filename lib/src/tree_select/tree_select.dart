@@ -305,6 +305,12 @@ class _TreeSelectFieldState<V extends Object, D> extends State<TreeSelect<V, D>>
       validator: widget.required ? defaultValid : null,
       autovalidateMode: widget.autovalidateMode,
       initialValue: _getValidationValue(),
+      onReset: () {
+        setState(() {
+          _cleared = false;
+          _syncFromExternalIds();
+        });
+      },
       onSaved: (value) {
         widget.onSaved?.call(_getValidationValue());
       },
@@ -392,18 +398,16 @@ class _TreeSelectFieldState<V extends Object, D> extends State<TreeSelect<V, D>>
               confirmButtonTextColor: widget.confirmButtonTextColor,
               cancelButtonColor: widget.cancelButtonColor,
               // 懒加载数据缓存回调：弹窗内加载的数据同步到父级缓存
-              onLazyDataLoaded: widget.onLoadChildren != null
-                  ? (data) => _lazyCache = data
-                  : null,
+              onLazyDataLoaded: widget.onLoadChildren != null ? (data) => _lazyCache = data : null,
               // 单选,多选模式都可传 onSelect，多选模式仅传 onConfirm
-              onSelect: (node) {
+              onSelect: (value, node, isSelected) {
                 _selectedNode = node;
-                widget.onSelect?.call(node);
+                widget.onSelect?.call(value, node, isSelected);
               },
               onConfirm: widget.multiple
-                  ? (nodes) {
+                  ? (values, nodes, datas) {
                       _selectedNodes = nodes;
-                      widget.onConfirm?.call(nodes);
+                      widget.onConfirm?.call(values, nodes, datas);
                     }
                   : null,
             ),

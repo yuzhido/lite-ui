@@ -2,11 +2,15 @@
 
 import 'tree_node.dart';
 
-/// 单选节点点击回调
-typedef TreeNodeSelect<V extends Object, D> = void Function(TreeNode<V, D> node);
+/// 节点点击回调
+///
+/// [isSelected] 表示当前操作是选中还是取消选中：
+/// - 单选模式：始终为 true（点击即选中）
+/// - 多选模式：true = 选中，false = 取消选中
+typedef TreeNodeSelect<V extends Object, D> = void Function(V value, TreeNode<V, D> node, bool isSelected);
 
 /// 多选选中状态变化回调
-typedef TreeNodeConfirm<V extends Object, D> = void Function(List<TreeNode<V, D>> selectedNodes);
+typedef TreeNodeConfirm<V extends Object, D> = void Function(List<V> value, List<TreeNode<V, D>> selectedNodes, List<D?> data);
 
 /// 懒加载节点回调
 ///

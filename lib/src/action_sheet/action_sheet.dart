@@ -281,6 +281,12 @@ class _ActionSheetState<V, D> extends State<ActionSheet<V, D>> {
       validator: widget.required ? defaultValid : null,
       autovalidateMode: widget.autovalidateMode,
       initialValue: _effectiveValue?.toString() ?? '',
+      onReset: () {
+        setState(() {
+          _internalValue = null;
+          _selectItem = null;
+        });
+      },
       onSaved: (value) {
         widget.onSaved?.call(_effectiveValue?.toString() ?? '');
       },

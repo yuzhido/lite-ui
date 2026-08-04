@@ -89,10 +89,11 @@ class WrapperContainer<V, D> extends StatelessWidget {
         label: (formLayout == FormLayout.column)
             ? null
             : hasError
-            ? Text(
-                errorText!,
-                style: TextStyle(fontSize: 16, color: errorColor, fontWeight: FontWeight.w500),
-              )
+            ? Text(errorText!)
+            : null,
+        // 统一错误文字样式，与 InputText 保持一致
+        labelStyle: hasError
+            ? TextStyle(color: errorColor, fontWeight: FontWeight.w500)
             : null,
         floatingLabelBehavior: selectItems.isEmpty ? FloatingLabelBehavior.never : FloatingLabelBehavior.always,
         border: buildInputOutlineBorder(type: BorderType.border, context: context, hasError: hasError, errorColor: hasError ? errorColor : null, gapPadding: 0),

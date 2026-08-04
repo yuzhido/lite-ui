@@ -122,19 +122,40 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
         TreeNode<String, dynamic>(value: 'L1-3', label: '温州市', parentId: 'L1', isLeaf: true),
       ];
     } else if (parent.value == 'L2') {
-      return [TreeNode<String, dynamic>(value: 'L2-1', label: '南京市', parentId: 'L2', isLeaf: false), TreeNode<String, dynamic>(value: 'L2-2', label: '苏州市', parentId: 'L2', isLeaf: false)];
+      return [
+        TreeNode<String, dynamic>(value: 'L2-1', label: '南京市', parentId: 'L2', isLeaf: false),
+        TreeNode<String, dynamic>(value: 'L2-2', label: '苏州市', parentId: 'L2', isLeaf: false),
+      ];
     } else if (parent.value == 'L3') {
-      return [TreeNode<String, dynamic>(value: 'L3-1', label: '广州市', parentId: 'L3', isLeaf: false), TreeNode<String, dynamic>(value: 'L3-2', label: '深圳市', parentId: 'L3', isLeaf: true)];
+      return [
+        TreeNode<String, dynamic>(value: 'L3-1', label: '广州市', parentId: 'L3', isLeaf: false),
+        TreeNode<String, dynamic>(value: 'L3-2', label: '深圳市', parentId: 'L3', isLeaf: true),
+      ];
     } else if (parent.value == 'L1-1') {
-      return [TreeNode<String, dynamic>(value: 'L1-1-1', label: '西湖区', parentId: 'L1-1', isLeaf: true), TreeNode<String, dynamic>(value: 'L1-1-2', label: '滨江区', parentId: 'L1-1', isLeaf: true)];
+      return [
+        TreeNode<String, dynamic>(value: 'L1-1-1', label: '西湖区', parentId: 'L1-1', isLeaf: true),
+        TreeNode<String, dynamic>(value: 'L1-1-2', label: '滨江区', parentId: 'L1-1', isLeaf: true),
+      ];
     } else if (parent.value == 'L1-2') {
-      return [TreeNode<String, dynamic>(value: 'L1-2-1', label: '海曙区', parentId: 'L1-2', isLeaf: true), TreeNode<String, dynamic>(value: 'L1-2-2', label: '鄞州区', parentId: 'L1-2', isLeaf: true)];
+      return [
+        TreeNode<String, dynamic>(value: 'L1-2-1', label: '海曙区', parentId: 'L1-2', isLeaf: true),
+        TreeNode<String, dynamic>(value: 'L1-2-2', label: '鄞州区', parentId: 'L1-2', isLeaf: true),
+      ];
     } else if (parent.value == 'L2-1') {
-      return [TreeNode<String, dynamic>(value: 'L2-1-1', label: '玄武区', parentId: 'L2-1', isLeaf: true), TreeNode<String, dynamic>(value: 'L2-1-2', label: '鼓楼区', parentId: 'L2-1', isLeaf: true)];
+      return [
+        TreeNode<String, dynamic>(value: 'L2-1-1', label: '玄武区', parentId: 'L2-1', isLeaf: true),
+        TreeNode<String, dynamic>(value: 'L2-1-2', label: '鼓楼区', parentId: 'L2-1', isLeaf: true),
+      ];
     } else if (parent.value == 'L2-2') {
-      return [TreeNode<String, dynamic>(value: 'L2-2-1', label: '姑苏区', parentId: 'L2-2', isLeaf: true), TreeNode<String, dynamic>(value: 'L2-2-2', label: '吴中区', parentId: 'L2-2', isLeaf: true)];
+      return [
+        TreeNode<String, dynamic>(value: 'L2-2-1', label: '姑苏区', parentId: 'L2-2', isLeaf: true),
+        TreeNode<String, dynamic>(value: 'L2-2-2', label: '吴中区', parentId: 'L2-2', isLeaf: true),
+      ];
     } else if (parent.value == 'L3-1') {
-      return [TreeNode<String, dynamic>(value: 'L3-1-1', label: '天河区', parentId: 'L3-1', isLeaf: true), TreeNode<String, dynamic>(value: 'L3-1-2', label: '越秀区', parentId: 'L3-1', isLeaf: true)];
+      return [
+        TreeNode<String, dynamic>(value: 'L3-1-1', label: '天河区', parentId: 'L3-1', isLeaf: true),
+        TreeNode<String, dynamic>(value: 'L3-1-2', label: '越秀区', parentId: 'L3-1', isLeaf: true),
+      ];
     }
     return [];
   }
@@ -205,7 +226,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                 multiple: true,
                 parentSelectable: false,
                 selectedIds: _multiSelectedIds1.toSet(),
-                onConfirm: (nodes) {
+                onConfirm: (values, nodes, datas) {
                   setState(() {
                     _multiSelectedIds1 = nodes.map((e) => e.value).toList();
                     _multiResult1 = nodes.map((e) => e.label).join('、');
@@ -227,7 +248,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                 multiple: true,
                 parentSelectable: true,
                 selectedIds: _multiSelectedIds2.toSet(),
-                onConfirm: (nodes) {
+                onConfirm: (values, nodes, datas) {
                   setState(() {
                     _multiSelectedIds2 = nodes.map((e) => e.value).toList();
                     _multiResult2 = nodes.map((e) => e.label).join('、');
@@ -275,7 +296,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                 parentSelectable: true,
                 selectedIds: _lazySelectedIds2.toSet(),
                 onLoadChildren: _loadChildren,
-                onConfirm: (nodes) {
+                onConfirm: (values, nodes, datas) {
                   setState(() {
                     _lazySelectedIds2 = nodes.map((e) => e.value).toList();
                     _lazyResult2 = nodes.map((e) => e.label).join('、');
@@ -318,7 +339,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                   multiple: false,
                   required: true,
                   hintText: '请选择负责人',
-                  onSelect: (node) {
+                  onSelect: (value, node, isSelected) {
                     setState(() {
                       _formSingleResult = '${node.label}（value: ${node.value}）';
                     });
@@ -333,7 +354,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                   multiple: true,
                   required: true,
                   hintText: '请选择参与人员',
-                  onConfirm: (nodes) {
+                  onConfirm: (values, nodes, datas) {
                     setState(() {
                       _formMultiResult = nodes.map((e) => e.label).join('、');
                     });
