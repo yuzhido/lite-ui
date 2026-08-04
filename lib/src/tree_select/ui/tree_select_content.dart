@@ -19,6 +19,8 @@ import 'tree_list.dart';
 /// 或通过 [TreeSelect] 表单组件集成使用。
 class TreeModalContent<V extends Object, D> extends StatefulWidget {
   /// 树形数据源
+  ///
+  /// 可为空，为空时弹窗打开后自动通过 [onLoadChildren](parent == null) 加载根节点。
   final List<TreeNode<V, D>> treeData;
 
   /// 主标题
@@ -51,7 +53,9 @@ class TreeModalContent<V extends Object, D> extends StatefulWidget {
   /// 确认回调（多选）
   final TreeNodeConfirm<V, D>? onConfirm;
 
-  /// 懒加载子节点回调
+  /// 懒加载节点回调
+  ///
+  /// parent 为 null 时加载根节点，否则加载该父节点的子节点。
   final TreeNodeLoadChild<V, D>? onLoadChildren;
 
   /// 取消按钮文字
@@ -78,9 +82,15 @@ class TreeModalContent<V extends Object, D> extends StatefulWidget {
   /// 取消按钮文字/边框颜色
   final Color? cancelButtonColor;
 
+  /// 懒加载数据缓存回调
+  ///
+  /// 弹窗内完成懒加载（根节点或子节点）后，将最新完整树数据
+  /// 同步到父级缓存，避免下次打开弹窗重复加载。
+  final void Function(List<TreeNode<V, D>> data)? onLazyDataLoaded;
+
   const TreeModalContent({
     super.key,
-    required this.treeData,
+    this.treeData = const [],
     this.title = '请选择',
     this.subTitle,
     this.searchHint = '搜索...',
@@ -100,6 +110,7 @@ class TreeModalContent<V extends Object, D> extends StatefulWidget {
     this.confirmButtonColor,
     this.confirmButtonTextColor,
     this.cancelButtonColor,
+    this.onLazyDataLoaded,
   });
 
   @override
@@ -112,6 +123,12 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
   Set<V> _selectedIds = {};
   List<TreeNode<V, D>> _filteredData = [];
 
+  /// 内部维护的原始树数据（支持根节点懒加载后更新）
+  List<TreeNode<V, D>> _treeData = [];
+
+  /// 是否正在加载根节点
+  bool _isLoadingRoot = false;
+
   /// 当前选中的节点列表
   List<TreeNode<V, D>> get _selectedNodes => TreeUtils.getSelectedNodes(_filteredData, _selectedIds);
 
@@ -123,19 +140,46 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
     super.initState();
     _searchController = TextEditingController();
     _selectedIds = Set.from(widget.selectedIds);
-    _applyFilter('');
+    _treeData = widget.treeData;
 
-    // 展开所有选中节点的祖先路径
-    TreeUtils.expandSelectedNodeAncestors(_filteredData, _selectedIds);
-    setState(() {}); // 触发重建以应用展开状态
+    if (_treeData.isEmpty && widget.onLoadChildren != null) {
+      // 纯懒加载模式：自动加载根节点
+      _filteredData = [];
+      _isLoadingRoot = true;
+      _loadRootNodes();
+    } else {
+      _applyFilter('');
+      // 展开所有选中节点的祖先路径
+      TreeUtils.expandSelectedNodeAncestors(_filteredData, _selectedIds);
+    }
+  }
+
+  /// 加载根节点（treeData 为空时自动触发）
+  void _loadRootNodes() async {
+    try {
+      final roots = await widget.onLoadChildren!(null);
+      if (!mounted) return;
+      setState(() {
+        _treeData = roots;
+        _isLoadingRoot = false;
+        _applyFilter('');
+        TreeUtils.expandSelectedNodeAncestors(_filteredData, _selectedIds);
+      });
+      // 同步到父级缓存
+      widget.onLazyDataLoaded?.call(List.of(_treeData));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingRoot = false);
+    }
   }
 
   @override
   void didUpdateWidget(covariant TreeModalContent<V, D> oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // treeData 变化时：重新克隆 + 应用当前搜索词
+    // treeData 变化时：同步内部数据 + 重新克隆 + 应用当前搜索词
     if (!identical(widget.treeData, oldWidget.treeData)) {
+      _treeData = widget.treeData;
       final keyword = _searchController.text;
       if (keyword.isEmpty) {
         _filteredData = TreeUtils.cloneTree(widget.treeData);
@@ -162,9 +206,9 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
 
   void _applyFilter(String keyword) {
     if (keyword.isEmpty) {
-      _filteredData = TreeUtils.cloneTree(widget.treeData);
+      _filteredData = TreeUtils.cloneTree(_treeData);
     } else {
-      _filteredData = TreeUtils.filterTree(TreeUtils.cloneTree(widget.treeData), keyword.toLowerCase());
+      _filteredData = TreeUtils.filterTree(TreeUtils.cloneTree(_treeData), keyword.toLowerCase());
     }
     setState(() {});
   }
@@ -205,10 +249,10 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
     setState(() {
       if (widget.parentSelectable) {
         // 仅选中/取消父节点自身，不联动子节点，不展开
-        if (_selectedIds.contains(node.id)) {
-          _selectedIds.remove(node.id);
+        if (_selectedIds.contains(node.value)) {
+          _selectedIds.remove(node.value);
         } else {
-          _selectedIds.add(node.id);
+          _selectedIds.add(node.value);
         }
       } else {
         // 默认模式：联动子节点
@@ -217,36 +261,10 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
     });
   }
 
-  /// 多选 + parentSelectable 模式下，点击父节点文本但子节点未加载时，先懒加载再全选
-  void _onParentExpandForSelect(TreeNode<V, D> node) async {
-    final clonedNode = TreeUtils.findNode(_filteredData, node.id);
-    if (clonedNode == null || clonedNode.isChildrenLoaded) return;
-
-    // 触发懒加载（展开 + loading）
-    setState(() {
-      clonedNode.isLoading = true;
-      clonedNode.isExpanded = true;
-    });
-    try {
-      final children = await widget.onLoadChildren!(clonedNode);
-      setState(() {
-        TreeUtils.setNodeChildren(_filteredData, node.id, children);
-        clonedNode.isLoading = false;
-        // 同步到原始数据
-        TreeUtils.setNodeChildren(widget.treeData, node.id, children);
-        // 加载完成后自动全选（不向上联动父节点）
-        TreeUtils.addNodeAndDescendants(clonedNode, _selectedIds);
-      });
-    } catch (_) {
-      setState(() {
-        clonedNode.isLoading = false;
-      });
-    }
-  }
 
   void _onNodeTap(TreeNode<V, D> node) {
-    widget.onSelect?.call(node);
     Navigator.of(context).pop(node);
+    widget.onSelect?.call(node);
   }
 
   void _onConfirm() {
@@ -263,15 +281,15 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
       final result = <TreeNode<V, D>>[];
       for (final node in nodes) {
         final children = prune(node.children);
-        final keep = _selectedIds.contains(node.id) || (children != null && children.isNotEmpty);
+        final keep = _selectedIds.contains(node.value) || (children != null && children.isNotEmpty);
         if (keep) {
-          result.add(TreeNode<V, D>(id: node.id, label: node.label, parentId: node.parentId, children: children ?? const [], data: node.data));
+          result.add(TreeNode<V, D>(value: node.value, label: node.label, parentId: node.parentId, children: children ?? const [], data: node.data));
         }
       }
       return result.isEmpty ? null : result;
     }
 
-    return prune(widget.treeData) ?? [];
+    return prune(_treeData) ?? [];
   }
 
   void _handleViewSelected() {
@@ -292,7 +310,9 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
   // ── 懒加载同步 ──
 
   void _onChildrenLoaded(V nodeId, List<TreeNode<V, D>> children) {
-    TreeUtils.setNodeChildren(widget.treeData, nodeId, children);
+    TreeUtils.setNodeChildren(_treeData, nodeId, children);
+    // 同步到父级缓存
+    widget.onLazyDataLoaded?.call(List.of(_treeData));
   }
 
   // ── 构建 UI ──
@@ -322,22 +342,23 @@ class _TreeModalContentState<V extends Object, D> extends State<TreeModalContent
               searchButtonTextColor: widget.searchButtonTextColor,
             ),
 
-          // 树形列表
+          // 树形列表（根节点加载中显示 loading）
           Expanded(
-            child: TreeList<V, D>(
-              nodes: _filteredData,
-              selectedIds: _selectedIds,
-              multiple: widget.multiple,
-              emptyText: widget.emptyText,
-              onLoadChildren: widget.onLoadChildren,
-              onChildrenLoaded: widget.onLoadChildren != null ? _onChildrenLoaded : null,
-              onNodeTap: _selectNode,
-              keyword: _searchController.text,
-              highlightStyle: widget.highlightStyle,
-              parentSelectable: widget.parentSelectable,
-              onParentIndicatorTap: widget.multiple ? _onParentIndicatorTap : null,
-              onParentExpandForSelect: widget.multiple && widget.parentSelectable ? _onParentExpandForSelect : null,
-            ),
+            child: _isLoadingRoot
+                ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                : TreeList<V, D>(
+                    nodes: _filteredData,
+                    selectedIds: _selectedIds,
+                    multiple: widget.multiple,
+                    emptyText: widget.emptyText,
+                    onLoadChildren: widget.onLoadChildren,
+                    onChildrenLoaded: widget.onLoadChildren != null ? _onChildrenLoaded : null,
+                    onNodeTap: _selectNode,
+                    keyword: _searchController.text,
+                    highlightStyle: widget.highlightStyle,
+                    parentSelectable: widget.parentSelectable,
+                    onParentIndicatorTap: widget.multiple ? _onParentIndicatorTap : null,
+                  ),
           ),
 
           // 底部按钮（仅多选模式显示）

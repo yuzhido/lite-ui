@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: develop
 nodes_managed: true
-exported_at: "2026-08-03T07:43:35Z"
+exported_at: "2026-08-03T09:43:25Z"
 modules:
     "":
-        dir_name: LiteUI 轻量级 Flutter 自定义组件库
-        title: LiteUI 轻量级 Flutter 自定义组件库
+        dir_name: LiteUI 轻量级 Flutter UI 组件库
+        title: LiteUI 轻量级 Flutter UI 组件库
         scope: []
         source_files: []
         children: []

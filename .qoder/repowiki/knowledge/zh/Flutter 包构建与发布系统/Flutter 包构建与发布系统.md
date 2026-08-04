@@ -7,30 +7,32 @@ scope:
 source_files:
     - pubspec.yaml
     - example/pubspec.yaml
-    - analysis_options.yaml
     - CHANGELOG.md
+    - analysis_options.yaml
 ---
 
-该仓库是一个 Flutter 组件库，构建系统基于 Flutter/Dart 官方工具链，采用标准的 pub 包管理方式。
+该仓库是一个 Flutter 自定义 UI 组件库，采用标准的 Flutter Package 结构进行构建和发布管理。
 
-**构建系统与工具**
-- 使用 `pubspec.yaml` 作为核心构建配置，定义包名、版本、依赖和 Dart SDK 约束（^3.12.2）
-- 通过 `flutter pub` 命令进行依赖解析、分析和打包
-- 代码质量检查使用 `flutter_lints` 静态分析规则
-- 测试框架为 `flutter_test`
+**构建系统与工具链**
+- 使用 Flutter SDK 作为核心构建工具，通过 `pubspec.yaml` 声明依赖和元数据
+- 版本管理：主包版本为 1.2.0，SDK 要求 ^3.12.2，Flutter 版本 >=1.17.0
+- 依赖管理：使用 `file_picker: 12.0.0-beta.7`、`image_picker: 1.2.3` 等第三方包
+- 代码分析：通过 `flutter_lints: ^6.0.0` 进行静态分析和代码质量检查
 
 **项目结构**
-- 根目录 `pubspec.yaml` 定义库包 `lite_ui`（当前版本 1.2.0），包含业务依赖如 `file_picker`、`image_picker`
-- `example/` 子项目通过 `path: ../` 引用本地库，用于开发和演示，且设置 `publish_to: 'none'` 避免误发布
-- 各平台原生工程（Android/iOS/Linux/macOS/Windows/Web）由 Flutter 自动生成，无需手动维护构建脚本
+- 根目录 `pubspec.yaml`：定义库的元数据、依赖和发布配置
+- `example/` 目录：包含完整的示例应用，用于测试和演示组件功能
+- `lib/src/`：核心组件源码目录
+- `lite_ui.dart`：库的统一入口文件
 
-**发布流程**
-- 无自动化 CI/CD 流水线（未发现 `.github/workflows`、`.gitlab-ci.yml` 等配置文件）
-- 版本号管理在 `pubspec.yaml` 的 `version` 字段中手动维护
-- 发布方式为标准的 `flutter pub publish` 命令
-- 变更日志记录在 `CHANGELOG.md` 中
+**构建流程**
+- 开发时通过 `flutter pub get` 获取依赖
+- 运行示例应用：`flutter run` 在 example 目录下
+- 打包发布：使用 `flutter pub publish` 发布到 pub.dev
+- 跨平台支持：Android、iOS、Linux、macOS、Windows、Web
 
-**开发约定**
-- 使用 `analysis_options.yaml` 统一代码风格和分析规则
-- 示例应用与库代码分离，便于独立开发和调试
-- 依赖版本采用语义化版本控制，SDK 约束使用 caret 语法保证兼容性
+**发布策略**
+- 无 CI/CD 配置文件（如 GitHub Actions、Dockerfile 等）
+- 手动发布流程，通过 Flutter CLI 工具完成
+- 版本变更通过 CHANGELOG.md 记录
+- 遵循 Flutter Package 的标准发布规范

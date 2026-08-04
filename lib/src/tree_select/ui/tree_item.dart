@@ -45,9 +45,6 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
   /// 父节点圆圈点击回调（仅多选 + parentSelectable 时有效）
   final void Function(TreeNode<V, D> node)? onParentIndicatorTap;
 
-  /// 父节点文本点击时需要展开（懒加载场景），由外部处理加载后再选中
-  final void Function(TreeNode<V, D> node)? onParentExpandForSelect;
-
   const TreeItem({
     super.key,
     required this.node,
@@ -61,35 +58,19 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
     required this.onToggleExpand,
     this.onNodeTap,
     this.onParentIndicatorTap,
-    this.onParentExpandForSelect,
   });
 
   @override
   Widget build(BuildContext context) {
     final hasChildren = node.children.isNotEmpty;
     final canExpand = !node.isLeaf && (hasChildren || canLazyLoad);
-    final isSelected = selectedIds.contains(node.id);
+    final isSelected = selectedIds.contains(node.value);
     final isHalfSelected = multiple && !parentSelectable && TreeUtils.isNodeHalfSelected(node, selectedIds);
     final isFullySelected = multiple && (parentSelectable ? isSelected : TreeUtils.isNodeFullySelected(node, selectedIds));
     final indent = level * 24.0;
     final isSelectedVisual = isSelected || isFullySelected;
     // 多选 + parentSelectable + 非叶子节点：拆分文本区和圆圈区
     final splitIndicator = multiple && canExpand && !node.isLeaf;
-
-    // —— 子节点数量 badge ——
-    final total = TreeUtils.countDescendants(node);
-    final selectedCount = TreeUtils.countSelectedDescendants(node, selectedIds);
-    final badgeText = multiple && selectedCount > 0 ? '$selectedCount/$total' : '$total';
-    final badge = Container(
-      constraints: const BoxConstraints(minWidth: 32),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(color: selectedCount > 0 ? const Color(0xFF007AFF).withValues(alpha: 0.1) : Colors.grey.shade100, borderRadius: BorderRadius.circular(999)),
-      child: Text(
-        badgeText,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: selectedCount > 0 ? const Color(0xFF007AFF) : Colors.grey.shade600, fontWeight: FontWeight.w500),
-      ),
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,16 +79,18 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          padding: EdgeInsets.only(left: 8 + indent, right: 8, top: 6, bottom: 6),
-          decoration: BoxDecoration(color: isSelectedVisual ? const Color(0xFF007AFF).withValues(alpha: 0.08) : null, borderRadius: BorderRadius.circular(10)),
+          padding: EdgeInsets.only(left: 8 + indent, top: 6, bottom: 6, right: 8),
+          decoration: BoxDecoration(color: isSelectedVisual ? const Color(0xFF007AFF).withValues(alpha: 0.08) : null, borderRadius: BorderRadius.circular(5)),
           child: Row(
             children: [
               // 左侧展开/折叠箭头区
               if (canExpand)
                 GestureDetector(
-                  onTap: () => onToggleExpand(node.id),
+                  onTap: () => onToggleExpand(node.value),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
+                    width: 20,
+                    height: 20,
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(999)),
                     padding: const EdgeInsets.all(0),
@@ -128,13 +111,10 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
                 child: InkWell(
                   onTap: () {
                     if (!parentSelectable && canExpand) {
-                      // parentSelectable=false + 父节点 → 展开/折叠
-                      onToggleExpand(node.id);
-                    } else if (parentSelectable && multiple && canExpand && !node.isLeaf && !node.isChildrenLoaded) {
-                      // parentSelectable=true + 多选 + 父节点未加载 → 通知外部懒加载后再选中
-                      onParentExpandForSelect?.call(node);
+                      // parentSelectable=false + 父节点 → 展开/折叠（仅箭头触发）
+                      onToggleExpand(node.value);
                     } else {
-                      // 正常选中逻辑
+                      // 正常选中逻辑（包括单选/多选 + parentSelectable、叶子节点等）
                       onNodeTap?.call(node);
                     }
                   },
@@ -150,16 +130,19 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 15,
                               color: isSelectedVisual ? const Color(0xFF007AFF) : const Color(0xFF1A1A1A),
-                              fontWeight: isSelectedVisual ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight: isSelectedVisual ? FontWeight.w600 : FontWeight.w500,
                             ),
                             highlightStyle: highlightStyle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-
-                        // 子节点数量 badge
-                        if (canExpand && hasChildren) ...[const SizedBox(width: 8), badge],
+                        // 单选模式下的选中标记图标（badge 之后显示）
+                        if (!multiple && isSelectedVisual)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 6),
+                            child: Icon(Icons.check_circle, size: 18, color: Color(0xFF007AFF)),
+                          ),
 
                         // 选择指示器
                         if (multiple) ...[
@@ -168,10 +151,7 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
                             GestureDetector(
                               onTap: () => onParentIndicatorTap?.call(node),
                               behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.all(2),
-                                child: SelectIndicator(selected: isFullySelected, halfSelected: isHalfSelected),
-                              ),
+                              child: SelectIndicator(selected: isFullySelected, halfSelected: isHalfSelected),
                             )
                           else
                             SelectIndicator(selected: isFullySelected, halfSelected: isHalfSelected),
@@ -221,7 +201,6 @@ class TreeItem<V extends Object, D> extends StatelessWidget {
                       onToggleExpand: onToggleExpand,
                       onNodeTap: onNodeTap,
                       onParentIndicatorTap: onParentIndicatorTap,
-                      onParentExpandForSelect: onParentExpandForSelect,
                     ),
                   ],
                 ),

@@ -40,6 +40,9 @@ class TreeSelect<V extends Object, D> extends StatefulWidget {
   final bool multiple;
 
   /// 树形数据源
+  ///
+  /// 可不传（或传空列表），此时弹窗打开后自动通过 [onLoadChildren]
+  /// 以 parent == null 加载根节点（纯懒加载模式）。
   final List<TreeNode<V, D>> treeData;
 
   /// 初始/外部选中的节点ID集合
@@ -57,8 +60,20 @@ class TreeSelect<V extends Object, D> extends StatefulWidget {
   /// 空状态提示文字
   final String emptyText;
 
-  /// 懒加载子节点回调
+  /// 懒加载节点回调
+  ///
+  /// parent 为 null 时加载根节点，否则加载该父节点的子节点。
   final TreeNodeLoadChild<V, D>? onLoadChildren;
+
+  /// 弹窗最大高度（屏幕占比，0~1）
+  ///
+  /// 默认 0.9，即弹窗最大高度为屏幕高度的 90%。
+  final double maxHeight;
+
+  /// 弹窗最小高度（屏幕占比，0~1）
+  ///
+  /// 默认 0.4，即弹窗最小高度为屏幕高度的 40%。
+  final double minHeight;
 
   /// 关键字高亮样式配置
   final KeywordHighlightStyle? highlightStyle;
@@ -135,7 +150,7 @@ class TreeSelect<V extends Object, D> extends StatefulWidget {
   const TreeSelect({
     super.key,
     required this.formLabel,
-    required this.treeData,
+    this.treeData = const [],
     this.subTitle,
     this.hintText,
     this.required = false,
@@ -145,6 +160,8 @@ class TreeSelect<V extends Object, D> extends StatefulWidget {
     this.showSearch = true,
     this.searchHint = '输入关键字搜索...',
     this.emptyText = '暂无数据',
+    this.maxHeight = 0.75,
+    this.minHeight = 0.4,
     this.onLoadChildren,
     this.highlightStyle,
     this.title,
@@ -189,6 +206,12 @@ class _TreeSelectFieldState<V extends Object, D> extends State<TreeSelect<V, D>>
 
   /// 是否已内部清除（点击后缀 clear 图标后置为 true）
   bool _cleared = false;
+
+  /// 懒加载数据缓存（组件销毁前持续生效）
+  ///
+  /// 仅在 [onLoadChildren] 模式下使用，缓存已加载的树数据，
+  /// 避免每次打开弹窗都重新请求。
+  List<TreeNode<V, D>>? _lazyCache;
 
   @override
   void initState() {
@@ -235,27 +258,27 @@ class _TreeSelectFieldState<V extends Object, D> extends State<TreeSelect<V, D>>
   String _getValidationValue() {
     if (_cleared) return '';
     if (widget.multiple) {
-      return _selectedNodes.map((e) => e.id.toString()).join(',');
+      return _selectedNodes.map((e) => e.value.toString()).join(',');
     }
-    return _selectedNode != null ? _selectedNode!.id.toString() : '';
+    return _selectedNode != null ? _selectedNode!.value.toString() : '';
   }
 
   /// 将选中节点转为 SelectItem 列表供 WrapperContainer 显示
   List<SelectItem<V, TreeNode<V, D>>> _toSelectItems() {
     if (_cleared) return [];
     if (widget.multiple) {
-      return _selectedNodes.map((node) => SelectItem<V, TreeNode<V, D>>(value: node.id, label: node.label, data: node)).toList();
+      return _selectedNodes.map((node) => SelectItem<V, TreeNode<V, D>>(value: node.value, label: node.label, data: node)).toList();
     }
-    return _selectedNode != null ? [SelectItem<V, TreeNode<V, D>>(value: _selectedNode!.id, label: _selectedNode!.label, data: _selectedNode)] : [];
+    return _selectedNode != null ? [SelectItem<V, TreeNode<V, D>>(value: _selectedNode!.value, label: _selectedNode!.label, data: _selectedNode)] : [];
   }
 
   /// 弹窗打开时应使用的选中ID集合
   Set<V> _modalSelectedIds() {
     if (_cleared) return {};
     if (widget.multiple) {
-      return _selectedNodes.map((e) => e.id).toSet();
+      return _selectedNodes.map((e) => e.value).toSet();
     }
-    return _selectedNode != null ? {_selectedNode!.id} : {};
+    return _selectedNode != null ? {_selectedNode!.value} : {};
   }
 
   // 默认验证规则
@@ -348,9 +371,9 @@ class _TreeSelectFieldState<V extends Object, D> extends State<TreeSelect<V, D>>
       builder: (ctx) {
         return SafeArea(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: screenHeight * 0.75, minHeight: screenHeight * 0.5),
+            constraints: BoxConstraints(maxHeight: screenHeight * widget.maxHeight, minHeight: screenHeight * widget.minHeight),
             child: TreeModalContent<V, D>(
-              treeData: widget.treeData,
+              treeData: widget.treeData.isNotEmpty ? widget.treeData : (_lazyCache ?? const []),
               title: widget.title ?? '请选择${widget.formLabel}',
               subTitle: widget.subTitle,
               searchHint: widget.searchHint,
@@ -368,6 +391,10 @@ class _TreeSelectFieldState<V extends Object, D> extends State<TreeSelect<V, D>>
               confirmButtonColor: widget.confirmButtonColor,
               confirmButtonTextColor: widget.confirmButtonTextColor,
               cancelButtonColor: widget.cancelButtonColor,
+              // 懒加载数据缓存回调：弹窗内加载的数据同步到父级缓存
+              onLazyDataLoaded: widget.onLoadChildren != null
+                  ? (data) => _lazyCache = data
+                  : null,
               // 单选,多选模式都可传 onSelect，多选模式仅传 onConfirm
               onSelect: (node) {
                 _selectedNode = node;

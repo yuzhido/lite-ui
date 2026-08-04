@@ -46,7 +46,7 @@ class _LookChosenTreeState<V extends Object, D> extends State<LookChosenTree<V, 
 
   /// 收集节点自身 + 全部后代 ID
   Set<V> _collectIds(TreeNode<V, D> node) {
-    final ids = <V>{node.id};
+    final ids = <V>{node.value};
     for (final child in node.children) {
       ids.addAll(_collectIds(child));
     }
@@ -57,7 +57,7 @@ class _LookChosenTreeState<V extends Object, D> extends State<LookChosenTree<V, 
     final removedIds = _collectIds(node).where(_selectedIds.contains).toSet();
     setState(() {
       _selectedIds.removeAll(removedIds);
-      _removeNode(_tree, node.id);
+      _removeNode(_tree, node.value);
     });
     widget.onRemove?.call(removedIds);
 
@@ -71,7 +71,7 @@ class _LookChosenTreeState<V extends Object, D> extends State<LookChosenTree<V, 
 
   bool _removeNode(List<TreeNode<V, D>> nodes, V id) {
     for (var i = 0; i < nodes.length; i++) {
-      if (nodes[i].id == id) {
+      if (nodes[i].value == id) {
         nodes.removeAt(i);
         return true;
       }
@@ -192,7 +192,7 @@ class _ChosenTreeItem<V extends Object, D> extends StatelessWidget {
     final indent = level * 20.0;
     final hasChildren = node.children.isNotEmpty;
     final selectedDescCount = _countSelected(node);
-    final isSelected = selectedIds.contains(node.id);
+    final isSelected = selectedIds.contains(node.value);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

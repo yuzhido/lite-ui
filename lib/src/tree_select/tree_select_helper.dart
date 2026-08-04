@@ -17,9 +17,11 @@ class TreeSelectHelper {
   /// 多选模式（[multiple] = true）：通过 [onConfirm] 回调返回选中节点列表。
   ///
   /// [selectedIds] 预选中的节点ID集合。
+  /// [treeData] 可不传（或传空列表），此时弹窗打开后自动通过
+  /// [onLoadChildren]（parent == null）加载根节点。
   static Future<TreeNode<V, D>?> show<V extends Object, D>({
     required BuildContext context,
-    required List<TreeNode<V, D>> treeData,
+    List<TreeNode<V, D>> treeData = const [],
     String title = '请选择',
     String? subTitle,
     String searchHint = '搜索...',
@@ -41,6 +43,7 @@ class TreeSelectHelper {
     Color? cancelButtonColor,
   }) {
     assert(onConfirm == null || multiple, '单选模式不支持 onConfirm，onConfirm 仅在多选模式下有效');
+    assert(treeData.isNotEmpty || onLoadChildren != null, 'treeData 与 onLoadChildren 至少提供一个：无初始数据时需通过 onLoadChildren(parent == null) 加载根节点');
     return showModalBottomSheet<TreeNode<V, D>>(
       context: context,
       backgroundColor: Colors.transparent,

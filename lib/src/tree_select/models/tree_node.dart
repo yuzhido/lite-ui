@@ -8,12 +8,12 @@ import 'callback.dart';
 /// 用于 [TreeSelect] 的节点数据。
 /// 纯数据结构，不包含 UI 逻辑。
 ///
-/// 泛型 [V] 为节点 ID 类型，默认 `String`，也可使用 `int` 等类型。
+/// 泛型 [V] 为节点 value 类型，默认 `String`，也可使用 `int` 等类型。
 /// 泛型 [D] 为附加数据类型，可携带原始业务实体对象（如 User、Department），
 /// 不需要时可使用 `dynamic`。
 class TreeNode<V extends Object, D> {
-  /// 节点ID（唯一标识）
-  final V id;
+  /// 节点值（唯一标识）
+  final V value;
 
   /// 节点名称
   final String label;
@@ -37,7 +37,7 @@ class TreeNode<V extends Object, D> {
   /// 附加数据（原始业务实体对象）
   final D? data;
 
-  TreeNode({required this.id, required this.label, this.parentId, this.children = const [], this.isExpanded = false, this.isLeaf = false, this.isLoading = false, this.data});
+  TreeNode({required this.value, required this.label, this.parentId, this.children = const [], this.isExpanded = false, this.isLeaf = false, this.isLoading = false, this.data});
 
   /// 是否有子节点（已加载的或待加载的都算）
   bool get hasChildren => children.isNotEmpty || (!isLeaf && children.isEmpty);

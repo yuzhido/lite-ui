@@ -55,9 +55,6 @@ class TreeList<V extends Object, D> extends StatefulWidget {
   /// 父节点圆圈点击回调（仅多选 + parentSelectable 时有效）
   final void Function(TreeNode<V, D> node)? onParentIndicatorTap;
 
-  /// 父节点文本点击时需要展开（懒加载场景），由外部处理加载后再选中
-  final void Function(TreeNode<V, D> node)? onParentExpandForSelect;
-
   const TreeList({
     super.key,
     required this.nodes,
@@ -71,7 +68,6 @@ class TreeList<V extends Object, D> extends StatefulWidget {
     this.highlightStyle,
     this.parentSelectable = false,
     this.onParentIndicatorTap,
-    this.onParentExpandForSelect,
   });
 
   @override
@@ -117,7 +113,6 @@ class _TreeListState<V extends Object, D> extends State<TreeList<V, D>> {
           onToggleExpand: _toggleNodeExpansion,
           onNodeTap: widget.onNodeTap,
           onParentIndicatorTap: widget.onParentIndicatorTap,
-          onParentExpandForSelect: widget.onParentExpandForSelect,
         );
       },
     );

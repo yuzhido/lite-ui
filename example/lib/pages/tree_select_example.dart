@@ -35,61 +35,61 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
   List<TreeNode<String, dynamic>> _buildTreeData() {
     return [
       TreeNode<String, dynamic>(
-        id: '1',
+        value: '1',
         label: '技术中心',
         children: [
           TreeNode<String, dynamic>(
-            id: '1-1',
+            value: '1-1',
             label: '前端组',
             children: [
-              TreeNode<String, dynamic>(id: '1-1-1', label: '张三', isLeaf: true),
-              TreeNode<String, dynamic>(id: '1-1-2', label: '李四', isLeaf: true),
-              TreeNode<String, dynamic>(id: '1-1-3', label: '王五', isLeaf: true),
+              TreeNode<String, dynamic>(value: '1-1-1', label: '张三', isLeaf: true),
+              TreeNode<String, dynamic>(value: '1-1-2', label: '李四', isLeaf: true),
+              TreeNode<String, dynamic>(value: '1-1-3', label: '王五', isLeaf: true),
             ],
           ),
           TreeNode<String, dynamic>(
-            id: '1-2',
+            value: '1-2',
             label: '后端组',
             children: [
-              TreeNode<String, dynamic>(id: '1-2-1', label: '赵六', isLeaf: true),
-              TreeNode<String, dynamic>(id: '1-2-2', label: '孙七', isLeaf: true),
+              TreeNode<String, dynamic>(value: '1-2-1', label: '赵六', isLeaf: true),
+              TreeNode<String, dynamic>(value: '1-2-2', label: '孙七', isLeaf: true),
             ],
           ),
           TreeNode<String, dynamic>(
-            id: '1-3',
+            value: '1-3',
             label: '测试组',
             children: [
-              TreeNode<String, dynamic>(id: '1-3-1', label: '周八', isLeaf: true),
-              TreeNode<String, dynamic>(id: '1-3-2', label: '吴九', isLeaf: true),
+              TreeNode<String, dynamic>(value: '1-3-1', label: '周八', isLeaf: true),
+              TreeNode<String, dynamic>(value: '1-3-2', label: '吴九', isLeaf: true),
             ],
           ),
         ],
       ),
       TreeNode<String, dynamic>(
-        id: '2',
+        value: '2',
         label: '产品中心',
         children: [
           TreeNode<String, dynamic>(
-            id: '2-1',
+            value: '2-1',
             label: '产品设计',
             children: [
-              TreeNode<String, dynamic>(id: '2-1-1', label: '郑十', isLeaf: true),
-              TreeNode<String, dynamic>(id: '2-1-2', label: '刘一', isLeaf: true),
+              TreeNode<String, dynamic>(value: '2-1-1', label: '郑十', isLeaf: true),
+              TreeNode<String, dynamic>(value: '2-1-2', label: '刘一', isLeaf: true),
             ],
           ),
           TreeNode<String, dynamic>(
-            id: '2-2',
+            value: '2-2',
             label: '产品运营',
-            children: [TreeNode<String, dynamic>(id: '2-2-1', label: '陈二', isLeaf: true)],
+            children: [TreeNode<String, dynamic>(value: '2-2-1', label: '陈二', isLeaf: true)],
           ),
         ],
       ),
       TreeNode<String, dynamic>(
-        id: '3',
+        value: '3',
         label: '市场中心',
         children: [
-          TreeNode<String, dynamic>(id: '3-1', label: '品牌推广', isLeaf: true),
-          TreeNode<String, dynamic>(id: '3-2', label: '渠道合作', isLeaf: true),
+          TreeNode<String, dynamic>(value: '3-1', label: '品牌推广', isLeaf: true),
+          TreeNode<String, dynamic>(value: '3-2', label: '渠道合作', isLeaf: true),
         ],
       ),
     ];
@@ -98,35 +98,43 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
   // ── 懒加载树数据（初始只有根节点）──
   List<TreeNode<String, dynamic>> _buildLazyTreeData() {
     return [
-      TreeNode<String, dynamic>(id: 'L1', label: '浙江省', isLeaf: false),
-      TreeNode<String, dynamic>(id: 'L2', label: '江苏省', isLeaf: false),
-      TreeNode<String, dynamic>(id: 'L3', label: '广东省', isLeaf: false),
+      TreeNode<String, dynamic>(value: 'L1', label: '浙江省', isLeaf: false),
+      TreeNode<String, dynamic>(value: 'L2', label: '江苏省', isLeaf: false),
+      TreeNode<String, dynamic>(value: 'L3', label: '广东省', isLeaf: false),
     ];
   }
 
-  // ── 模拟懒加载回调 ──
-  Future<List<TreeNode<String, dynamic>>> _loadChildren(TreeNode<String, dynamic> parent) async {
+  // ── 模拟懒加载回调（parent == null 时加载根节点）──
+  Future<List<TreeNode<String, dynamic>>> _loadChildren(TreeNode<String, dynamic>? parent) async {
     await Future.delayed(const Duration(milliseconds: 800));
-    if (parent.id == 'L1') {
+    if (parent == null) {
+      // 加载根节点
       return [
-        TreeNode<String, dynamic>(id: 'L1-1', label: '杭州市', parentId: 'L1', isLeaf: false),
-        TreeNode<String, dynamic>(id: 'L1-2', label: '宁波市', parentId: 'L1', isLeaf: false),
-        TreeNode<String, dynamic>(id: 'L1-3', label: '温州市', parentId: 'L1', isLeaf: true),
+        TreeNode<String, dynamic>(value: 'L1', label: '浙江省', isLeaf: false),
+        TreeNode<String, dynamic>(value: 'L2', label: '江苏省', isLeaf: false),
+        TreeNode<String, dynamic>(value: 'L3', label: '广东省', isLeaf: false),
       ];
-    } else if (parent.id == 'L2') {
-      return [TreeNode<String, dynamic>(id: 'L2-1', label: '南京市', parentId: 'L2', isLeaf: false), TreeNode<String, dynamic>(id: 'L2-2', label: '苏州市', parentId: 'L2', isLeaf: false)];
-    } else if (parent.id == 'L3') {
-      return [TreeNode<String, dynamic>(id: 'L3-1', label: '广州市', parentId: 'L3', isLeaf: false), TreeNode<String, dynamic>(id: 'L3-2', label: '深圳市', parentId: 'L3', isLeaf: true)];
-    } else if (parent.id == 'L1-1') {
-      return [TreeNode<String, dynamic>(id: 'L1-1-1', label: '西湖区', parentId: 'L1-1', isLeaf: true), TreeNode<String, dynamic>(id: 'L1-1-2', label: '滨江区', parentId: 'L1-1', isLeaf: true)];
-    } else if (parent.id == 'L1-2') {
-      return [TreeNode<String, dynamic>(id: 'L1-2-1', label: '海曙区', parentId: 'L1-2', isLeaf: true), TreeNode<String, dynamic>(id: 'L1-2-2', label: '鄞州区', parentId: 'L1-2', isLeaf: true)];
-    } else if (parent.id == 'L2-1') {
-      return [TreeNode<String, dynamic>(id: 'L2-1-1', label: '玄武区', parentId: 'L2-1', isLeaf: true), TreeNode<String, dynamic>(id: 'L2-1-2', label: '鼓楼区', parentId: 'L2-1', isLeaf: true)];
-    } else if (parent.id == 'L2-2') {
-      return [TreeNode<String, dynamic>(id: 'L2-2-1', label: '姑苏区', parentId: 'L2-2', isLeaf: true), TreeNode<String, dynamic>(id: 'L2-2-2', label: '吴中区', parentId: 'L2-2', isLeaf: true)];
-    } else if (parent.id == 'L3-1') {
-      return [TreeNode<String, dynamic>(id: 'L3-1-1', label: '天河区', parentId: 'L3-1', isLeaf: true), TreeNode<String, dynamic>(id: 'L3-1-2', label: '越秀区', parentId: 'L3-1', isLeaf: true)];
+    }
+    if (parent.value == 'L1') {
+      return [
+        TreeNode<String, dynamic>(value: 'L1-1', label: '杭州市', parentId: 'L1', isLeaf: false),
+        TreeNode<String, dynamic>(value: 'L1-2', label: '宁波市', parentId: 'L1', isLeaf: false),
+        TreeNode<String, dynamic>(value: 'L1-3', label: '温州市', parentId: 'L1', isLeaf: true),
+      ];
+    } else if (parent.value == 'L2') {
+      return [TreeNode<String, dynamic>(value: 'L2-1', label: '南京市', parentId: 'L2', isLeaf: false), TreeNode<String, dynamic>(value: 'L2-2', label: '苏州市', parentId: 'L2', isLeaf: false)];
+    } else if (parent.value == 'L3') {
+      return [TreeNode<String, dynamic>(value: 'L3-1', label: '广州市', parentId: 'L3', isLeaf: false), TreeNode<String, dynamic>(value: 'L3-2', label: '深圳市', parentId: 'L3', isLeaf: true)];
+    } else if (parent.value == 'L1-1') {
+      return [TreeNode<String, dynamic>(value: 'L1-1-1', label: '西湖区', parentId: 'L1-1', isLeaf: true), TreeNode<String, dynamic>(value: 'L1-1-2', label: '滨江区', parentId: 'L1-1', isLeaf: true)];
+    } else if (parent.value == 'L1-2') {
+      return [TreeNode<String, dynamic>(value: 'L1-2-1', label: '海曙区', parentId: 'L1-2', isLeaf: true), TreeNode<String, dynamic>(value: 'L1-2-2', label: '鄞州区', parentId: 'L1-2', isLeaf: true)];
+    } else if (parent.value == 'L2-1') {
+      return [TreeNode<String, dynamic>(value: 'L2-1-1', label: '玄武区', parentId: 'L2-1', isLeaf: true), TreeNode<String, dynamic>(value: 'L2-1-2', label: '鼓楼区', parentId: 'L2-1', isLeaf: true)];
+    } else if (parent.value == 'L2-2') {
+      return [TreeNode<String, dynamic>(value: 'L2-2-1', label: '姑苏区', parentId: 'L2-2', isLeaf: true), TreeNode<String, dynamic>(value: 'L2-2-2', label: '吴中区', parentId: 'L2-2', isLeaf: true)];
+    } else if (parent.value == 'L3-1') {
+      return [TreeNode<String, dynamic>(value: 'L3-1-1', label: '天河区', parentId: 'L3-1', isLeaf: true), TreeNode<String, dynamic>(value: 'L3-1-2', label: '越秀区', parentId: 'L3-1', isLeaf: true)];
     }
     return [];
   }
@@ -154,8 +162,8 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
               );
               if (result != null) {
                 setState(() {
-                  _singleSelectedId1 = result.id;
-                  _singleResult1 = '${result.label}（id: ${result.id}）';
+                  _singleSelectedId1 = result.value;
+                  _singleResult1 = '${result.label}（value: ${result.value}）';
                 });
               }
             },
@@ -175,8 +183,8 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
               );
               if (result != null) {
                 setState(() {
-                  _singleSelectedId2 = result.id;
-                  _singleResult2 = '${result.label}（id: ${result.id}）';
+                  _singleSelectedId2 = result.value;
+                  _singleResult2 = '${result.label}（value: ${result.value}）';
                 });
               }
             },
@@ -199,7 +207,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                 selectedIds: _multiSelectedIds1.toSet(),
                 onConfirm: (nodes) {
                   setState(() {
-                    _multiSelectedIds1 = nodes.map((e) => e.id).toList();
+                    _multiSelectedIds1 = nodes.map((e) => e.value).toList();
                     _multiResult1 = nodes.map((e) => e.label).join('、');
                   });
                 },
@@ -221,7 +229,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                 selectedIds: _multiSelectedIds2.toSet(),
                 onConfirm: (nodes) {
                   setState(() {
-                    _multiSelectedIds2 = nodes.map((e) => e.id).toList();
+                    _multiSelectedIds2 = nodes.map((e) => e.value).toList();
                     _multiResult2 = nodes.map((e) => e.label).join('、');
                   });
                 },
@@ -247,8 +255,8 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
               );
               if (result != null) {
                 setState(() {
-                  _lazySelectedId1 = result.id;
-                  _lazyResult1 = '${result.label}（id: ${result.id}）';
+                  _lazySelectedId1 = result.value;
+                  _lazyResult1 = '${result.label}（value: ${result.value}）';
                 });
               }
             },
@@ -269,11 +277,31 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                 onLoadChildren: _loadChildren,
                 onConfirm: (nodes) {
                   setState(() {
-                    _lazySelectedIds2 = nodes.map((e) => e.id).toList();
+                    _lazySelectedIds2 = nodes.map((e) => e.value).toList();
                     _lazyResult2 = nodes.map((e) => e.label).join('、');
                   });
                 },
               );
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildCard(
+            title: '7. 纯懒加载（连根节点也异步加载）',
+            subtitle: '不提供 treeData，打开弹窗自动加载根节点',
+            result: _lazyResult1,
+            onTap: () async {
+              final result = await TreeSelectHelper.show<String, dynamic>(
+                context: context,
+                title: '选择地区（纯懒加载）',
+                selectedIds: _lazySelectedId1 != null ? {_lazySelectedId1!} : const {},
+                onLoadChildren: _loadChildren,
+              );
+              if (result != null) {
+                setState(() {
+                  _lazySelectedId1 = result.value;
+                  _lazyResult1 = '${result.label}（value: ${result.value}）';
+                });
+              }
             },
           ),
           const SizedBox(height: 24),
@@ -292,7 +320,7 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                   hintText: '请选择负责人',
                   onSelect: (node) {
                     setState(() {
-                      _formSingleResult = '${node.label}（id: ${node.id}）';
+                      _formSingleResult = '${node.label}（value: ${node.value}）';
                     });
                   },
                 ),
@@ -315,6 +343,8 @@ class _TreeSelectExamplePageState extends State<TreeSelectExamplePage> {
                 Text('多选结果：$_formMultiResult', style: TextStyle(color: Colors.grey[600])),
                 const SizedBox(height: 16),
                 TreeSelect<String, dynamic>(formLabel: '地区', treeData: _buildLazyTreeData(), multiple: false, hintText: '请选择地区（懒加载）', onLoadChildren: _loadChildren),
+                const SizedBox(height: 8),
+                TreeSelect<String, dynamic>(formLabel: '地区（纯懒加载）', multiple: false, hintText: '不提供初始数据，打开弹窗自动加载', onLoadChildren: _loadChildren),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
