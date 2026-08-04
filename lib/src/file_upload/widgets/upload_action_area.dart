@@ -186,7 +186,7 @@ class _UploadActionAreaState extends State<UploadActionArea> {
           decoration:
               widget.decoration ??
               BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.04),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(widget.borderRadius),
                 border: Border.all(color: defaultBorderColor, width: 1),
                 image: widget.backgroundImage != null
